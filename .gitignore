@@ -1,0 +1,21 @@
+# Visual Studio
+.vs/
+
+# .NET
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+
+# Build output
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

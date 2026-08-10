@@ -1,0 +1,51 @@
+<UserControl x:Class="BookStore.UI.Views.Inventory.InventoryListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <DockPanel Margin="0,0,0,12">
+            <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Inventory" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding HistoryCommand}" Content="Ledger" Icon="L" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
+                <controls:PrimaryButton Command="{Binding AdjustCommand}" Content="Adjust" Icon="A" />
+            </StackPanel>
+        </DockPanel>
+        <Border Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
+            <WrapPanel>
+                <controls:SearchBox Width="260" Margin="0,0,12,0" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" />
+                <CheckBox Margin="0,6,12,0" Content="Low Stock" IsChecked="{Binding LowStockOnly}" />
+                <CheckBox Margin="0,6,12,0" Content="Out of Stock" IsChecked="{Binding OutOfStockOnly}" />
+            </WrapPanel>
+        </Border>
+        <Grid Grid.Row="2">
+            <controls:AppDataGrid ItemsSource="{Binding Items}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Binding="{Binding ImagePath}" Header="Product Image" Width="1.4*" />
+                    <DataGridTextColumn Binding="{Binding Barcode}" Header="Barcode" Width="*" />
+                    <DataGridTextColumn Binding="{Binding ISBN}" Header="ISBN" Width="*" />
+                    <DataGridTextColumn Binding="{Binding Title}" Header="Title" Width="2*" />
+                    <DataGridTextColumn Binding="{Binding CategoryName}" Header="Category" Width="*" />
+                    <DataGridTextColumn Binding="{Binding CurrentQuantity}" Header="Current Quantity" Width="*" />
+                    <DataGridTextColumn Binding="{Binding MinimumStock}" Header="Minimum Stock" Width="*" />
+                    <DataGridTextColumn Binding="{Binding InventoryStatus}" Header="Inventory Status" Width="*" />
+                    <DataGridTextColumn Binding="{Binding LastUpdated, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Header="Last Updated" Width="*" />
+                </DataGrid.Columns>
+            </controls:AppDataGrid>
+            <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading inventory..." />
+        </Grid>
+        <Border Grid.Row="3" Margin="0,12,0,0" Style="{StaticResource PanelBorderStyle}">
+            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
+                <Run Text="Page " /><Run Text="{Binding PageNumber}" />
+                <Run Text=" | Page size " /><Run Text="{Binding PageSize}" />
+                <Run Text=" | Total " /><Run Text="{Binding TotalCount}" />
+            </TextBlock>
+        </Border>
+    </Grid>
+</UserControl>

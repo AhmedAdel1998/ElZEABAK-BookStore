@@ -1,0 +1,103 @@
+<UserControl x:Class="BookStore.UI.Views.Products.ProductListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Products" />
+                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Manage bookstore products and stock-ready metadata." />
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ImportCommand}" Content="Import" Icon="I" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ExportCommand}" Content="Export" Icon="E" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
+                <controls:PrimaryButton Command="{Binding AddCommand}" Content="Add" Icon="+" />
+            </StackPanel>
+        </DockPanel>
+
+        <Border Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
+            <WrapPanel>
+                <controls:SearchBox Width="240" Margin="0,0,8,8" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" />
+                <ComboBox Width="180" Margin="0,0,8,8" DisplayMemberPath="Name" SelectedValuePath="Id" ItemsSource="{Binding Categories}" SelectedValue="{Binding SelectedCategoryId}" />
+                <ComboBox Width="130" Margin="0,0,8,8" SelectedValue="{Binding StatusFilter}" SelectedValuePath="Tag">
+                    <ComboBoxItem Content="All Status" Tag="" />
+                    <ComboBoxItem Content="Active" Tag="Active" />
+                    <ComboBoxItem Content="Inactive" Tag="Inactive" />
+                </ComboBox>
+                <CheckBox Margin="0,6,12,8" Content="Low Stock" IsChecked="{Binding LowStockOnly}" />
+                <controls:CurrencyTextBox Width="110" Margin="0,0,8,8" Placeholder="Min price" Text="{Binding MinPrice, UpdateSourceTrigger=PropertyChanged}" />
+                <controls:CurrencyTextBox Width="110" Margin="0,0,8,8" Placeholder="Max price" Text="{Binding MaxPrice, UpdateSourceTrigger=PropertyChanged}" />
+                <controls:NumericTextBox Width="110" Margin="0,0,8,8" Placeholder="Min qty" Text="{Binding MinQuantity, UpdateSourceTrigger=PropertyChanged}" />
+                <controls:NumericTextBox Width="110" Margin="0,0,8,8" Placeholder="Max qty" Text="{Binding MaxQuantity, UpdateSourceTrigger=PropertyChanged}" />
+            </WrapPanel>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <controls:AppDataGrid x:Name="ProductGrid"
+                                  ItemsSource="{Binding Products}"
+                                  SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                                  IsLoading="{Binding IsBusy}">
+                <controls:AppDataGrid.InputBindings>
+                    <MouseBinding Gesture="LeftDoubleClick" Command="{Binding EditCommand}" />
+                </controls:AppDataGrid.InputBindings>
+                <controls:AppDataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="View Details" Command="{Binding PlacementTarget.DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <MenuItem Header="Edit" Command="{Binding PlacementTarget.DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <MenuItem Header="Duplicate" Command="{Binding PlacementTarget.DataContext.DuplicateCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <Separator />
+                        <MenuItem Header="Activate" Command="{Binding PlacementTarget.DataContext.ActivateCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <MenuItem Header="Deactivate" Command="{Binding PlacementTarget.DataContext.DeactivateCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <Separator />
+                        <MenuItem Header="Delete" Command="{Binding PlacementTarget.DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                    </ContextMenu>
+                </controls:AppDataGrid.ContextMenu>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Binding="{Binding ImagePath}" Header="Cover Image" Width="1.4*" />
+                    <DataGridTextColumn Binding="{Binding Barcode}" Header="Barcode" Width="*" />
+                    <DataGridTextColumn Binding="{Binding ISBN}" Header="ISBN" Width="*" />
+                    <DataGridTextColumn Binding="{Binding Title}" Header="Title" Width="2*" />
+                    <DataGridTextColumn Binding="{Binding Author}" Header="Author" Width="*" />
+                    <DataGridTextColumn Binding="{Binding Publisher}" Header="Publisher" Width="*" />
+                    <DataGridTextColumn Binding="{Binding CategoryName}" Header="Category" Width="*" />
+                    <DataGridTextColumn Binding="{Binding SellingPrice, StringFormat={}{0:C}}" Header="Selling Price" Width="*" />
+                    <DataGridTextColumn Binding="{Binding PurchasePrice, StringFormat={}{0:C}}" Header="Purchase Price" Width="*" />
+                    <DataGridTextColumn Binding="{Binding Quantity}" Header="Current Quantity" Width="*" />
+                    <DataGridTextColumn Binding="{Binding MinimumStock}" Header="Minimum Stock" Width="*" />
+                    <DataGridTextColumn Binding="{Binding Status}" Header="Status" Width="*" />
+                </DataGrid.Columns>
+            </controls:AppDataGrid>
+
+            <controls:NoDataView Title="No Products" Message="{Binding EmptyMessage}">
+                <controls:NoDataView.Style>
+                    <Style TargetType="{x:Type controls:NoDataView}" BasedOn="{StaticResource {x:Type controls:NoDataView}}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ElementName=ProductGrid, Path=HasItems}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </controls:NoDataView.Style>
+            </controls:NoDataView>
+            <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading products..." />
+        </Grid>
+
+        <Border Grid.Row="3" Margin="0,12,0,0" Style="{StaticResource PanelBorderStyle}">
+            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
+                <Run Text="Page " /><Run Text="{Binding PageNumber}" />
+                <Run Text=" | Page size " /><Run Text="{Binding PageSize}" />
+                <Run Text=" | Total " /><Run Text="{Binding TotalCount}" />
+                <Run Text=" | Pagination prepared" />
+            </TextBlock>
+        </Border>
+    </Grid>
+</UserControl>

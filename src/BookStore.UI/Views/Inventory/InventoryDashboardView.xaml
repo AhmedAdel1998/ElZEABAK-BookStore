@@ -1,0 +1,28 @@
+<UserControl x:Class="BookStore.UI.Views.Inventory.InventoryDashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <DockPanel Margin="0,0,0,14">
+            <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Inventory Dashboard" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ViewHistoryCommand}" Content="Ledger" Icon="L" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ViewInventoryCommand}" Content="Inventory" Icon="I" />
+                <controls:PrimaryButton Command="{Binding AdjustStockCommand}" Content="Adjust" Icon="A" />
+            </StackPanel>
+        </DockPanel>
+        <UniformGrid Grid.Row="1" Columns="3">
+            <controls:AppCard Margin="0,0,12,12" Title="Total Products" Value="{Binding Dashboard.TotalProducts}" Icon="P" />
+            <controls:AppCard Margin="0,0,12,12" Title="Total Stock" Value="{Binding Dashboard.TotalStock}" Icon="S" />
+            <controls:AppCard Margin="0,0,12,12" Title="Low Stock" Value="{Binding Dashboard.LowStockCount}" Icon="!" />
+            <controls:AppCard Margin="0,0,12,12" Title="Out of Stock" Value="{Binding Dashboard.OutOfStockCount}" Icon="0" />
+            <controls:AppCard Margin="0,0,12,12" Title="Purchase Value" Value="{Binding Dashboard.TotalPurchaseValue, StringFormat={}{0:C}}" Icon="$" />
+            <controls:AppCard Margin="0,0,12,12" Title="Selling Value" Value="{Binding Dashboard.TotalSellingValue, StringFormat={}{0:C}}" Icon="$" />
+        </UniformGrid>
+        <controls:LoadingOverlay Grid.RowSpan="2" IsBusy="{Binding IsBusy}" Message="Loading inventory dashboard..." />
+    </Grid>
+</UserControl>

@@ -1,0 +1,13 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <!-- Text glyph keys keep the first framework pass dependency-free. IconRegistry can swap these later. -->
+    <sys:String x:Key="IconSearch">Q</sys:String>
+    <sys:String x:Key="IconInfo">i</sys:String>
+    <sys:String x:Key="IconWarning">!</sys:String>
+    <sys:String x:Key="IconError">x</sys:String>
+    <sys:String x:Key="IconSuccess">+</sys:String>
+    <sys:String x:Key="IconQuestion">?</sys:String>
+    <sys:String x:Key="IconSettings">G</sys:String>
+    <sys:String x:Key="IconLogout">L</sys:String>
+</ResourceDictionary>

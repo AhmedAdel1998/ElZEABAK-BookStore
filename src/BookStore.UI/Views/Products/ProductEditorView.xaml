@@ -1,0 +1,110 @@
+<UserControl x:Class="BookStore.UI.Views.Products.ProductEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <UserControl.InputBindings>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
+    </UserControl.InputBindings>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid>
+            <controls:AppCard Title="{Binding Title}" Subtitle="General, book, pricing, stock, category, media, and status metadata." Icon="P">
+                <StackPanel>
+                    <UniformGrid Columns="2">
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Barcode" />
+                            <controls:BarcodeTextBox Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="ISBN" />
+                            <controls:ISBNTextBox Text="{Binding Isbn, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Title" />
+                            <controls:TextInputBox Text="{Binding TitleText, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Subtitle" />
+                            <controls:TextInputBox Text="{Binding Subtitle, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Author" />
+                            <controls:TextInputBox Text="{Binding Author, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Publisher" />
+                            <controls:TextInputBox Text="{Binding Publisher, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Language" />
+                            <controls:TextInputBox Text="{Binding Language, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Edition" />
+                            <controls:TextInputBox Text="{Binding Edition, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Publish Date" />
+                            <DatePicker SelectedDate="{Binding PublishDate}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Category" />
+                            <ComboBox DisplayMemberPath="Name" SelectedValuePath="Id" ItemsSource="{Binding Categories}" SelectedValue="{Binding CategoryId}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Purchase Price" />
+                            <controls:CurrencyTextBox Text="{Binding PurchasePrice, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Selling Price" />
+                            <controls:CurrencyTextBox Text="{Binding SellingPrice, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Tax Category" />
+                            <controls:TextInputBox Text="{Binding TaxCategory, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Quantity" />
+                            <controls:NumericTextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Minimum Stock" />
+                            <controls:NumericTextBox Text="{Binding MinimumStock, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel Margin="0,0,12,12">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Shelf Location" />
+                            <controls:TextInputBox Text="{Binding ShelfLocation, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </UniformGrid>
+
+                    <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Description" />
+                    <controls:TextInputBox Height="90" AcceptsReturn="True" Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <DockPanel Margin="0,16,0,0">
+                        <StackPanel DockPanel.Dock="Left">
+                            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Cover Image" />
+                            <TextBlock Width="520" Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding ImagePath}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding SelectImageCommand}" Content="Select" Icon="I" />
+                            <controls:SecondaryButton Command="{Binding RemoveImageCommand}" Content="Remove" Icon="X" />
+                        </StackPanel>
+                    </DockPanel>
+
+                    <CheckBox Margin="0,16,0,0" Content="Active" IsChecked="{Binding IsActive}" />
+                    <TextBlock Margin="0,12,0,0" Foreground="{DynamicResource DangerBrush}" Text="{Binding ValidationMessage}" TextWrapping="Wrap" />
+
+                    <StackPanel Margin="0,18,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
+                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding GenerateBarcodeCommand}" Content="Generate Barcode" Icon="B" />
+                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding DuplicateCommand}" Content="Duplicate" Icon="D" />
+                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ResetCommand}" Content="Reset" Icon="R" />
+                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="Cancel" Icon="X" />
+                        <controls:PrimaryButton Command="{Binding SaveCommand}" Content="Save" Icon="S" IsLoading="{Binding IsBusy}" />
+                    </StackPanel>
+                </StackPanel>
+            </controls:AppCard>
+            <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Saving product..." />
+        </Grid>
+    </ScrollViewer>
+</UserControl>

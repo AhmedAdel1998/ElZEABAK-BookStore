@@ -1,0 +1,33 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <!-- Card template for metrics, statistics, quick actions, and information panels. -->
+    <Style TargetType="{x:Type controls:AppCard}">
+        <Setter Property="Margin" Value="0,0,0,12" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:AppCard}">
+                    <Border Padding="16"
+                            Background="{DynamicResource SurfaceBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource CornerRadiusLarge}"
+                            Effect="{DynamicResource CardShadow}">
+                        <StackPanel>
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Left" Margin="0,0,10,0" FontSize="18" Foreground="{DynamicResource AccentBrush}" Text="{TemplateBinding Icon}" />
+                                <StackPanel>
+                                    <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{TemplateBinding Title}" />
+                                    <TextBlock FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Text="{TemplateBinding Subtitle}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <TextBlock Margin="0,12,0,0" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{TemplateBinding Value}" />
+                            <ContentPresenter Margin="0,12,0,0" />
+                            <ContentPresenter Margin="0,12,0,0" Content="{TemplateBinding Footer}" />
+                        </StackPanel>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

@@ -1,0 +1,43 @@
+<UserControl x:Class="BookStore.UI.Views.Categories.CategoryDetailsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <Grid>
+        <controls:AppCard Width="620"
+                          HorizontalAlignment="Left"
+                          Title="Category Details"
+                          Subtitle="{Binding Message}"
+                          Icon="C">
+            <StackPanel DataContext="{Binding Category}">
+                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="{Binding Name}" />
+                <TextBlock Margin="0,8,0,0" Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding Description}" TextWrapping="Wrap" />
+                <Separator Margin="0,16" />
+                <UniformGrid Columns="2">
+                    <StackPanel Margin="0,0,12,12">
+                        <TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Status" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Status}" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,12">
+                        <TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Product Count" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding ProductCount}" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,12">
+                        <TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Created" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,12,12">
+                        <TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Updated" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding UpdatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" />
+                    </StackPanel>
+                </UniformGrid>
+            </StackPanel>
+        </controls:AppCard>
+
+        <StackPanel Width="620" Margin="0,260,0,0" HorizontalAlignment="Left" Orientation="Horizontal">
+            <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding BackCommand}" Content="Back" Icon="B" />
+            <controls:PrimaryButton Command="{Binding EditCommand}" Content="Edit" Icon="E" />
+        </StackPanel>
+
+        <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading category..." />
+    </Grid>
+</UserControl>

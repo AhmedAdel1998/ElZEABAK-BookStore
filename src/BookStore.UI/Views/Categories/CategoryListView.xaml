@@ -1,0 +1,84 @@
+<UserControl x:Class="BookStore.UI.Views.Categories.CategoryListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,14">
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Categories" />
+                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Manage product category classification." />
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <controls:SearchBox Width="260" Margin="0,0,8,0" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
+                <controls:PrimaryButton Command="{Binding AddCommand}" Content="Add" Icon="+" />
+            </StackPanel>
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <controls:AppDataGrid x:Name="CategoryGrid"
+                                  ItemsSource="{Binding Categories}"
+                                  SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
+                                  IsLoading="{Binding IsBusy}"
+                                  EmptyMessage="{Binding EmptyMessage}">
+                <controls:AppDataGrid.InputBindings>
+                    <MouseBinding Gesture="LeftDoubleClick" Command="{Binding EditCommand}" />
+                </controls:AppDataGrid.InputBindings>
+                <controls:AppDataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="View Details" Command="{Binding PlacementTarget.DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <MenuItem Header="Edit" Command="{Binding PlacementTarget.DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <Separator />
+                        <MenuItem Header="Activate" Command="{Binding PlacementTarget.DataContext.ActivateCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <MenuItem Header="Deactivate" Command="{Binding PlacementTarget.DataContext.DeactivateCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <Separator />
+                        <MenuItem Header="Delete" Command="{Binding PlacementTarget.DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                    </ContextMenu>
+                </controls:AppDataGrid.ContextMenu>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Binding="{Binding Name}" Header="Name" Width="2*" />
+                    <DataGridTextColumn Binding="{Binding Description}" Header="Description" Width="3*" />
+                    <DataGridTextColumn Binding="{Binding Status}" Header="Status" Width="*" />
+                    <DataGridTextColumn Binding="{Binding ProductCount}" Header="Product Count" Width="*" />
+                    <DataGridTextColumn Binding="{Binding CreatedAt, StringFormat={}{0:yyyy-MM-dd}}" Header="Created Date" Width="*" />
+                </DataGrid.Columns>
+            </controls:AppDataGrid>
+
+            <controls:NoDataView Title="No Categories"
+                                 Message="{Binding EmptyMessage}">
+                <controls:NoDataView.Style>
+                    <Style TargetType="{x:Type controls:NoDataView}" BasedOn="{StaticResource {x:Type controls:NoDataView}}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ElementName=CategoryGrid, Path=HasItems}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </controls:NoDataView.Style>
+            </controls:NoDataView>
+
+            <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading categories..." />
+        </Grid>
+
+        <Border Grid.Row="2" Margin="0,12,0,0" Style="{StaticResource PanelBorderStyle}">
+            <DockPanel>
+                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
+                    <Run Text="Page " />
+                    <Run Text="{Binding PageNumber}" />
+                    <Run Text=" | Page size " />
+                    <Run Text="{Binding PageSize}" />
+                    <Run Text=" | Total " />
+                    <Run Text="{Binding TotalCount}" />
+                </TextBlock>
+                <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource MutedTextBrush}" Text="Pagination controls prepared for future enhancement." />
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,30 @@
+<Window x:Class="BookStore.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:loginViews="clr-namespace:BookStore.UI.Views.Login"
+        xmlns:views="clr-namespace:BookStore.UI.Views.Authentication"
+        xmlns:viewModels="clr-namespace:BookStore.UI.ViewModels"
+        mc:Ignorable="d"
+        Title="BookStore POS"
+        Height="720"
+        MinHeight="600"
+        MinWidth="960"
+        Width="1180"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type viewModels:LoginViewModel}">
+            <loginViews:LoginView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:AuthenticatedHomeViewModel}">
+            <views:AuthenticatedHomeView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:ChangePasswordViewModel}">
+            <views:ChangePasswordView />
+        </DataTemplate>
+    </Window.Resources>
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
+        <ContentControl Content="{Binding NavigationService.CurrentViewModel}" />
+    </Grid>
+</Window>

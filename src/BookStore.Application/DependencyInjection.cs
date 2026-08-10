@@ -1,0 +1,88 @@
+using Microsoft.Extensions.DependencyInjection;
+using FluentValidation;
+using BookStore.Application.Features.Categories.Handlers;
+using BookStore.Application.Features.Customers.Handlers;
+using BookStore.Application.Features.Products.Handlers;
+using InventoryHandlers = BookStore.Application.Features.Inventory.Handlers;
+using BarcodeHandlers = BookStore.Application.Features.Barcode.Handlers;
+using SalesHandlers = BookStore.Application.Features.Sales.Handlers;
+using BookStore.Application.Interfaces;
+
+namespace BookStore.Application;
+
+/// <summary>
+/// Registers application-layer services used by commands, queries, validation, and mapping.
+/// </summary>
+public static class DependencyInjection
+{
+    /// <summary>
+    /// Adds application services to the dependency injection container.
+    /// </summary>
+    /// <param name="services">The service collection to configure.</param>
+    /// <returns>The configured service collection.</returns>
+    public static IServiceCollection AddApplication(this IServiceCollection services)
+    {
+        services.AddAutoMapper(_ => { }, typeof(DependencyInjection).Assembly);
+        services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
+        services.AddTransient<CreateCategoryHandler>();
+        services.AddTransient<UpdateCategoryHandler>();
+        services.AddTransient<DeleteCategoryHandler>();
+        services.AddTransient<ActivateCategoryHandler>();
+        services.AddTransient<DeactivateCategoryHandler>();
+        services.AddTransient<GetCategoriesHandler>();
+        services.AddTransient<GetCategoryByIdHandler>();
+        services.AddTransient<SearchCategoriesHandler>();
+        services.AddTransient<CreateCustomerHandler>();
+        services.AddTransient<UpdateCustomerHandler>();
+        services.AddTransient<DeleteCustomerHandler>();
+        services.AddTransient<ActivateCustomerHandler>();
+        services.AddTransient<DeactivateCustomerHandler>();
+        services.AddTransient<GetCustomersHandler>();
+        services.AddTransient<GetCustomerByIdHandler>();
+        services.AddTransient<SearchCustomersHandler>();
+        services.AddTransient<GetCustomerSalesHistoryHandler>();
+        services.AddTransient<CreateProductHandler>();
+        services.AddTransient<UpdateProductHandler>();
+        services.AddTransient<DeleteProductHandler>();
+        services.AddTransient<ActivateProductHandler>();
+        services.AddTransient<DeactivateProductHandler>();
+        services.AddTransient<DuplicateProductHandler>();
+        services.AddTransient<GetProductsHandler>();
+        services.AddTransient<GetProductByIdHandler>();
+        services.AddTransient<SearchProductsHandler>();
+        services.AddTransient<GetLowStockProductsHandler>();
+        services.AddTransient<InventoryHandlers.InventoryMovementService>();
+        services.AddTransient<InventoryHandlers.IncreaseStockHandler>();
+        services.AddTransient<InventoryHandlers.DecreaseStockHandler>();
+        services.AddTransient<InventoryHandlers.AdjustStockHandler>();
+        services.AddTransient<InventoryHandlers.GetInventoryHandler>();
+        services.AddTransient<InventoryHandlers.GetInventoryHistoryHandler>();
+        services.AddTransient<InventoryHandlers.GetLowStockProductsHandler>();
+        services.AddTransient<InventoryHandlers.GetOutOfStockProductsHandler>();
+        services.AddTransient<InventoryHandlers.GetInventoryDashboardHandler>();
+        services.AddTransient<BarcodeHandlers.GenerateBarcodeHandler>();
+        services.AddTransient<BarcodeHandlers.ValidateBarcodeHandler>();
+        services.AddTransient<BarcodeHandlers.PrintBarcodeHandler>();
+        services.AddTransient<BarcodeHandlers.FindProductByBarcodeHandler>();
+        services.AddTransient<BarcodeHandlers.GetBarcodeSettingsHandler>();
+        services.AddScoped<IPricingService, SalesHandlers.PricingService>();
+        services.AddTransient<SalesHandlers.StartSaleHandler>();
+        services.AddTransient<SalesHandlers.AddItemHandler>();
+        services.AddTransient<SalesHandlers.UpdateItemQuantityHandler>();
+        services.AddTransient<SalesHandlers.RemoveItemHandler>();
+        services.AddTransient<SalesHandlers.ApplyLineDiscountHandler>();
+        services.AddTransient<SalesHandlers.ApplyInvoiceDiscountHandler>();
+        services.AddTransient<SalesHandlers.CancelSaleHandler>();
+        services.AddTransient<SalesHandlers.SuspendSaleHandler>();
+        services.AddTransient<SalesHandlers.ResumeSaleHandler>();
+        services.AddTransient<SalesHandlers.CompleteSaleHandler>();
+        services.AddTransient<SalesHandlers.SearchProductHandler>();
+        services.AddTransient<SalesHandlers.GetCurrentSaleHandler>();
+        services.AddTransient<SalesHandlers.GetHeldSalesHandler>();
+        services.AddTransient<SalesHandlers.GetSaleSummaryHandler>();
+        services.AddTransient<SalesHandlers.SelectCustomerForSaleHandler>();
+        services.AddTransient<SalesHandlers.ClearCustomerFromSaleHandler>();
+
+        return services;
+    }
+}

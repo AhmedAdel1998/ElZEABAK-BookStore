@@ -1,0 +1,85 @@
+<UserControl x:Class="BookStore.UI.Views.Customers.CustomerListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Customers" />
+                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Manage customer contact information and sales history." />
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
+                <controls:PrimaryButton Command="{Binding AddCommand}" Content="Add" Icon="+" />
+            </StackPanel>
+        </DockPanel>
+        <Border Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
+            <WrapPanel>
+                <controls:SearchBox Width="260" Margin="0,0,8,8" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" />
+                <ComboBox Width="130" Margin="0,0,8,8" SelectedValue="{Binding StatusFilter}" SelectedValuePath="Tag">
+                    <ComboBoxItem Content="All Status" Tag="" />
+                    <ComboBoxItem Content="Active" Tag="Active" />
+                    <ComboBoxItem Content="Inactive" Tag="Inactive" />
+                </ComboBox>
+            </WrapPanel>
+        </Border>
+        <Grid Grid.Row="2">
+            <controls:AppDataGrid x:Name="CustomerGrid"
+                                  ItemsSource="{Binding Customers}"
+                                  SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}"
+                                  IsLoading="{Binding IsBusy}">
+                <controls:AppDataGrid.InputBindings>
+                    <MouseBinding Gesture="LeftDoubleClick" Command="{Binding ViewDetailsCommand}" />
+                </controls:AppDataGrid.InputBindings>
+                <controls:AppDataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="View Details" Command="{Binding PlacementTarget.DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <MenuItem Header="Edit" Command="{Binding PlacementTarget.DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <Separator />
+                        <MenuItem Header="Activate" Command="{Binding PlacementTarget.DataContext.ActivateCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <MenuItem Header="Deactivate" Command="{Binding PlacementTarget.DataContext.DeactivateCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                        <Separator />
+                        <MenuItem Header="Delete" Command="{Binding PlacementTarget.DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                    </ContextMenu>
+                </controls:AppDataGrid.ContextMenu>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Binding="{Binding FullName}" Header="Customer Name" Width="1.6*" />
+                    <DataGridTextColumn Binding="{Binding Phone}" Header="Phone" Width="*" />
+                    <DataGridTextColumn Binding="{Binding Email}" Header="Email" Width="1.2*" />
+                    <DataGridTextColumn Binding="{Binding Address}" Header="Address" Width="1.4*" />
+                    <DataGridTextColumn Binding="{Binding SalesCount}" Header="Sales" Width="80" />
+                    <DataGridTextColumn Binding="{Binding TotalPurchases, StringFormat=N2}" Header="Total Purchases" Width="*" />
+                    <DataGridTextColumn Binding="{Binding LastPurchaseDate}" Header="Last Purchase" Width="*" />
+                    <DataGridTextColumn Binding="{Binding Status}" Header="Status" Width="90" />
+                    <DataGridTextColumn Binding="{Binding CreatedAt}" Header="Created" Width="*" />
+                </DataGrid.Columns>
+            </controls:AppDataGrid>
+            <controls:NoDataView Title="No Customers" Message="{Binding EmptyMessage}">
+                <controls:NoDataView.Style>
+                    <Style TargetType="{x:Type controls:NoDataView}" BasedOn="{StaticResource {x:Type controls:NoDataView}}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ElementName=CustomerGrid, Path=HasItems}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </controls:NoDataView.Style>
+            </controls:NoDataView>
+            <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading customers..." />
+        </Grid>
+        <Border Grid.Row="3" Margin="0,12,0,0" Style="{StaticResource PanelBorderStyle}">
+            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
+                <Run Text="Page " /><Run Text="{Binding PageNumber}" />
+                <Run Text=" | Page size " /><Run Text="{Binding PageSize}" />
+                <Run Text=" | Total " /><Run Text="{Binding TotalCount}" />
+            </TextBlock>
+        </Border>
+    </Grid>
+</UserControl>
