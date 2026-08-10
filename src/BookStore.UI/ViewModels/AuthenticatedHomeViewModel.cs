@@ -237,7 +237,7 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
         AddMenuItem("Barcode", "BC", PermissionConstants.BarcodeView, NavigateBarcodeCommand, "Barcode");
         AddMenuItem("Sales (POS)", "S", PermissionConstants.SalesCreate, NavigateSalesCommand, "Sales > POS");
         AddMenuItem("Customers", "CU", PermissionConstants.CustomerView, new AsyncRelayCommand(() => NavigateAsync<CustomerListViewModel>("Customers")), "Customers");
-        AddMenuItem("Suppliers", "SU", PermissionConstants.SupplierView, new AsyncRelayCommand(() => NavigateAsync<SuppliersViewModel>("Suppliers")), "Suppliers");
+        AddMenuItem("Suppliers", "SU", PermissionConstants.SupplierView, new AsyncRelayCommand(() => NavigateAsync<SupplierListViewModel>("Suppliers")), "Suppliers");
         AddMenuItem("Reports", "R", PermissionConstants.ReportsView, NavigateReportsCommand, "Reports");
         AddMenuItem("Settings", "ST", PermissionConstants.SettingsView, new AsyncRelayCommand(() => NavigateAsync<SettingsViewModel>("Settings")), "Settings");
         AddMenuItem("Users", "U", PermissionConstants.UsersManage, new AsyncRelayCommand(() => NavigateAsync<UsersViewModel>("Settings > Users")), "Settings > Users");

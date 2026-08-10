@@ -181,6 +181,26 @@ public static class PermissionConstants
     public const string SupplierView = "Supplier.View";
 
     /// <summary>
+    /// Supplier create permission.
+    /// </summary>
+    public const string SupplierCreate = "Supplier.Create";
+
+    /// <summary>
+    /// Supplier edit permission.
+    /// </summary>
+    public const string SupplierEdit = "Supplier.Edit";
+
+    /// <summary>
+    /// Supplier delete permission.
+    /// </summary>
+    public const string SupplierDelete = "Supplier.Delete";
+
+    /// <summary>
+    /// Supplier product overview permission.
+    /// </summary>
+    public const string SupplierViewProducts = "Supplier.ViewProducts";
+
+    /// <summary>
     /// Reports view permission.
     /// </summary>
     public const string ReportsView = "Reports.View";

@@ -7,6 +7,7 @@
              xmlns:inventoryViews="clr-namespace:BookStore.UI.Views.Inventory"
              xmlns:barcodeViews="clr-namespace:BookStore.UI.Views.Barcode"
              xmlns:customerViews="clr-namespace:BookStore.UI.Views.Customers"
+             xmlns:supplierViews="clr-namespace:BookStore.UI.Views.Suppliers"
              xmlns:salesViews="clr-namespace:BookStore.UI.Views.Sales"
              xmlns:views="clr-namespace:BookStore.UI.Views.Shell"
              xmlns:viewModels="clr-namespace:BookStore.UI.ViewModels">
@@ -85,6 +86,15 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:SuppliersViewModel}">
             <views:ModulePlaceholderView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:SupplierListViewModel}">
+            <supplierViews:SupplierListView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:SupplierEditorViewModel}">
+            <supplierViews:SupplierEditorView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:SupplierDetailsViewModel}">
+            <supplierViews:SupplierDetailsView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:ReportsViewModel}">
             <views:ModulePlaceholderView />

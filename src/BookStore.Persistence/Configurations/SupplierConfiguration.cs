@@ -14,12 +14,17 @@ public class SupplierConfiguration : EntityConfigurationBase<Supplier>
     {
         builder.ToTable("Suppliers");
         builder.Property(supplier => supplier.CompanyName).IsRequired().HasMaxLength(200);
-        builder.Property(supplier => supplier.ContactName).HasMaxLength(200);
+        builder.Property(supplier => supplier.ContactName).HasMaxLength(150);
         builder.Property(supplier => supplier.Phone).HasConversion(ValueObjectConverters.PhoneConverter).HasMaxLength(20);
         builder.Property(supplier => supplier.Email).HasConversion(ValueObjectConverters.EmailConverter).HasMaxLength(254);
-        builder.Property(supplier => supplier.Notes).HasMaxLength(1000);
+        builder.Property(supplier => supplier.Notes).HasMaxLength(2000);
         builder.Property(supplier => supplier.IsActive).IsRequired();
         builder.HasIndex(supplier => supplier.CompanyName);
+        builder.HasIndex(supplier => supplier.ContactName);
+        builder.HasIndex(supplier => supplier.Phone);
+        builder.HasIndex(supplier => supplier.Email);
+        builder.HasIndex(supplier => supplier.IsActive);
+        builder.HasIndex(supplier => supplier.IsDeleted);
         builder.OwnsOne(supplier => supplier.Address, address =>
         {
             address.Property(value => value.Line1).HasMaxLength(250).HasColumnName("AddressLine1");

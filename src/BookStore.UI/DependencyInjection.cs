@@ -2,6 +2,7 @@ using BookStore.Application.Interfaces;
 using BookStore.Application.Features.Categories.Handlers;
 using BookStore.Application.Features.Customers.Handlers;
 using BookStore.Application.Features.Products.Handlers;
+using BookStore.Application.Features.Suppliers.Handlers;
 using BarcodeHandlers = BookStore.Application.Features.Barcode.Handlers;
 using SalesHandlers = BookStore.Application.Features.Sales.Handlers;
 using BookStore.UI.Dialogs;
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddSingleton<ICategoryNavigationState, CategoryNavigationState>();
         services.AddSingleton<IProductNavigationState, ProductNavigationState>();
         services.AddSingleton<ICustomerNavigationState, CustomerNavigationState>();
+        services.AddSingleton<ISupplierNavigationState, SupplierNavigationState>();
         services.AddSingleton<DialogService>();
         services.AddSingleton<IDialogService>(provider => provider.GetRequiredService<DialogService>());
         services.AddSingleton<IMessageDialogService>(provider => provider.GetRequiredService<DialogService>());
@@ -66,6 +68,15 @@ public static class DependencyInjection
         services.AddTransient<GetCustomerByIdHandler>();
         services.AddTransient<SearchCustomersHandler>();
         services.AddTransient<GetCustomerSalesHistoryHandler>();
+        services.AddTransient<CreateSupplierHandler>();
+        services.AddTransient<UpdateSupplierHandler>();
+        services.AddTransient<DeleteSupplierHandler>();
+        services.AddTransient<ActivateSupplierHandler>();
+        services.AddTransient<DeactivateSupplierHandler>();
+        services.AddTransient<GetSuppliersHandler>();
+        services.AddTransient<GetSupplierByIdHandler>();
+        services.AddTransient<SearchSuppliersHandler>();
+        services.AddTransient<GetSupplierProductsHandler>();
         services.AddTransient<CreateProductHandler>();
         services.AddTransient<UpdateProductHandler>();
         services.AddTransient<DeleteProductHandler>();
@@ -118,6 +129,9 @@ public static class DependencyInjection
         services.AddTransient<CustomerEditorViewModel>();
         services.AddTransient<CustomerDetailsViewModel>();
         services.AddTransient<CustomerSelectionViewModel>();
+        services.AddTransient<SupplierListViewModel>();
+        services.AddTransient<SupplierEditorViewModel>();
+        services.AddTransient<SupplierDetailsViewModel>();
         services.AddTransient<SalesViewModel>();
         services.AddTransient<CustomersViewModel>();
         services.AddTransient<SuppliersViewModel>();
@@ -154,6 +168,9 @@ public static class DependencyInjection
                 [typeof(CustomerEditorViewModel)] = () => provider.GetRequiredService<CustomerEditorViewModel>(),
                 [typeof(CustomerDetailsViewModel)] = () => provider.GetRequiredService<CustomerDetailsViewModel>(),
                 [typeof(CustomerSelectionViewModel)] = () => provider.GetRequiredService<CustomerSelectionViewModel>(),
+                [typeof(SupplierListViewModel)] = () => provider.GetRequiredService<SupplierListViewModel>(),
+                [typeof(SupplierEditorViewModel)] = () => provider.GetRequiredService<SupplierEditorViewModel>(),
+                [typeof(SupplierDetailsViewModel)] = () => provider.GetRequiredService<SupplierDetailsViewModel>(),
                 [typeof(SalesViewModel)] = () => provider.GetRequiredService<SalesViewModel>(),
                 [typeof(CustomersViewModel)] = () => provider.GetRequiredService<CustomersViewModel>(),
                 [typeof(SuppliersViewModel)] = () => provider.GetRequiredService<SuppliersViewModel>(),
