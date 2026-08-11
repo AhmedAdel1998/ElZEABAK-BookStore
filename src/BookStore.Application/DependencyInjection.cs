@@ -3,9 +3,11 @@ using FluentValidation;
 using BookStore.Application.Features.Categories.Handlers;
 using BookStore.Application.Features.Customers.Handlers;
 using BookStore.Application.Features.Products.Handlers;
+using BookStore.Application.Features.Suppliers.Handlers;
 using InventoryHandlers = BookStore.Application.Features.Inventory.Handlers;
 using BarcodeHandlers = BookStore.Application.Features.Barcode.Handlers;
 using SalesHandlers = BookStore.Application.Features.Sales.Handlers;
+using ReportHandlers = BookStore.Application.Features.Reports.Handlers;
 using BookStore.Application.Interfaces;
 
 namespace BookStore.Application;
@@ -41,6 +43,15 @@ public static class DependencyInjection
         services.AddTransient<GetCustomerByIdHandler>();
         services.AddTransient<SearchCustomersHandler>();
         services.AddTransient<GetCustomerSalesHistoryHandler>();
+        services.AddTransient<CreateSupplierHandler>();
+        services.AddTransient<UpdateSupplierHandler>();
+        services.AddTransient<DeleteSupplierHandler>();
+        services.AddTransient<ActivateSupplierHandler>();
+        services.AddTransient<DeactivateSupplierHandler>();
+        services.AddTransient<GetSuppliersHandler>();
+        services.AddTransient<GetSupplierByIdHandler>();
+        services.AddTransient<SearchSuppliersHandler>();
+        services.AddTransient<GetSupplierProductsHandler>();
         services.AddTransient<CreateProductHandler>();
         services.AddTransient<UpdateProductHandler>();
         services.AddTransient<DeleteProductHandler>();
@@ -82,6 +93,21 @@ public static class DependencyInjection
         services.AddTransient<SalesHandlers.GetSaleSummaryHandler>();
         services.AddTransient<SalesHandlers.SelectCustomerForSaleHandler>();
         services.AddTransient<SalesHandlers.ClearCustomerFromSaleHandler>();
+        services.AddTransient<ReportHandlers.GetReportsDashboardHandler>();
+        services.AddTransient<ReportHandlers.GetSalesSummaryHandler>();
+        services.AddTransient<ReportHandlers.GetSalesDetailsHandler>();
+        services.AddTransient<ReportHandlers.GetProfitReportHandler>();
+        services.AddTransient<ReportHandlers.GetBestSellingProductsHandler>();
+        services.AddTransient<ReportHandlers.GetProductSalesHandler>();
+        services.AddTransient<ReportHandlers.GetCategorySalesHandler>();
+        services.AddTransient<ReportHandlers.GetInventoryReportHandler>();
+        services.AddTransient<ReportHandlers.GetInventoryMovementsHandler>();
+        services.AddTransient<ReportHandlers.GetLowStockHandler>();
+        services.AddTransient<ReportHandlers.GetCustomerReportHandler>();
+        services.AddTransient<ReportHandlers.GetCashierPerformanceHandler>();
+        services.AddTransient<ReportHandlers.GetPaymentMethodsHandler>();
+        services.AddTransient<ReportHandlers.GetDailySalesHandler>();
+        services.AddTransient<ReportHandlers.GetHourlySalesHandler>();
 
         return services;
     }

@@ -46,6 +46,11 @@ public class BookStoreDbContext : DbContext
     public DbSet<Supplier> Suppliers => Set<Supplier>();
 
     /// <summary>
+    /// Gets the product-supplier associations set.
+    /// </summary>
+    public DbSet<ProductSupplier> ProductSuppliers => Set<ProductSupplier>();
+
+    /// <summary>
     /// Gets the users set.
     /// </summary>
     public DbSet<User> Users => Set<User>();

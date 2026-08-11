@@ -34,5 +34,7 @@ public class ProductConfiguration : EntityConfigurationBase<Product>
         builder.HasIndex(product => product.Barcode).IsUnique();
         builder.HasIndex(product => product.ISBN);
         builder.HasIndex(product => product.Title);
+        builder.HasIndex(product => new { product.CategoryId, product.IsActive });
+        builder.HasIndex(product => new { product.Quantity, product.MinimumStock });
     }
 }

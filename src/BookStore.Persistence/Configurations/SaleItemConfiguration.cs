@@ -21,5 +21,7 @@ public class SaleItemConfiguration : EntityConfigurationBase<SaleItem>
             .WithMany()
             .HasForeignKey(item => item.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex("SaleId");
+        builder.HasIndex(item => item.ProductId);
     }
 }

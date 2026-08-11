@@ -21,9 +21,13 @@ public class InventoryTransactionConfiguration : EntityConfigurationBase<Invento
         builder.Property(transaction => transaction.Reference).HasMaxLength(100);
         builder.Property(transaction => transaction.UserName).HasMaxLength(150);
         builder.Property(transaction => transaction.Notes).HasMaxLength(1000);
-        builder.Property(transaction => transaction.Date).IsRequired();
+        builder.Property(transaction => transaction.Date)
+            .HasConversion(value => value.UtcTicks, value => new DateTimeOffset(value, TimeSpan.Zero))
+            .IsRequired();
         builder.HasIndex(transaction => transaction.ProductId);
         builder.HasIndex(transaction => transaction.Date);
+        builder.HasIndex(transaction => new { transaction.Date, transaction.TransactionType });
+        builder.HasIndex(transaction => new { transaction.UserId, transaction.Date });
         builder.HasOne<Product>()
             .WithMany()
             .HasForeignKey(transaction => transaction.ProductId)

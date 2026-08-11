@@ -14,7 +14,9 @@ public class SaleConfiguration : EntityConfigurationBase<Sale>
     {
         builder.ToTable("Sales");
         builder.Property(sale => sale.InvoiceNumber).IsRequired().HasMaxLength(50);
-        builder.Property(sale => sale.SaleDate).IsRequired();
+        builder.Property(sale => sale.SaleDate)
+            .HasConversion(value => value.UtcTicks, value => new DateTimeOffset(value, TimeSpan.Zero))
+            .IsRequired();
         builder.Property(sale => sale.PaymentMethod).IsRequired().HasConversion<string>().HasMaxLength(30);
         builder.Property(sale => sale.Discount).HasPrecision(18, 2).IsRequired();
         builder.Property(sale => sale.Tax).HasPrecision(18, 2).IsRequired();
@@ -23,6 +25,11 @@ public class SaleConfiguration : EntityConfigurationBase<Sale>
         builder.Property(sale => sale.ChangeAmount).HasPrecision(18, 2).IsRequired();
         builder.Property(sale => sale.Status).IsRequired().HasConversion<string>().HasMaxLength(30);
         builder.HasIndex(sale => sale.InvoiceNumber).IsUnique();
+        builder.HasIndex(sale => sale.SaleDate);
+        builder.HasIndex(sale => new { sale.SaleDate, sale.Status });
+        builder.HasIndex(sale => new { sale.UserId, sale.SaleDate });
+        builder.HasIndex(sale => new { sale.PaymentMethod, sale.SaleDate });
+        builder.HasIndex(sale => new { sale.CustomerId, sale.SaleDate });
         builder.Navigation(sale => sale.SaleItems).UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.HasMany(sale => sale.SaleItems)
             .WithOne()

@@ -43,11 +43,6 @@ public class DatabaseSeeder
 
     private async Task SeedRolesAndPermissionsAsync(CancellationToken cancellationToken)
     {
-        if (await _dbContext.Roles.AnyAsync(cancellationToken))
-        {
-            return;
-        }
-
         var permissions = new[]
         {
             new Permission(PermissionConstants.ProductView, "View products"),
@@ -64,7 +59,18 @@ public class DatabaseSeeder
             new Permission(PermissionConstants.InventoryEdit, "Edit inventory"),
             new Permission(PermissionConstants.CustomerView, "View customers"),
             new Permission(PermissionConstants.SupplierView, "View suppliers"),
+            new Permission(PermissionConstants.SupplierCreate, "Create suppliers"),
+            new Permission(PermissionConstants.SupplierEdit, "Edit suppliers"),
+            new Permission(PermissionConstants.SupplierDelete, "Delete suppliers"),
+            new Permission(PermissionConstants.SupplierViewProducts, "View supplier products"),
             new Permission(PermissionConstants.ReportsView, "View reports"),
+            new Permission(PermissionConstants.ReportView, "Open reports dashboard"),
+            new Permission(PermissionConstants.ReportSales, "View sales reports"),
+            new Permission(PermissionConstants.ReportProfit, "View profit reports"),
+            new Permission(PermissionConstants.ReportInventory, "View inventory reports"),
+            new Permission(PermissionConstants.ReportCustomers, "View customer reports"),
+            new Permission(PermissionConstants.ReportCashiers, "View cashier performance reports"),
+            new Permission(PermissionConstants.ReportExport, "Export reports"),
             new Permission(PermissionConstants.SettingsView, "View settings"),
             new Permission(PermissionConstants.UsersManage, "Manage users"),
             new Permission(PermissionConstants.RolesManage, "Manage roles"),
@@ -72,25 +78,65 @@ public class DatabaseSeeder
             new Permission(PermissionConstants.RestoreDatabase, "Restore database")
         };
 
+        var existingPermissionNames = await _dbContext.Permissions.Select(permission => permission.Name).ToListAsync(cancellationToken);
+        var missingPermissions = permissions
+            .Where(permission => !existingPermissionNames.Contains(permission.Name, StringComparer.OrdinalIgnoreCase))
+            .ToArray();
+        if (missingPermissions.Length > 0)
+        {
+            await _dbContext.Permissions.AddRangeAsync(missingPermissions, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        var storedPermissions = await _dbContext.Permissions.ToListAsync(cancellationToken);
+
+        if (await _dbContext.Roles.AnyAsync(cancellationToken))
+        {
+            await EnsureRolePermissionsAsync(storedPermissions, cancellationToken);
+            return;
+        }
+
         var administrator = new Role("Administrator", "Full system access");
         var manager = new Role("Manager", "Store management access");
         var cashier = new Role("Cashier", "Point-of-sale access");
 
-        foreach (var permission in permissions)
+        foreach (var permission in storedPermissions)
         {
             administrator.AddPermission(permission);
         }
 
-        foreach (var permission in permissions.Where(permission => permission.Name is not PermissionConstants.UsersManage and not PermissionConstants.RolesManage and not PermissionConstants.RestoreDatabase))
+        foreach (var permission in storedPermissions.Where(permission => permission.Name is not PermissionConstants.UsersManage and not PermissionConstants.RolesManage and not PermissionConstants.RestoreDatabase))
         {
             manager.AddPermission(permission);
         }
 
-        cashier.AddPermission(permissions.Single(permission => permission.Name == PermissionConstants.SalesCreate));
-        cashier.AddPermission(permissions.Single(permission => permission.Name == PermissionConstants.ProductView));
-        cashier.AddPermission(permissions.Single(permission => permission.Name == PermissionConstants.CustomerView));
+        cashier.AddPermission(storedPermissions.Single(permission => permission.Name == PermissionConstants.SalesCreate));
+        cashier.AddPermission(storedPermissions.Single(permission => permission.Name == PermissionConstants.ProductView));
+        cashier.AddPermission(storedPermissions.Single(permission => permission.Name == PermissionConstants.CustomerView));
 
         await _dbContext.Roles.AddRangeAsync([administrator, manager, cashier], cancellationToken);
+    }
+
+    private async Task EnsureRolePermissionsAsync(IReadOnlyCollection<Permission> permissions, CancellationToken cancellationToken)
+    {
+        var roles = await _dbContext.Roles.Include(role => role.Permissions).ToListAsync(cancellationToken);
+        var administrator = roles.FirstOrDefault(role => role.Name == "Administrator");
+        if (administrator is not null)
+        {
+            foreach (var permission in permissions.Where(permission => administrator.Permissions.All(existing => existing.Name != permission.Name)))
+            {
+                administrator.AddPermission(permission);
+            }
+        }
+
+        var manager = roles.FirstOrDefault(role => role.Name == "Manager");
+        if (manager is not null)
+        {
+            foreach (var permission in permissions.Where(permission => permission.Name is not PermissionConstants.UsersManage and not PermissionConstants.RolesManage and not PermissionConstants.RestoreDatabase && manager.Permissions.All(existing => existing.Name != permission.Name)))
+            {
+                manager.AddPermission(permission);
+            }
+        }
     }
 
     private async Task SeedCategoriesAsync(CancellationToken cancellationToken)

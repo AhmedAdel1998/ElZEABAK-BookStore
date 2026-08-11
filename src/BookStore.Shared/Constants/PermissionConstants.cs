@@ -181,9 +181,64 @@ public static class PermissionConstants
     public const string SupplierView = "Supplier.View";
 
     /// <summary>
+    /// Supplier create permission.
+    /// </summary>
+    public const string SupplierCreate = "Supplier.Create";
+
+    /// <summary>
+    /// Supplier edit permission.
+    /// </summary>
+    public const string SupplierEdit = "Supplier.Edit";
+
+    /// <summary>
+    /// Supplier delete permission.
+    /// </summary>
+    public const string SupplierDelete = "Supplier.Delete";
+
+    /// <summary>
+    /// Supplier product overview permission.
+    /// </summary>
+    public const string SupplierViewProducts = "Supplier.ViewProducts";
+
+    /// <summary>
     /// Reports view permission.
     /// </summary>
     public const string ReportsView = "Reports.View";
+
+    /// <summary>
+    /// General reports view permission.
+    /// </summary>
+    public const string ReportView = "Report.View";
+
+    /// <summary>
+    /// Sales reports permission.
+    /// </summary>
+    public const string ReportSales = "Report.Sales";
+
+    /// <summary>
+    /// Profit reports permission.
+    /// </summary>
+    public const string ReportProfit = "Report.Profit";
+
+    /// <summary>
+    /// Inventory reports permission.
+    /// </summary>
+    public const string ReportInventory = "Report.Inventory";
+
+    /// <summary>
+    /// Customer reports permission.
+    /// </summary>
+    public const string ReportCustomers = "Report.Customers";
+
+    /// <summary>
+    /// Cashier reports permission.
+    /// </summary>
+    public const string ReportCashiers = "Report.Cashiers";
+
+    /// <summary>
+    /// Report export permission.
+    /// </summary>
+    public const string ReportExport = "Report.Export";
 
     /// <summary>
     /// Settings view permission.

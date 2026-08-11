@@ -1,0 +1,20 @@
+<UserControl x:Class="BookStore.UI.Controls.ReportDateRangeControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="34">
+    <StackPanel Orientation="Horizontal">
+        <ComboBox Width="150"
+                  SelectedValue="{Binding SelectedPreset, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+                  SelectedValuePath="Tag">
+            <ComboBoxItem Content="Today" Tag="Today" />
+            <ComboBoxItem Content="Yesterday" Tag="Yesterday" />
+            <ComboBoxItem Content="This Week" Tag="ThisWeek" />
+            <ComboBoxItem Content="This Month" Tag="ThisMonth" />
+            <ComboBoxItem Content="Previous Month" Tag="PreviousMonth" />
+            <ComboBoxItem Content="This Year" Tag="ThisYear" />
+            <ComboBoxItem Content="Custom Range" Tag="Custom" />
+        </ComboBox>
+        <DatePicker Width="132" Margin="8,0,0,0" SelectedDate="{Binding StartDate, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}" />
+        <DatePicker Width="132" Margin="8,0,0,0" SelectedDate="{Binding EndDate, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}" />
+    </StackPanel>
+</UserControl>

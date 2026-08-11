@@ -1,4 +1,5 @@
 using BookStore.Domain.Entities;
+using BookStore.Domain.ReadModels;
 using BookStore.Domain.Specifications;
 
 namespace BookStore.Domain.Interfaces;
@@ -40,4 +41,34 @@ public interface ISupplierRepository
     {
         throw new NotImplementedException();
     }
+
+    /// <summary>
+    /// Determines whether a supplier exists with the same company name.
+    /// </summary>
+    Task<bool> ExistsByCompanyNameAsync(string companyName, Guid? excludedSupplierId = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Searches suppliers using database-side filtering.
+    /// </summary>
+    Task<IReadOnlyCollection<SupplierListReadModel>> SearchAsync(string? searchTerm, bool? isActive, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Counts suppliers matching a search filter.
+    /// </summary>
+    Task<int> CountAsync(string? searchTerm = null, bool? isActive = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets one supplier summary row.
+    /// </summary>
+    Task<SupplierListReadModel?> GetSummaryByIdAsync(Guid supplierId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets products associated with a supplier using an efficient projection.
+    /// </summary>
+    Task<IReadOnlyCollection<SupplierProductReadModel>> GetProductsAsync(Guid supplierId, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Counts products associated with a supplier.
+    /// </summary>
+    Task<int> CountProductsAsync(Guid supplierId, CancellationToken cancellationToken = default);
 }

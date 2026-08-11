@@ -110,8 +110,8 @@ namespace BookStore.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("Date")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("Date")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
@@ -161,6 +161,10 @@ namespace BookStore.Persistence.Migrations
                     b.HasIndex("Date");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("Date", "TransactionType");
+
+                    b.HasIndex("UserId", "Date");
 
                     b.ToTable("InventoryTransactions", (string)null);
                 });
@@ -290,13 +294,58 @@ namespace BookStore.Persistence.Migrations
                     b.HasIndex("Barcode")
                         .IsUnique();
 
-                    b.HasIndex("CategoryId");
-
                     b.HasIndex("ISBN");
 
                     b.HasIndex("Title");
 
+                    b.HasIndex("CategoryId", "IsActive");
+
+                    b.HasIndex("Quantity", "MinimumStock");
+
                     b.ToTable("Products", (string)null);
+                });
+
+            modelBuilder.Entity("BookStore.Domain.Entities.ProductSupplier", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsPreferred")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SupplierSku")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("ProductId", "SupplierId")
+                        .IsUnique();
+
+                    b.ToTable("ProductSuppliers", (string)null);
                 });
 
             modelBuilder.Entity("BookStore.Domain.Entities.Role", b =>
@@ -368,8 +417,8 @@ namespace BookStore.Persistence.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("SaleDate")
-                        .HasColumnType("TEXT");
+                    b.Property<long>("SaleDate")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -392,12 +441,18 @@ namespace BookStore.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomerId");
-
                     b.HasIndex("InvoiceNumber")
                         .IsUnique();
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("SaleDate");
+
+                    b.HasIndex("CustomerId", "SaleDate");
+
+                    b.HasIndex("PaymentMethod", "SaleDate");
+
+                    b.HasIndex("SaleDate", "Status");
+
+                    b.HasIndex("UserId", "SaleDate");
 
                     b.ToTable("Sales", (string)null);
                 });
@@ -459,7 +514,7 @@ namespace BookStore.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ContactName")
-                        .HasMaxLength(200)
+                        .HasMaxLength(150)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -476,7 +531,7 @@ namespace BookStore.Persistence.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Notes")
-                        .HasMaxLength(1000)
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Phone")
@@ -489,6 +544,16 @@ namespace BookStore.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CompanyName");
+
+                    b.HasIndex("ContactName");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("IsDeleted");
+
+                    b.HasIndex("Phone");
 
                     b.ToTable("Suppliers", (string)null);
                 });
@@ -628,6 +693,25 @@ namespace BookStore.Persistence.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("BookStore.Domain.Entities.ProductSupplier", b =>
+                {
+                    b.HasOne("BookStore.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BookStore.Domain.Entities.Supplier", "Supplier")
+                        .WithMany("Products")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Supplier");
+                });
+
             modelBuilder.Entity("BookStore.Domain.Entities.Sale", b =>
                 {
                     b.HasOne("BookStore.Domain.Entities.Customer", "Customer")
@@ -738,6 +822,11 @@ namespace BookStore.Persistence.Migrations
             modelBuilder.Entity("BookStore.Domain.Entities.Sale", b =>
                 {
                     b.Navigation("SaleItems");
+                });
+
+            modelBuilder.Entity("BookStore.Domain.Entities.Supplier", b =>
+                {
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }
