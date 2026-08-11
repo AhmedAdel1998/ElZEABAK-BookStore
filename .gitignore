@@ -4,7 +4,7 @@
 # .NET
 bin/
 obj/
-
+git log --oneline
 # User-specific files
 *.user
 *.suo

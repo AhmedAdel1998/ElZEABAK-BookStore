@@ -196,7 +196,7 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     /// Navigates to reports.
     /// </summary>
     [RelayCommand]
-    private Task NavigateReportsAsync() => NavigateAsync<ReportsViewModel>("Reports");
+    private Task NavigateReportsAsync() => NavigateAsync<ReportsDashboardViewModel>("Reports");
 
     /// <summary>
     /// Navigates to backup.
@@ -238,7 +238,7 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
         AddMenuItem("Sales (POS)", "S", PermissionConstants.SalesCreate, NavigateSalesCommand, "Sales > POS");
         AddMenuItem("Customers", "CU", PermissionConstants.CustomerView, new AsyncRelayCommand(() => NavigateAsync<CustomerListViewModel>("Customers")), "Customers");
         AddMenuItem("Suppliers", "SU", PermissionConstants.SupplierView, new AsyncRelayCommand(() => NavigateAsync<SupplierListViewModel>("Suppliers")), "Suppliers");
-        AddMenuItem("Reports", "R", PermissionConstants.ReportsView, NavigateReportsCommand, "Reports");
+        AddMenuItem("Reports", "R", PermissionConstants.ReportView, NavigateReportsCommand, "Reports");
         AddMenuItem("Settings", "ST", PermissionConstants.SettingsView, new AsyncRelayCommand(() => NavigateAsync<SettingsViewModel>("Settings")), "Settings");
         AddMenuItem("Users", "U", PermissionConstants.UsersManage, new AsyncRelayCommand(() => NavigateAsync<UsersViewModel>("Settings > Users")), "Settings > Users");
         AddMenuItem("Roles", "RO", PermissionConstants.RolesManage, new AsyncRelayCommand(() => NavigateAsync<RolesViewModel>("Settings > Roles")), "Settings > Roles");

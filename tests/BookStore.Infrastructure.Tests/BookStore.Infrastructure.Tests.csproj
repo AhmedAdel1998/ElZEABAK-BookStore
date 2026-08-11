@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\BookStore.Persistence\BookStore.Persistence.csproj" />
     <ProjectReference Include="..\..\src\BookStore.Infrastructure\BookStore.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\BookStore.Reporting\BookStore.Reporting.csproj" />
   </ItemGroup>
 
 </Project>

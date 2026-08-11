@@ -9,6 +9,7 @@
              xmlns:customerViews="clr-namespace:BookStore.UI.Views.Customers"
              xmlns:supplierViews="clr-namespace:BookStore.UI.Views.Suppliers"
              xmlns:salesViews="clr-namespace:BookStore.UI.Views.Sales"
+             xmlns:reportViews="clr-namespace:BookStore.UI.Views.Reports"
              xmlns:views="clr-namespace:BookStore.UI.Views.Shell"
              xmlns:viewModels="clr-namespace:BookStore.UI.ViewModels">
     <UserControl.Resources>
@@ -98,6 +99,45 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:ReportsViewModel}">
             <views:ModulePlaceholderView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:ReportsDashboardViewModel}">
+            <reportViews:ReportsDashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:SalesSummaryViewModel}">
+            <reportViews:SalesSummaryView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:SalesDetailsViewModel}">
+            <reportViews:SalesDetailsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:ProfitReportViewModel}">
+            <reportViews:ProfitReportView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:BestSellingProductsViewModel}">
+            <reportViews:BestSellingProductsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:InventoryReportViewModel}">
+            <reportViews:InventoryReportView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:InventoryMovementViewModel}">
+            <reportViews:InventoryMovementView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:LowStockReportViewModel}">
+            <reportViews:LowStockReportView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:CustomerReportViewModel}">
+            <reportViews:CustomerReportView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:CashierPerformanceViewModel}">
+            <reportViews:CashierPerformanceView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:PaymentMethodsViewModel}">
+            <reportViews:PaymentMethodsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:DailySalesViewModel}">
+            <reportViews:DailySalesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:HourlySalesViewModel}">
+            <reportViews:HourlySalesView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:SettingsViewModel}">
             <views:ModulePlaceholderView />
