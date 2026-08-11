@@ -8,6 +8,8 @@ using InventoryHandlers = BookStore.Application.Features.Inventory.Handlers;
 using BarcodeHandlers = BookStore.Application.Features.Barcode.Handlers;
 using SalesHandlers = BookStore.Application.Features.Sales.Handlers;
 using ReportHandlers = BookStore.Application.Features.Reports.Handlers;
+using ReceiptHandlers = BookStore.Application.Features.Receipts.Handlers;
+using BookStore.Application.Features.Receipts.Services;
 using BookStore.Application.Interfaces;
 
 namespace BookStore.Application;
@@ -77,6 +79,7 @@ public static class DependencyInjection
         services.AddTransient<BarcodeHandlers.FindProductByBarcodeHandler>();
         services.AddTransient<BarcodeHandlers.GetBarcodeSettingsHandler>();
         services.AddScoped<IPricingService, SalesHandlers.PricingService>();
+        services.AddScoped<IReceiptService, ReceiptService>();
         services.AddTransient<SalesHandlers.StartSaleHandler>();
         services.AddTransient<SalesHandlers.AddItemHandler>();
         services.AddTransient<SalesHandlers.UpdateItemQuantityHandler>();
@@ -108,6 +111,13 @@ public static class DependencyInjection
         services.AddTransient<ReportHandlers.GetPaymentMethodsHandler>();
         services.AddTransient<ReportHandlers.GetDailySalesHandler>();
         services.AddTransient<ReportHandlers.GetHourlySalesHandler>();
+        services.AddTransient<ReceiptHandlers.PrintReceiptHandler>();
+        services.AddTransient<ReceiptHandlers.ReprintReceiptHandler>();
+        services.AddTransient<ReceiptHandlers.TestPrintHandler>();
+        services.AddTransient<ReceiptHandlers.RetryPrintHandler>();
+        services.AddTransient<ReceiptHandlers.GetReceiptPreviewHandler>();
+        services.AddTransient<ReceiptHandlers.GetAvailablePrintersHandler>();
+        services.AddTransient<ReceiptHandlers.SearchReceiptSalesHandler>();
 
         return services;
     }

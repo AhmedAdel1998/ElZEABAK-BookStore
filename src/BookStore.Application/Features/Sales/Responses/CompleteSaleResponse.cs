@@ -1,4 +1,4 @@
-using BookStore.Application.Features.Sales.DTOs;
+using BookStore.Application.Features.Receipts.DTOs;
 
 namespace BookStore.Application.Features.Sales.Responses;
 
@@ -13,4 +13,13 @@ public sealed class CompleteSaleResponse
     public string InvoiceNumber { get; set; } = string.Empty;
     /// <summary>Gets or sets receipt model.</summary>
     public ReceiptModel Receipt { get; set; } = new();
+
+    /// <summary>Gets or sets whether receipt printing succeeded.</summary>
+    public bool ReceiptPrintSucceeded { get; set; }
+
+    /// <summary>Gets or sets receipt print failure message.</summary>
+    public string? ReceiptPrintError { get; set; }
+
+    /// <summary>Gets or sets print request identifier.</summary>
+    public Guid? PrintRequestId { get; set; }
 }

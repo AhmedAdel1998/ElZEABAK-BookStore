@@ -71,6 +71,10 @@ public class DatabaseSeeder
             new Permission(PermissionConstants.ReportCustomers, "View customer reports"),
             new Permission(PermissionConstants.ReportCashiers, "View cashier performance reports"),
             new Permission(PermissionConstants.ReportExport, "Export reports"),
+            new Permission(PermissionConstants.ReceiptPrint, "Print receipts"),
+            new Permission(PermissionConstants.ReceiptReprint, "Reprint receipts"),
+            new Permission(PermissionConstants.ReceiptTestPrint, "Run printer test print"),
+            new Permission(PermissionConstants.ReceiptSettings, "Manage receipt printer settings"),
             new Permission(PermissionConstants.SettingsView, "View settings"),
             new Permission(PermissionConstants.UsersManage, "Manage users"),
             new Permission(PermissionConstants.RolesManage, "Manage roles"),
@@ -113,6 +117,7 @@ public class DatabaseSeeder
         cashier.AddPermission(storedPermissions.Single(permission => permission.Name == PermissionConstants.SalesCreate));
         cashier.AddPermission(storedPermissions.Single(permission => permission.Name == PermissionConstants.ProductView));
         cashier.AddPermission(storedPermissions.Single(permission => permission.Name == PermissionConstants.CustomerView));
+        cashier.AddPermission(storedPermissions.Single(permission => permission.Name == PermissionConstants.ReceiptPrint));
 
         await _dbContext.Roles.AddRangeAsync([administrator, manager, cashier], cancellationToken);
     }

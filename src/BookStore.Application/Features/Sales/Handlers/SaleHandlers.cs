@@ -16,6 +16,8 @@ using BookStore.Application.Features.Sales.Queries.GetHeldSales;
 using BookStore.Application.Features.Sales.Queries.GetSaleSummary;
 using BookStore.Application.Features.Sales.Queries.SearchProduct;
 using BookStore.Application.Features.Sales.Responses;
+using BookStore.Application.Features.Receipts.DTOs;
+using BookStore.Application.Features.Receipts.Services;
 using BookStore.Application.Interfaces;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Enums;
@@ -428,19 +430,19 @@ public sealed class CompleteSaleHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPosSaleSessionStore _sessionStore;
     private readonly IPricingService _pricingService;
-    private readonly IReceiptPreparationService _receiptPreparationService;
+    private readonly IReceiptService _receiptService;
     private readonly IValidator<CompleteSaleRequest> _validator;
     private readonly ILogger<CompleteSaleHandler> _logger;
 
     /// <summary>Initializes a new instance of the <see cref="CompleteSaleHandler"/> class.</summary>
-    public CompleteSaleHandler(IAuthorizationService authorizationService, ICurrentUserService currentUserService, IUnitOfWork unitOfWork, IPosSaleSessionStore sessionStore, IPricingService pricingService, IReceiptPreparationService receiptPreparationService, IValidator<CompleteSaleRequest> validator, ILogger<CompleteSaleHandler> logger)
+    public CompleteSaleHandler(IAuthorizationService authorizationService, ICurrentUserService currentUserService, IUnitOfWork unitOfWork, IPosSaleSessionStore sessionStore, IPricingService pricingService, IReceiptService receiptService, IValidator<CompleteSaleRequest> validator, ILogger<CompleteSaleHandler> logger)
     {
         _authorizationService = authorizationService;
         _currentUserService = currentUserService;
         _unitOfWork = unitOfWork;
         _sessionStore = sessionStore;
         _pricingService = pricingService;
-        _receiptPreparationService = receiptPreparationService;
+        _receiptService = receiptService;
         _validator = validator;
         _logger = logger;
     }
@@ -474,6 +476,8 @@ public sealed class CompleteSaleHandler
         }
 
         await _unitOfWork.BeginTransactionAsync(cancellationToken);
+        Guid completedSaleId;
+        string completedInvoiceNumber;
         try
         {
             var userId = _currentUserService.UserId ?? session.CashierId;
@@ -524,17 +528,9 @@ public sealed class CompleteSaleHandler
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await _unitOfWork.CommitAsync(cancellationToken);
             await _sessionStore.ClearCurrentAsync(cancellationToken);
-
-            var receipt = new ReceiptModel
-            {
-                InvoiceNumber = sale.InvoiceNumber,
-                CompletedAt = DateTimeOffset.UtcNow,
-                CashierName = session.CashierName,
-                Summary = session.Summary
-            };
-            await _receiptPreparationService.PrepareAsync(receipt, cancellationToken);
+            completedSaleId = sale.Id;
+            completedInvoiceNumber = sale.InvoiceNumber;
             _logger.LogInformation("POS sale completed. Invoice={InvoiceNumber} Total={Total}", sale.InvoiceNumber, sale.Total);
-            return Result<CompleteSaleResponse>.Success(new CompleteSaleResponse { SaleId = sale.Id, InvoiceNumber = sale.InvoiceNumber, Receipt = receipt });
         }
         catch (Exception ex)
         {
@@ -542,6 +538,30 @@ public sealed class CompleteSaleHandler
             _logger.LogError(ex, "POS sale completion failed. Invoice={InvoiceNumber}", session.InvoiceNumber);
             return Result<CompleteSaleResponse>.Failure(ex.Message);
         }
+
+        ReceiptPrintResult printResult;
+        try
+        {
+            printResult = await _receiptService.PrintCompletedSaleAsync(completedSaleId, PrintRequestKind.Automatic, copies: 0, cancellationToken: cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Receipt printing failed after sale commit. Invoice={InvoiceNumber}", completedInvoiceNumber);
+            printResult = ReceiptPrintResult.Failure(
+                Guid.NewGuid(),
+                "Sale completed, but receipt printing failed.",
+                receipt: new BookStore.Application.Features.Receipts.DTOs.ReceiptModel { SaleId = completedSaleId, InvoiceNumber = completedInvoiceNumber });
+        }
+
+        return Result<CompleteSaleResponse>.Success(new CompleteSaleResponse
+        {
+            SaleId = completedSaleId,
+            InvoiceNumber = completedInvoiceNumber,
+            Receipt = printResult.Receipt ?? new BookStore.Application.Features.Receipts.DTOs.ReceiptModel { SaleId = completedSaleId, InvoiceNumber = completedInvoiceNumber },
+            ReceiptPrintSucceeded = printResult.Succeeded,
+            ReceiptPrintError = printResult.Error,
+            PrintRequestId = printResult.PrintRequestId
+        });
     }
 }
 

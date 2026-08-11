@@ -10,6 +10,7 @@
              xmlns:supplierViews="clr-namespace:BookStore.UI.Views.Suppliers"
              xmlns:salesViews="clr-namespace:BookStore.UI.Views.Sales"
              xmlns:reportViews="clr-namespace:BookStore.UI.Views.Reports"
+             xmlns:receiptViews="clr-namespace:BookStore.UI.Views.Receipts"
              xmlns:views="clr-namespace:BookStore.UI.Views.Shell"
              xmlns:viewModels="clr-namespace:BookStore.UI.ViewModels">
     <UserControl.Resources>
@@ -138,6 +139,15 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:HourlySalesViewModel}">
             <reportViews:HourlySalesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:ReceiptPreviewViewModel}">
+            <receiptViews:ReceiptPreviewView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:ReprintReceiptViewModel}">
+            <receiptViews:ReprintReceiptView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:PrinterTestViewModel}">
+            <receiptViews:PrinterTestView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:SettingsViewModel}">
             <views:ModulePlaceholderView />

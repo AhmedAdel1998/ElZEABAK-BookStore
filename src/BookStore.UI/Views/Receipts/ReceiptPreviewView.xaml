@@ -1,0 +1,21 @@
+<UserControl x:Class="BookStore.UI.Views.Receipts.ReceiptPreviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12" Orientation="Horizontal">
+            <TextBox Width="220" Text="{Binding InvoiceNumber, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Margin="8,0,0,0" Command="{Binding LoadCommand}" Content="Preview" />
+            <Button Margin="8,0,0,0" Command="{Binding PrintCommand}" Content="Print" />
+            <Slider Width="120" Margin="16,0,0,0" Minimum="0.7" Maximum="1.6" Value="{Binding Zoom}" />
+        </StackPanel>
+        <ScrollViewer>
+            <Border Padding="16" Background="White" BorderBrush="#D6DAE1" BorderThickness="1" HorizontalAlignment="Left">
+                <TextBlock FontFamily="Consolas" Foreground="Black" Text="{Binding PreviewContent}">
+                    <TextBlock.LayoutTransform>
+                        <ScaleTransform ScaleX="{Binding Zoom}" ScaleY="{Binding Zoom}" />
+                    </TextBlock.LayoutTransform>
+                </TextBlock>
+            </Border>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>
