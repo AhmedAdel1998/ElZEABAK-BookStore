@@ -6,6 +6,7 @@ using BookStore.Application.Features.Suppliers.Handlers;
 using BarcodeHandlers = BookStore.Application.Features.Barcode.Handlers;
 using SalesHandlers = BookStore.Application.Features.Sales.Handlers;
 using ReportHandlers = BookStore.Application.Features.Reports.Handlers;
+using ReceiptHandlers = BookStore.Application.Features.Receipts.Handlers;
 using BookStore.UI.Dialogs;
 using BookStore.UI.Icons;
 using BookStore.UI.Navigation;
@@ -122,6 +123,13 @@ public static class DependencyInjection
         services.AddTransient<ReportHandlers.GetPaymentMethodsHandler>();
         services.AddTransient<ReportHandlers.GetDailySalesHandler>();
         services.AddTransient<ReportHandlers.GetHourlySalesHandler>();
+        services.AddTransient<ReceiptHandlers.PrintReceiptHandler>();
+        services.AddTransient<ReceiptHandlers.ReprintReceiptHandler>();
+        services.AddTransient<ReceiptHandlers.TestPrintHandler>();
+        services.AddTransient<ReceiptHandlers.RetryPrintHandler>();
+        services.AddTransient<ReceiptHandlers.GetReceiptPreviewHandler>();
+        services.AddTransient<ReceiptHandlers.GetAvailablePrintersHandler>();
+        services.AddTransient<ReceiptHandlers.SearchReceiptSalesHandler>();
 
         services.AddTransient<LoginViewModel>();
         services.AddTransient<AuthenticatedHomeViewModel>();
@@ -165,6 +173,9 @@ public static class DependencyInjection
         services.AddTransient<PaymentMethodsViewModel>();
         services.AddTransient<DailySalesViewModel>();
         services.AddTransient<HourlySalesViewModel>();
+        services.AddTransient<ReceiptPreviewViewModel>();
+        services.AddTransient<ReprintReceiptViewModel>();
+        services.AddTransient<PrinterTestViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<UsersViewModel>();
         services.AddTransient<RolesViewModel>();
@@ -217,6 +228,9 @@ public static class DependencyInjection
                 [typeof(PaymentMethodsViewModel)] = () => provider.GetRequiredService<PaymentMethodsViewModel>(),
                 [typeof(DailySalesViewModel)] = () => provider.GetRequiredService<DailySalesViewModel>(),
                 [typeof(HourlySalesViewModel)] = () => provider.GetRequiredService<HourlySalesViewModel>(),
+                [typeof(ReceiptPreviewViewModel)] = () => provider.GetRequiredService<ReceiptPreviewViewModel>(),
+                [typeof(ReprintReceiptViewModel)] = () => provider.GetRequiredService<ReprintReceiptViewModel>(),
+                [typeof(PrinterTestViewModel)] = () => provider.GetRequiredService<PrinterTestViewModel>(),
                 [typeof(SettingsViewModel)] = () => provider.GetRequiredService<SettingsViewModel>(),
                 [typeof(UsersViewModel)] = () => provider.GetRequiredService<UsersViewModel>(),
                 [typeof(RolesViewModel)] = () => provider.GetRequiredService<RolesViewModel>(),

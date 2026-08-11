@@ -3,6 +3,10 @@ using BookStore.Application.Features.Barcode.DTOs;
 using BookStore.Application.Features.Barcode.Handlers;
 using BookStore.Application.Features.Barcode.Queries.FindProductByBarcode;
 using BookStore.Application.Features.Barcode.Validators;
+using BookStore.Application.Features.Receipts.Commands;
+using BookStore.Application.Features.Receipts.DTOs;
+using BookStore.Application.Features.Receipts.Queries;
+using BookStore.Application.Features.Receipts.Services;
 using BookStore.Application.Features.Sales.Commands.AddItem;
 using BookStore.Application.Features.Sales.Commands.ApplyInvoiceDiscount;
 using BookStore.Application.Features.Sales.Commands.CompleteSale;
@@ -21,8 +25,10 @@ using BookStore.Domain.Specifications;
 using BookStore.Domain.ValueObjects;
 using BookStore.Shared.Constants;
 using BookStore.Shared.Models;
+using BookStore.Shared.Results;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using ReceiptModel = BookStore.Application.Features.Receipts.DTOs.ReceiptModel;
 
 namespace BookStore.Application.Tests;
 
@@ -159,6 +165,27 @@ public class SalesModuleTests
     }
 
     [Fact]
+    public async Task CompleteSale_DoesNotRollbackWhenReceiptPrintingFailsAfterCommit()
+    {
+        var fixture = new Fixture();
+        fixture.ReceiptService.ThrowOnPrint = true;
+        var product = fixture.AddProduct(quantity: 5, price: 100);
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 2));
+
+        var result = await fixture.CompleteSale.HandleAsync(new CompleteSaleRequest(PaymentMethod.Cash, 200));
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value!.ReceiptPrintSucceeded);
+        Assert.Equal("Sale completed, but receipt printing failed.", result.Value.ReceiptPrintError);
+        Assert.Equal(3, product.Quantity);
+        Assert.Single(fixture.InventoryRepository.Transactions);
+        Assert.Single(fixture.SaleRepository.Sales);
+        Assert.Null(await fixture.Store.GetCurrentAsync());
+        Assert.False(fixture.UnitOfWork.RollbackCalled);
+    }
+
+    [Fact]
     public async Task CompleteSale_RollsBackWhenInventoryIsInsufficient()
     {
         var fixture = new Fixture();
@@ -199,7 +226,7 @@ public class SalesModuleTests
         public FakeProductRepository ProductRepository { get; } = new();
         public FakeInventoryRepository InventoryRepository { get; } = new();
         public FakeSaleRepository SaleRepository { get; } = new();
-        public FakeReceiptPreparationService ReceiptService { get; } = new();
+        public FakeReceiptService ReceiptService { get; } = new();
         public FakeBarcodeService BarcodeService { get; } = new();
         public PricingService Pricing { get; }
         public FakeUnitOfWork UnitOfWork { get; }
@@ -299,14 +326,33 @@ public class SalesModuleTests
     {
         public List<Sale> Sales { get; } = [];
         public Task<Sale?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Sales.FirstOrDefault(sale => sale.Id == id));
+        public Task<Sale?> GetCompletedWithDetailsAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Sales.FirstOrDefault(sale => sale.Id == id && sale.Status == SaleStatus.Completed));
+        public Task<Sale?> GetCompletedByInvoiceAsync(string invoiceNumber, CancellationToken cancellationToken = default) => Task.FromResult(Sales.FirstOrDefault(sale => sale.InvoiceNumber == invoiceNumber && sale.Status == SaleStatus.Completed));
         public Task<IReadOnlyCollection<Sale>> ListAsync(ISpecification<Sale>? specification = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<Sale>>(Sales);
+        public Task<IReadOnlyCollection<Sale>> SearchCompletedAsync(string? invoiceNumber, DateTimeOffset? date, Guid? cashierId, int pageNumber, int pageSize, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<Sale>>(Sales.Where(sale => sale.Status == SaleStatus.Completed).ToArray());
         public Task AddAsync(Sale sale, CancellationToken cancellationToken = default) { Sales.Add(sale); return Task.CompletedTask; }
     }
 
-    private sealed class FakeReceiptPreparationService : IReceiptPreparationService
+    private sealed class FakeReceiptService : IReceiptService
     {
         public ReceiptModel? LastReceipt { get; private set; }
-        public Task PrepareAsync(ReceiptModel receipt, CancellationToken cancellationToken = default) { LastReceipt = receipt; return Task.CompletedTask; }
+        public bool ThrowOnPrint { get; set; }
+        public Task<Result<ReceiptModel>> BuildReceiptAsync(Guid saleId, CancellationToken cancellationToken = default) => Task.FromResult(Result<ReceiptModel>.Success(LastReceipt ?? new ReceiptModel { SaleId = saleId, InvoiceNumber = "TEST" }));
+        public Task<Result<ReceiptModel>> BuildReceiptByInvoiceAsync(string invoiceNumber, CancellationToken cancellationToken = default) => Task.FromResult(Result<ReceiptModel>.Success(LastReceipt ?? new ReceiptModel { InvoiceNumber = invoiceNumber }));
+        public Task<ReceiptPrintResult> PrintCompletedSaleAsync(Guid saleId, PrintRequestKind kind, string? printerName = null, int copies = 1, CancellationToken cancellationToken = default)
+        {
+            if (ThrowOnPrint)
+            {
+                throw new InvalidOperationException("Printer driver failed.");
+            }
+
+            LastReceipt = new ReceiptModel { SaleId = saleId, InvoiceNumber = "TEST" };
+            return Task.FromResult(ReceiptPrintResult.Success(LastReceipt.PrintRequestId, printerName, LastReceipt));
+        }
+
+        public Task<ReceiptPrintResult> ReprintAsync(ReprintReceiptCommand command, CancellationToken cancellationToken = default) => Task.FromResult(ReceiptPrintResult.Success(Guid.NewGuid(), command.PrinterName));
+        public Task<ReceiptPrintResult> TestPrintAsync(TestPrintCommand command, CancellationToken cancellationToken = default) => Task.FromResult(ReceiptPrintResult.Success(Guid.NewGuid(), command.PrinterName));
+        public Task<Result<ReceiptPreviewDto>> PreviewAsync(GetReceiptPreviewQuery query, CancellationToken cancellationToken = default) => Task.FromResult(Result<ReceiptPreviewDto>.Success(new ReceiptPreviewDto()));
     }
 
     private sealed class FakeCurrentUserService : ICurrentUserService

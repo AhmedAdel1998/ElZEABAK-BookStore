@@ -241,6 +241,26 @@ public static class PermissionConstants
     public const string ReportExport = "Report.Export";
 
     /// <summary>
+    /// Receipt print permission.
+    /// </summary>
+    public const string ReceiptPrint = "Receipt.Print";
+
+    /// <summary>
+    /// Receipt reprint permission.
+    /// </summary>
+    public const string ReceiptReprint = "Receipt.Reprint";
+
+    /// <summary>
+    /// Receipt test-print permission.
+    /// </summary>
+    public const string ReceiptTestPrint = "Receipt.TestPrint";
+
+    /// <summary>
+    /// Receipt printer settings permission.
+    /// </summary>
+    public const string ReceiptSettings = "Receipt.Settings";
+
+    /// <summary>
     /// Settings view permission.
     /// </summary>
     public const string SettingsView = "Settings.View";

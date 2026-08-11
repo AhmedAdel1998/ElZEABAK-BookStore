@@ -1,10 +1,14 @@
 using BookStore.Application.Interfaces;
+using BookStore.Application.Features.Receipts.Services;
 using BookStore.Infrastructure.Authentication;
 using BookStore.Infrastructure.Backup;
 using BookStore.Infrastructure.Barcode;
 using BookStore.Infrastructure.Configuration;
 using BookStore.Infrastructure.Logging;
 using BookStore.Infrastructure.Printing;
+using BookStore.Infrastructure.Printing.ESCPos;
+using BookStore.Infrastructure.Printing.Services;
+using BookStore.Infrastructure.Printing.Thermal;
 using BookStore.Infrastructure.Sales;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -34,6 +38,15 @@ public static class DependencyInjection
         services.AddScoped<IBarcodeService, BarcodeGeneratorService>();
         services.AddScoped<IBarcodeScannerService, BarcodeScannerService>();
         services.AddScoped<IBarcodeLabelPrintService, BarcodeLabelPrintService>();
+#pragma warning disable CA1416
+        services.AddScoped<IReceiptPrinter, WindowsReceiptPrinter>();
+        services.AddScoped<IPrinterDiscoveryService, PrinterDiscoveryService>();
+#pragma warning restore CA1416
+        services.AddScoped<IReceiptFormatter, ReceiptFormatter>();
+        services.AddScoped<IPrintQueueService, PrintQueueService>();
+        services.AddScoped<ICashDrawerService, CashDrawerService>();
+        services.AddScoped<IReceiptCodeService, ReceiptCodeService>();
+        services.AddScoped<EscPosReceiptCommandBuilder>();
         services.AddSingleton<IPosSaleSessionStore, PosSaleSessionStore>();
         services.AddSingleton<IReceiptPreparationService, ReceiptPreparationService>();
         services.AddScoped<ReceiptPrinter>();

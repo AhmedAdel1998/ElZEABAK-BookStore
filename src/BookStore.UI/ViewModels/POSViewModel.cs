@@ -511,7 +511,12 @@ public partial class POSViewModel : BaseViewModel
                 return;
             }
 
-            _notificationService.Show("POS", $"Receipt prepared for {result.Value.InvoiceNumber}.", NotificationSeverity.Information);
+            _notificationService.Show(
+                "POS",
+                result.Value.ReceiptPrintSucceeded
+                    ? $"Receipt printed successfully for {result.Value.InvoiceNumber}."
+                    : $"Sale completed, but receipt printing failed. {result.Value.ReceiptPrintError}",
+                result.Value.ReceiptPrintSucceeded ? NotificationSeverity.Success : NotificationSeverity.Warning);
             await StartSaleAsync();
         });
     }
