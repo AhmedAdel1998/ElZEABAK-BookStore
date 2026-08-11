@@ -1,0 +1,44 @@
+<UserControl x:Class="BookStore.UI.Views.Backup.BackupListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <DockPanel Margin="0,0,0,14">
+            <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Backup" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <controls:PrimaryButton Margin="0,0,8,0" Command="{Binding BackupNowCommand}" Content="Backup Now" Icon="B" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ValidateCommand}" Content="Validate" Icon="V" />
+                <controls:DangerButton Margin="0,0,8,0" Command="{Binding RestoreCommand}" Content="Restore" Icon="R" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding CleanupCommand}" Content="Cleanup" Icon="C" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding OpenFolderCommand}" Content="Open Folder" Icon="F" />
+                <controls:DangerButton Command="{Binding DeleteCommand}" Content="Delete" Icon="X" />
+            </StackPanel>
+        </DockPanel>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+                <TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="Restore confirmation" />
+                <controls:TextInputBox Width="430" Text="{Binding RestoreConfirmationText, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+            <DataGrid Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" ItemsSource="{Binding Backups}" SelectedItem="{Binding SelectedBackup}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Binding="{Binding CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Header="Date" Width="145" />
+                    <DataGridTextColumn Binding="{Binding FileName}" Header="File" Width="2*" />
+                    <DataGridTextColumn Binding="{Binding FileSizeBytes}" Header="Size" Width="100" />
+                    <DataGridTextColumn Binding="{Binding BackupType}" Header="Type" Width="100" />
+                    <DataGridTextColumn Binding="{Binding ValidationStatus}" Header="Status" Width="110" />
+                    <DataGridTextColumn Binding="{Binding ChecksumSha256}" Header="SHA-256" Width="2*" />
+                    <DataGridTextColumn Binding="{Binding CreatedBy}" Header="Created By" Width="120" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Working on backup operation..." />
+        </Grid>
+    </Grid>
+</UserControl>

@@ -11,6 +11,7 @@
              xmlns:salesViews="clr-namespace:BookStore.UI.Views.Sales"
              xmlns:reportViews="clr-namespace:BookStore.UI.Views.Reports"
              xmlns:receiptViews="clr-namespace:BookStore.UI.Views.Receipts"
+             xmlns:backupViews="clr-namespace:BookStore.UI.Views.Backup"
              xmlns:views="clr-namespace:BookStore.UI.Views.Shell"
              xmlns:viewModels="clr-namespace:BookStore.UI.ViewModels">
     <UserControl.Resources>
@@ -159,7 +160,19 @@
             <views:ModulePlaceholderView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:BackupViewModel}">
-            <views:ModulePlaceholderView />
+            <backupViews:BackupListView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:BackupListViewModel}">
+            <backupViews:BackupListView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:BackupDetailsViewModel}">
+            <backupViews:BackupDetailsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:BackupRestoreViewModel}">
+            <backupViews:BackupRestoreView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:DatabaseHealthViewModel}">
+            <backupViews:DatabaseHealthView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:ChangePasswordViewModel}">
             <views:ChangePasswordRegionView />

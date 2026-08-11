@@ -278,10 +278,40 @@ public static class PermissionConstants
     /// <summary>
     /// Database backup permission.
     /// </summary>
-    public const string BackupDatabase = "Backup.Database";
+    public const string BackupView = "Backup.View";
+
+    /// <summary>
+    /// Database backup creation permission.
+    /// </summary>
+    public const string BackupCreate = "Backup.Create";
 
     /// <summary>
     /// Database restore permission.
     /// </summary>
-    public const string RestoreDatabase = "Restore.Database";
+    public const string BackupRestore = "Backup.Restore";
+
+    /// <summary>
+    /// Backup deletion permission.
+    /// </summary>
+    public const string BackupDelete = "Backup.Delete";
+
+    /// <summary>
+    /// Backup validation permission.
+    /// </summary>
+    public const string BackupValidate = "Backup.Validate";
+
+    /// <summary>
+    /// Backup settings permission.
+    /// </summary>
+    public const string BackupSettings = "Backup.Settings";
+
+    /// <summary>
+    /// Legacy database backup permission alias.
+    /// </summary>
+    public const string BackupDatabase = BackupCreate;
+
+    /// <summary>
+    /// Legacy database restore permission alias.
+    /// </summary>
+    public const string RestoreDatabase = BackupRestore;
 }

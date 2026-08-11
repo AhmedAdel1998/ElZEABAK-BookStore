@@ -7,6 +7,7 @@ using BarcodeHandlers = BookStore.Application.Features.Barcode.Handlers;
 using SalesHandlers = BookStore.Application.Features.Sales.Handlers;
 using ReportHandlers = BookStore.Application.Features.Reports.Handlers;
 using ReceiptHandlers = BookStore.Application.Features.Receipts.Handlers;
+using BackupHandlers = BookStore.Application.Features.Backup.Handlers;
 using BookStore.UI.Dialogs;
 using BookStore.UI.Icons;
 using BookStore.UI.Navigation;
@@ -130,6 +131,16 @@ public static class DependencyInjection
         services.AddTransient<ReceiptHandlers.GetReceiptPreviewHandler>();
         services.AddTransient<ReceiptHandlers.GetAvailablePrintersHandler>();
         services.AddTransient<ReceiptHandlers.SearchReceiptSalesHandler>();
+        services.AddTransient<BackupHandlers.CreateBackupHandler>();
+        services.AddTransient<BackupHandlers.RestoreBackupHandler>();
+        services.AddTransient<BackupHandlers.DeleteBackupHandler>();
+        services.AddTransient<BackupHandlers.CleanupBackupsHandler>();
+        services.AddTransient<BackupHandlers.ValidateBackupHandler>();
+        services.AddTransient<BackupHandlers.GetBackupsHandler>();
+        services.AddTransient<BackupHandlers.GetBackupDetailsHandler>();
+        services.AddTransient<BackupHandlers.RunIntegrityCheckHandler>();
+        services.AddTransient<BackupHandlers.GetDatabaseHealthHandler>();
+        services.AddTransient<BackupHandlers.RunAutomaticBackupHandler>();
 
         services.AddTransient<LoginViewModel>();
         services.AddTransient<AuthenticatedHomeViewModel>();
@@ -176,6 +187,10 @@ public static class DependencyInjection
         services.AddTransient<ReceiptPreviewViewModel>();
         services.AddTransient<ReprintReceiptViewModel>();
         services.AddTransient<PrinterTestViewModel>();
+        services.AddTransient<BackupListViewModel>();
+        services.AddTransient<BackupDetailsViewModel>();
+        services.AddTransient<BackupRestoreViewModel>();
+        services.AddTransient<DatabaseHealthViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<UsersViewModel>();
         services.AddTransient<RolesViewModel>();
@@ -231,6 +246,10 @@ public static class DependencyInjection
                 [typeof(ReceiptPreviewViewModel)] = () => provider.GetRequiredService<ReceiptPreviewViewModel>(),
                 [typeof(ReprintReceiptViewModel)] = () => provider.GetRequiredService<ReprintReceiptViewModel>(),
                 [typeof(PrinterTestViewModel)] = () => provider.GetRequiredService<PrinterTestViewModel>(),
+                [typeof(BackupListViewModel)] = () => provider.GetRequiredService<BackupListViewModel>(),
+                [typeof(BackupDetailsViewModel)] = () => provider.GetRequiredService<BackupDetailsViewModel>(),
+                [typeof(BackupRestoreViewModel)] = () => provider.GetRequiredService<BackupRestoreViewModel>(),
+                [typeof(DatabaseHealthViewModel)] = () => provider.GetRequiredService<DatabaseHealthViewModel>(),
                 [typeof(SettingsViewModel)] = () => provider.GetRequiredService<SettingsViewModel>(),
                 [typeof(UsersViewModel)] = () => provider.GetRequiredService<UsersViewModel>(),
                 [typeof(RolesViewModel)] = () => provider.GetRequiredService<RolesViewModel>(),

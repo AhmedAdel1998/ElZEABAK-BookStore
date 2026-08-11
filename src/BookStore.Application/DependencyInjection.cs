@@ -9,6 +9,7 @@ using BarcodeHandlers = BookStore.Application.Features.Barcode.Handlers;
 using SalesHandlers = BookStore.Application.Features.Sales.Handlers;
 using ReportHandlers = BookStore.Application.Features.Reports.Handlers;
 using ReceiptHandlers = BookStore.Application.Features.Receipts.Handlers;
+using BackupHandlers = BookStore.Application.Features.Backup.Handlers;
 using BookStore.Application.Features.Receipts.Services;
 using BookStore.Application.Interfaces;
 
@@ -118,6 +119,16 @@ public static class DependencyInjection
         services.AddTransient<ReceiptHandlers.GetReceiptPreviewHandler>();
         services.AddTransient<ReceiptHandlers.GetAvailablePrintersHandler>();
         services.AddTransient<ReceiptHandlers.SearchReceiptSalesHandler>();
+        services.AddTransient<BackupHandlers.CreateBackupHandler>();
+        services.AddTransient<BackupHandlers.RestoreBackupHandler>();
+        services.AddTransient<BackupHandlers.DeleteBackupHandler>();
+        services.AddTransient<BackupHandlers.CleanupBackupsHandler>();
+        services.AddTransient<BackupHandlers.ValidateBackupHandler>();
+        services.AddTransient<BackupHandlers.GetBackupsHandler>();
+        services.AddTransient<BackupHandlers.GetBackupDetailsHandler>();
+        services.AddTransient<BackupHandlers.RunIntegrityCheckHandler>();
+        services.AddTransient<BackupHandlers.GetDatabaseHealthHandler>();
+        services.AddTransient<BackupHandlers.RunAutomaticBackupHandler>();
 
         return services;
     }

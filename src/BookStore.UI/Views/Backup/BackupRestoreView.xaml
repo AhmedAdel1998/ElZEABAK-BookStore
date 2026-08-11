@@ -1,0 +1,16 @@
+<UserControl x:Class="BookStore.UI.Views.Backup.BackupRestoreView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <controls:AppCard Width="760" HorizontalAlignment="Left" Title="Restore Backup" Icon="R">
+        <StackPanel>
+            <TextBlock FontWeight="SemiBold" Text="{Binding SelectedBackup.FileName}" />
+            <TextBlock Margin="0,4,0,0" Text="{Binding SelectedBackup.CreatedAt}" />
+            <TextBlock Margin="0,4,0,0" Text="{Binding SelectedBackup.ChecksumSha256}" TextWrapping="Wrap" />
+            <TextBlock Margin="0,18,0,6" Text="I understand that restoring will replace the current database." />
+            <controls:TextInputBox Text="{Binding ConfirmationText, UpdateSourceTrigger=PropertyChanged}" />
+            <controls:DangerButton Margin="0,14,0,0" HorizontalAlignment="Left" Command="{Binding RestoreCommand}" Content="Restore" Icon="R" />
+            <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Restoring database..." />
+        </StackPanel>
+    </controls:AppCard>
+</UserControl>
