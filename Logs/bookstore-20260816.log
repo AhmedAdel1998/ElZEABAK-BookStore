@@ -36,3 +36,140 @@
 2026-08-16 12:45:37.452 +03:00 [INF] Runtime folder verified: Temp
 2026-08-16 12:45:37.542 +03:00 [INF] UI culture applied: en-US
 2026-08-16 12:45:37.587 +03:00 [INF] Theme applied: Light
+2026-08-16 13:49:34.190 +03:00 [INF] Applying database migrations
+2026-08-16 13:49:34.330 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-08-16 13:49:34.391 +03:00 [INF] No migrations were applied. The database is already up to date.
+2026-08-16 13:49:34.750 +03:00 [INF] Database seed completed
+2026-08-16 13:49:34.753 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-08-16 13:49:34.753 +03:00 [INF] Hosting environment: Production
+2026-08-16 13:49:34.753 +03:00 [INF] Content root path: E:\EL ZEABAK BookStore\EL ZEABAK BookStore
+2026-08-16 13:49:34.754 +03:00 [INF] Application start
+2026-08-16 13:49:34.754 +03:00 [INF] Runtime folder verified: Database
+2026-08-16 13:49:34.754 +03:00 [INF] Runtime folder verified: Logs
+2026-08-16 13:49:34.755 +03:00 [INF] Runtime folder verified: Backups
+2026-08-16 13:49:34.755 +03:00 [INF] Runtime folder verified: Exports
+2026-08-16 13:49:34.755 +03:00 [INF] Runtime folder verified: Temp
+2026-08-16 13:49:34.838 +03:00 [INF] UI culture applied: en-US
+2026-08-16 13:49:34.883 +03:00 [INF] Theme applied: Light
+2026-08-16 13:49:35.005 +03:00 [INF] Remembered session restored. UserId="cbdae80e-cd81-4891-b80f-8e7faeb03d01"
+2026-08-16 13:49:35.014 +03:00 [WRN] Unauthorized permission check: Barcode.View
+2026-08-16 13:49:35.047 +03:00 [INF] Report opened: Reports Dashboard
+2026-08-16 13:49:35.077 +03:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-08-16 13:49:35.106 +03:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-08-16 13:49:35.117 +03:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-08-16 13:49:35.139 +03:00 [ERR] Report generation failed: Reports Dashboard
+System.InvalidOperationException: The LINQ expression 'RelationalGroupByShaperExpression:
+KeySelector: new { 
+    Id = p0.Id, 
+    Title = p0.Title, 
+    Category = c0.Name
+ }, 
+ElementSelector: new TransparentIdentifier<TransparentIdentifier<TransparentIdentifier<SaleItem, Sale>, Product>, Category>(
+    Outer = new TransparentIdentifier<TransparentIdentifier<SaleItem, Sale>, Product>(
+        Outer = new TransparentIdentifier<SaleItem, Sale>(
+            Outer = StructuralTypeShaperExpression(
+                StructuralType: BookStore.Domain.Entities.SaleItem
+                ValueBufferExpression: ProjectionBindingExpression: Outer.Outer.Outer
+                IsNullable: False), 
+            Inner = StructuralTypeShaperExpression(
+                StructuralType: BookStore.Domain.Entities.Sale
+                ValueBufferExpression: ProjectionBindingExpression: Outer.Outer.Inner
+                IsNullable: False)
+        ), 
+        Inner = StructuralTypeShaperExpression(
+            StructuralType: BookStore.Domain.Entities.Product
+            ValueBufferExpression: ProjectionBindingExpression: Outer.Inner
+            IsNullable: False)
+    ), 
+    Inner = StructuralTypeShaperExpression(
+        StructuralType: BookStore.Domain.Entities.Category
+        ValueBufferExpression: ProjectionBindingExpression: Inner
+        IsNullable: False)
+), 
+GroupingEnumerable:ShapedQueryExpression: 
+    QueryExpression: 
+        Projection Mapping:
+            Outer.Outer.Outer -> StructuralTypeProjectionExpression: SaleItem
+            Outer.Outer.Inner -> StructuralTypeProjectionExpression: Sale
+            Outer.Inner -> StructuralTypeProjectionExpression: Product
+            Inner -> StructuralTypeProjectionExpression: Category
+        SELECT 1
+        FROM SaleItems AS s2
+        INNER JOIN 
+        (
+            SELECT s4.Id, s4.ChangeAmount, s4.CreatedAt, s4.CustomerId, s4.Discount, s4.InvoiceNumber, s4.IsDeleted, s4.PaidAmount, s4.PaymentMethod, s4.SaleDate, s4.Status, s4.Tax, s4.Total, s4.UpdatedAt, s4.UserId
+            FROM Sales AS s4
+            WHERE s4.IsDeleted == 0
+        ) AS s3 ON s2.SaleId == s3.Id
+        INNER JOIN 
+        (
+            SELECT p2.Id, p2.Author, p2.Barcode, p2.CategoryId, p2.CreatedAt, p2.Description, p2.Edition, p2.ISBN, p2.ImagePath, p2.IsActive, p2.IsDeleted, p2.Language, p2.MinimumStock, p2.PublishDate, p2.Publisher, p2.PurchasePrice, p2.Quantity, p2.SellingPrice, p2.ShelfLocation, p2.Subtitle, p2.TaxCategory, p2.Title, p2.UpdatedAt
+            FROM Products AS p2
+            WHERE p2.IsDeleted == 0
+        ) AS p1 ON s2.ProductId == p1.Id
+        INNER JOIN 
+        (
+            SELECT c2.Id, c2.CreatedAt, c2.Description, c2.IsActive, c2.IsDeleted, c2.Name, c2.UpdatedAt
+            FROM Categories AS c2
+            WHERE c2.IsDeleted == 0
+        ) AS c1 ON p1.CategoryId == c1.Id
+        WHERE ((s2.IsDeleted == 0) && (((s3.SaleDate >= @__range_StartDate_0) && (s3.SaleDate < @__range_EndDate_1)) && (s3.Status != 'Cancelled'))) && (((p0.Id == p1.Id) && (p0.Title == p1.Title)) && (c0.Name == c1.Name))
+    ShaperExpression: new TransparentIdentifier<TransparentIdentifier<TransparentIdentifier<SaleItem, Sale>, Product>, Category>(
+            Outer = new TransparentIdentifier<TransparentIdentifier<SaleItem, Sale>, Product>(
+                Outer = new TransparentIdentifier<SaleItem, Sale>(
+                    Outer = StructuralTypeShaperExpression(
+                        StructuralType: BookStore.Domain.Entities.SaleItem
+                        ValueBufferExpression: ProjectionBindingExpression: Outer.Outer.Outer
+                        IsNullable: False), 
+                    Inner = StructuralTypeShaperExpression(
+                        StructuralType: BookStore.Domain.Entities.Sale
+                        ValueBufferExpression: ProjectionBindingExpression: Outer.Outer.Inner
+                        IsNullable: False)
+                ), 
+                Inner = StructuralTypeShaperExpression(
+                    StructuralType: BookStore.Domain.Entities.Product
+                    ValueBufferExpression: ProjectionBindingExpression: Outer.Inner
+                    IsNullable: False)
+            ), 
+            Inner = StructuralTypeShaperExpression(
+                StructuralType: BookStore.Domain.Entities.Category
+                ValueBufferExpression: ProjectionBindingExpression: Inner
+                IsNullable: False)
+        )
+
+    .AsQueryable()
+    .Max(e => e.Outer.Inner.Barcode.Value)' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.TranslateSubquery(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.RelationalSqlTranslatingExpressionVisitor.<VisitMethodCall>g__TranslateAsSubquery|33_0(Expression expression, <>c__DisplayClass33_0&)
+   at Microsoft.EntityFrameworkCore.Query.RelationalSqlTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Microsoft.EntityFrameworkCore.Sqlite.Query.Internal.SqliteSqlTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Microsoft.EntityFrameworkCore.Query.RelationalSqlTranslatingExpressionVisitor.TranslateInternal(Expression expression, Boolean applyDefaultTypeMapping)
+   at Microsoft.EntityFrameworkCore.Query.RelationalSqlTranslatingExpressionVisitor.TranslateProjection(Expression expression, Boolean applyDefaultTypeMapping)
+   at Microsoft.EntityFrameworkCore.Query.Internal.RelationalProjectionBindingExpressionVisitor.Visit(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.Internal.RelationalProjectionBindingExpressionVisitor.VisitNew(NewExpression newExpression)
+   at Microsoft.EntityFrameworkCore.Query.Internal.RelationalProjectionBindingExpressionVisitor.Visit(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.Internal.RelationalProjectionBindingExpressionVisitor.Translate(SelectExpression selectExpression, Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.RelationalQueryableMethodTranslatingExpressionVisitor.TranslateSelect(ShapedQueryExpression source, LambdaExpression selector)
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Microsoft.EntityFrameworkCore.Query.RelationalQueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutorExpression[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Storage.Database.CompileQuery[TResult](Expression query, Boolean async)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.CompileQueryCore[TResult](IDatabase database, Expression query, IModel model, Boolean async)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass11_0`1.<ExecuteCore>b__0()
+   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryProvider.ExecuteAsync[TResult](Expression expression, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at System.Runtime.CompilerServices.ConfiguredCancelableAsyncEnumerable`1.GetAsyncEnumerator()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToArrayAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at BookStore.Reporting.Services.BookStoreReportQueryService.BuildProductSalesRowsAsync(ReportDateRange range, CancellationToken cancellationToken) in E:\EL ZEABAK BookStore\EL ZEABAK BookStore\src\BookStore.Reporting\Services\BookStoreReportQueryService.cs:line 481
+   at BookStore.Reporting.Services.BookStoreReportQueryService.GetBestSellingProductsAsync(GetBestSellingProductsQuery query, CancellationToken cancellationToken) in E:\EL ZEABAK BookStore\EL ZEABAK BookStore\src\BookStore.Reporting\Services\BookStoreReportQueryService.cs:line 166
+   at BookStore.Reporting.Services.BookStoreReportQueryService.GetDashboardAsync(GetReportsDashboardQuery query, CancellationToken cancellationToken) in E:\EL ZEABAK BookStore\EL ZEABAK BookStore\src\BookStore.Reporting\Services\BookStoreReportQueryService.cs:line 36
+   at BookStore.Application.Features.Reports.Handlers.ReportQueryHandlerBase`2.HandleAsync(TQuery query, CancellationToken cancellationToken) in E:\EL ZEABAK BookStore\EL ZEABAK BookStore\src\BookStore.Application\Features\Reports\Handlers\ReportQueryHandlers.cs:line 48
+2026-08-16 13:49:35.160 +03:00 [INF] Report opened: Sales Summary
+2026-08-16 13:49:35.161 +03:00 [INF] Report generated: Sales Summary in 1 ms

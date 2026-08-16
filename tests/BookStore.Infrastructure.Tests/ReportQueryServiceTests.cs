@@ -54,6 +54,23 @@ public class ReportQueryServiceTests
     }
 
     [Fact]
+    public async Task Dashboard_LoadsDynamicData_WithSqliteValueObjectMappings()
+    {
+        await using var fixture = await ReportingFixture.CreateAsync();
+
+        var dashboard = await fixture.Service.GetDashboardAsync(new GetReportsDashboardQuery(fixture.TodayRange));
+
+        Assert.Equal(214, dashboard.TodaysSales);
+        Assert.Equal(2, dashboard.TodaysTransactions);
+        Assert.Equal(120, dashboard.TodaysProfit);
+        Assert.Equal("Clean Architecture", dashboard.BestSellingProduct);
+        Assert.Equal("Walk-in", dashboard.TopCustomer);
+        Assert.Equal("Cashier One", dashboard.TopCashier);
+        Assert.Equal(1, dashboard.LowStockProducts);
+        Assert.Equal(1, dashboard.OutOfStockProducts);
+    }
+
+    [Fact]
     public async Task CashierCustomersPaymentAndHourlyReports_AggregateSeparately()
     {
         await using var fixture = await ReportingFixture.CreateAsync();

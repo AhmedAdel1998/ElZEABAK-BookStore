@@ -275,7 +275,12 @@
                         <controls:SearchBox Width="250" Margin="6,3" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="{DynamicResource Shell.SearchTooltip}" />
                         <Button Margin="6,3" Command="{Binding ToggleLanguageCommand}" Content="{Binding LanguageToggleText}" />
                         <Button Margin="6,3" Command="{Binding ToggleThemeCommand}" Content="{DynamicResource Shell.Theme}" />
-                        <Button Margin="6,3" Content="{DynamicResource Shell.Notifications}" />
+                        <Button Margin="6,3" Command="{Binding ToggleNotificationsCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{DynamicResource Shell.Notifications}" />
+                                <TextBlock Margin="6,0,0,0" FontWeight="SemiBold" Text="{Binding NotificationCount}" />
+                            </StackPanel>
+                        </Button>
                         <Button Margin="6,3" Command="{Binding ChangePasswordCommand}" Content="{DynamicResource Shell.Settings}" />
                         <Button Margin="6,3" Command="{Binding LogoutCommand}" Content="{DynamicResource Nav.Logout}" />
                     </WrapPanel>
@@ -299,6 +304,66 @@
                 </Border>
 
                 <controls:LoadingOverlay IsBusy="{Binding IsLoading}" Message="{Binding LoadingText}" />
+
+                <Border Width="360"
+                        MaxHeight="420"
+                        Margin="0,16,16,0"
+                        Padding="14"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Visibility="{Binding IsNotificationsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <DockPanel LastChildFill="True">
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                            <Button DockPanel.Dock="Right"
+                                    MinWidth="72"
+                                    Padding="10,5"
+                                    Command="{Binding ClearNotificationsCommand}"
+                                    Content="{DynamicResource Shell.ClearNotifications}" />
+                            <TextBlock VerticalAlignment="Center"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       Text="{DynamicResource Shell.Notifications}" />
+                        </DockPanel>
+                        <TextBlock Margin="0,8,0,0"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   Text="{DynamicResource Shell.NoNotifications}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding NotificationCount}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <ScrollViewer MaxHeight="330" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Notifications}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,8"
+                                                Padding="10"
+                                                Background="{DynamicResource SurfaceAltBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="6">
+                                            <StackPanel>
+                                                <TextBlock FontWeight="SemiBold" Text="{Binding Title}" />
+                                                <TextBlock Margin="0,4,0,0" Text="{Binding Message}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
 
                 <ItemsControl Margin="0,16,16,0" HorizontalAlignment="Right" VerticalAlignment="Top" ItemsSource="{Binding Notifications}">
                     <ItemsControl.ItemTemplate>

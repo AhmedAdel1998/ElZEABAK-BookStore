@@ -26,6 +26,11 @@ public partial class POSView : UserControl
         FocusBarcodeInput();
     }
 
+    private void OnCashierActionClicked(object sender, RoutedEventArgs e)
+    {
+        FocusBarcodeInput();
+    }
+
     private void FocusBarcodeInput()
     {
         Dispatcher.BeginInvoke(() =>

@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddSingleton<IValidationMessageAdapter, ValidationMessageAdapter>();
         services.AddSingleton<ICategoryNavigationState, CategoryNavigationState>();
         services.AddSingleton<IProductNavigationState, ProductNavigationState>();
+        services.AddSingleton<IInventoryNavigationState, InventoryNavigationState>();
         services.AddSingleton<ICustomerNavigationState, CustomerNavigationState>();
         services.AddSingleton<ISupplierNavigationState, SupplierNavigationState>();
         services.AddSingleton<DialogService>();
