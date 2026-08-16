@@ -31,4 +31,10 @@ public class NotificationService : INotificationService
         };
         timer.Start();
     }
+
+    /// <inheritdoc />
+    public void Clear()
+    {
+        Notifications.Clear();
+    }
 }

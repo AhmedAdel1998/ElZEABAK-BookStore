@@ -40,8 +40,8 @@
         </Style>
     </UserControl.Resources>
 
-    <ScrollViewer FlowDirection="LeftToRight" VerticalScrollBarVisibility="Auto">
-        <Grid FlowDirection="LeftToRight">
+    <ScrollViewer FlowDirection="{DynamicResource AppFlowDirection}" VerticalScrollBarVisibility="Auto">
+        <Grid FlowDirection="{DynamicResource AppFlowDirection}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -93,42 +93,50 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Margin="0,0,12,0" Style="{StaticResource MetricCardStyle}">
-                            <Grid FlowDirection="LeftToRight">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="44" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel>
-                                    <TextBlock FontSize="13"
-                                               Foreground="{DynamicResource SecondaryTextBrush}"
-                                               Text="{Binding Title}" />
-                                    <TextBlock Margin="0,8,0,0"
-                                               FontSize="26"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource PrimaryTextBrush}"
-                                               Text="{Binding Value}" />
-                                    <TextBlock Margin="0,6,0,0"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource MutedTextBrush}"
-                                               Text="{Binding Hint}"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                                <Border Grid.Column="1"
-                                        Width="40"
-                                        Height="40"
-                                        Background="{DynamicResource SurfaceAltBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="8">
-                                    <TextBlock HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold"
-                                               Foreground="{DynamicResource AccentBrush}"
-                                               Text="{Binding Icon}" />
-                                </Border>
-                            </Grid>
-                        </Border>
+                        <Button Margin="0,0,12,0"
+                                Padding="0"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Stretch"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Command="{Binding Command}">
+                            <Border Style="{StaticResource MetricCardStyle}">
+                                <Grid FlowDirection="{DynamicResource AppFlowDirection}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="44" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock FontSize="13"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   Text="{Binding Title}" />
+                                        <TextBlock Margin="0,8,0,0"
+                                                   FontSize="26"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                                   Text="{Binding Value}" />
+                                        <TextBlock Margin="0,6,0,0"
+                                                   FontSize="12"
+                                                   Foreground="{DynamicResource MutedTextBrush}"
+                                                   Text="{Binding Hint}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Border Grid.Column="1"
+                                            Width="40"
+                                            Height="40"
+                                            Background="{DynamicResource SurfaceAltBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="8">
+                                        <TextBlock HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   FontWeight="Bold"
+                                                   Foreground="{DynamicResource AccentBrush}"
+                                                   Text="{Binding Icon}" />
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
@@ -153,7 +161,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <DockPanel FlowDirection="LeftToRight">
+                            <DockPanel FlowDirection="{DynamicResource AppFlowDirection}">
                                 <TextBlock Text="{DynamicResource Dashboard.InventoryHealth}" />
                                 <TextBlock DockPanel.Dock="Right"
                                            FontWeight="SemiBold"
@@ -165,7 +173,7 @@
                                          Margin="0,8,0,16"
                                          Maximum="100"
                                          Value="{Binding InventoryHealthPercent}" />
-                            <DockPanel Grid.Row="2" FlowDirection="LeftToRight">
+                            <DockPanel Grid.Row="2" FlowDirection="{DynamicResource AppFlowDirection}">
                                 <TextBlock Text="{DynamicResource Dashboard.SalesMomentum}" />
                                 <TextBlock DockPanel.Dock="Right"
                                            FontWeight="SemiBold"
@@ -192,7 +200,7 @@
                                             BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="1"
                                             CornerRadius="6">
-                                        <DockPanel FlowDirection="LeftToRight">
+                                        <DockPanel FlowDirection="{DynamicResource AppFlowDirection}">
                                             <TextBlock DockPanel.Dock="Right"
                                                        FontWeight="SemiBold"
                                                        Foreground="{DynamicResource AccentBrush}"
@@ -225,7 +233,7 @@
                                             Padding="14"
                                             HorizontalContentAlignment="Stretch"
                                             Command="{Binding Command}">
-                                        <DockPanel FlowDirection="LeftToRight">
+                                        <DockPanel FlowDirection="{DynamicResource AppFlowDirection}">
                                             <TextBlock DockPanel.Dock="Right"
                                                        VerticalAlignment="Center"
                                                        FontSize="18"

@@ -26,6 +26,7 @@ using BookStore.UI.Dialogs;
 using BookStore.UI.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Media;
 
 namespace BookStore.UI.ViewModels;
 
@@ -112,6 +113,15 @@ public partial class POSViewModel : BaseViewModel
     [ObservableProperty]
     private string newCustomerPhone = string.Empty;
 
+    [ObservableProperty]
+    private string cartSummaryText = string.Empty;
+
+    [ObservableProperty]
+    private string paymentStatusText = string.Empty;
+
+    [ObservableProperty]
+    private string stockAlertText = string.Empty;
+
     /// <summary>Initializes a new instance of the <see cref="POSViewModel"/> class.</summary>
     public POSViewModel(
         StartSaleHandler startSaleHandler,
@@ -157,6 +167,7 @@ public partial class POSViewModel : BaseViewModel
         _localizationService = localizationService;
         Title = _localizationService.T("POS.Cashier");
         LastScanMessage = _localizationService.T("POS.ReadyToScan");
+        _localizationService.CultureChanged += (_, _) => ApplyLocalizedText();
         _ = StartSaleAsync();
     }
 
@@ -218,7 +229,7 @@ public partial class POSViewModel : BaseViewModel
             }
 
             SetSale(result.Value);
-            _notificationService.Show("POS", "Customer selected.", NotificationSeverity.Information);
+            _notificationService.Show(_localizationService.T("POS.Title"), _localizationService.T("POS.CustomerSelected"), NotificationSeverity.Information);
         });
     }
 
@@ -262,7 +273,7 @@ public partial class POSViewModel : BaseViewModel
             NewCustomerName = string.Empty;
             NewCustomerPhone = string.Empty;
             SetSale(select.Value);
-            _notificationService.Show("POS", "Customer created and selected.", NotificationSeverity.Success);
+            _notificationService.Show(_localizationService.T("POS.Title"), _localizationService.T("POS.CustomerCreated"), NotificationSeverity.Success);
         });
     }
 
@@ -304,9 +315,10 @@ public partial class POSViewModel : BaseViewModel
             var lookup = await _findProductByBarcodeHandler.HandleAsync(new FindProductByBarcodeRequest(barcode));
             if (!lookup.IsSuccess || lookup.Value is null)
             {
-                LastScanMessage = $"Barcode {barcode} was not added.";
+                LastScanMessage = string.Format(_localizationService.T("POS.ScanNotAdded"), barcode);
                 LastScanCategory = string.Empty;
                 LastScanDestination = string.Empty;
+                SystemSounds.Exclamation.Play();
                 await ShowErrorAsync(lookup.Error);
                 return;
             }
@@ -314,19 +326,21 @@ public partial class POSViewModel : BaseViewModel
             var result = await _addItemHandler.HandleAsync(new AddItemRequest(lookup.Value.ProductId, 1));
             if (!result.IsSuccess || result.Value is null)
             {
-                LastScanMessage = $"{lookup.Value.Title} was not added.";
-                LastScanCategory = lookup.Value.CategoryName ?? "No category";
+                LastScanMessage = string.Format(_localizationService.T("POS.ProductNotAdded"), lookup.Value.Title);
+                LastScanCategory = lookup.Value.CategoryName ?? _localizationService.T("POS.NoCategory");
                 LastScanDestination = CurrentSale?.InvoiceNumber ?? string.Empty;
+                SystemSounds.Exclamation.Play();
                 await ShowErrorAsync(result.Error);
                 return;
             }
 
             BarcodeText = string.Empty;
             SetSale(result.Value, lookup.Value.ProductId);
-            LastScanMessage = $"Added {lookup.Value.Title}.";
-            LastScanCategory = lookup.Value.CategoryName ?? "No category";
-            LastScanDestination = $"Added to invoice {result.Value.InvoiceNumber}; cart lines: {result.Value.Items.Count}.";
-            _notificationService.Show("Scan", $"{lookup.Value.Title} added to {result.Value.InvoiceNumber}.", NotificationSeverity.Success);
+            LastScanMessage = string.Format(_localizationService.T("POS.AddedProduct"), lookup.Value.Title);
+            LastScanCategory = lookup.Value.CategoryName ?? _localizationService.T("POS.NoCategory");
+            LastScanDestination = string.Format(_localizationService.T("POS.AddedToInvoice"), result.Value.InvoiceNumber, result.Value.Items.Count);
+            SystemSounds.Asterisk.Play();
+            _notificationService.Show(_localizationService.T("POS.ScanTitle"), string.Format(_localizationService.T("POS.AddedToInvoice"), result.Value.InvoiceNumber, result.Value.Items.Count), NotificationSeverity.Success);
         });
     }
 
@@ -392,6 +406,32 @@ public partial class POSViewModel : BaseViewModel
 
             SetSale(result.Value, SelectedProduct.ProductId);
         });
+    }
+
+    /// <summary>Increases the selected cart item quantity by one.</summary>
+    [RelayCommand]
+    private async Task IncreaseQuantityAsync()
+    {
+        if (SelectedCartItem is null)
+        {
+            return;
+        }
+
+        ItemQuantity = SelectedCartItem.Quantity + 1;
+        await UpdateQuantityAsync();
+    }
+
+    /// <summary>Decreases the selected cart item quantity by one.</summary>
+    [RelayCommand]
+    private async Task DecreaseQuantityAsync()
+    {
+        if (SelectedCartItem is null || SelectedCartItem.Quantity <= 1)
+        {
+            return;
+        }
+
+        ItemQuantity = SelectedCartItem.Quantity - 1;
+        await UpdateQuantityAsync();
     }
 
     /// <summary>Updates the selected cart item quantity.</summary>
@@ -490,7 +530,7 @@ public partial class POSViewModel : BaseViewModel
                 return;
             }
 
-            _notificationService.Show("POS", "Sale suspended.", NotificationSeverity.Information);
+            _notificationService.Show(_localizationService.T("POS.Title"), _localizationService.T("POS.SaleSuspended"), NotificationSeverity.Information);
             await StartSaleAsync();
         });
     }
@@ -522,7 +562,7 @@ public partial class POSViewModel : BaseViewModel
     [RelayCommand]
     private async Task CancelSaleAsync()
     {
-        var confirmed = await _dialogService.ShowConfirmationAsync("Cancel sale", "Cancel the active sale?");
+        var confirmed = await _dialogService.ShowConfirmationAsync(_localizationService.T("POS.CancelTitle"), _localizationService.T("POS.CancelConfirm"));
         if (!confirmed)
         {
             return;
@@ -547,11 +587,11 @@ public partial class POSViewModel : BaseViewModel
     {
         if (CurrentSale is null || CurrentSale.Items.Count == 0)
         {
-            await ShowErrorAsync("A sale must contain at least one item.");
+            await ShowErrorAsync(_localizationService.T("POS.EmptySale"));
             return;
         }
 
-        var confirmed = await _dialogService.ShowConfirmationAsync("Complete sale", "Complete payment and prepare receipt?");
+        var confirmed = await _dialogService.ShowConfirmationAsync(_localizationService.T("POS.CompleteSale"), _localizationService.T("POS.CompleteConfirm"));
         if (!confirmed)
         {
             return;
@@ -567,13 +607,30 @@ public partial class POSViewModel : BaseViewModel
             }
 
             _notificationService.Show(
-                "POS",
+                _localizationService.T("POS.Title"),
                 result.Value.ReceiptPrintSucceeded
-                    ? $"{result.Value.ReceiptCopies} receipt copy/copies printed successfully for {result.Value.InvoiceNumber}."
-                    : $"Sale completed, but receipt printing failed. {result.Value.ReceiptPrintError}",
+                    ? string.Format(_localizationService.T("POS.ReceiptPrinted"), result.Value.ReceiptCopies, result.Value.InvoiceNumber)
+                    : string.Format(_localizationService.T("POS.ReceiptFailed"), result.Value.ReceiptPrintError),
                 result.Value.ReceiptPrintSucceeded ? NotificationSeverity.Success : NotificationSeverity.Warning);
             await StartSaleAsync();
         });
+    }
+
+    /// <summary>Sets the paid amount to the exact sale total.</summary>
+    [RelayCommand]
+    private void PayExact()
+    {
+        AmountPaid = CurrentSale?.Summary.GrandTotal ?? 0m;
+    }
+
+    /// <summary>Adds a quick cash amount to the paid amount.</summary>
+    [RelayCommand]
+    private void AddQuickCash(string? amountText)
+    {
+        if (decimal.TryParse(amountText, out var amount) && amount > 0)
+        {
+            AmountPaid += amount;
+        }
     }
 
     private async Task RefreshHeldSalesAsync()
@@ -608,6 +665,17 @@ public partial class POSViewModel : BaseViewModel
         return true;
     }
 
+    private void ApplyLocalizedText()
+    {
+        Title = _localizationService.T("POS.Cashier");
+        if (string.IsNullOrWhiteSpace(LastScanMessage) || LastScanMessage == "Ready to scan." || LastScanMessage == "جاهز لمسح الكود.")
+        {
+            LastScanMessage = _localizationService.T("POS.ReadyToScan");
+        }
+
+        UpdateDerivedState();
+    }
+
     private void SetSale(SaleSessionDto sale, Guid? selectedProductId = null)
     {
         CurrentSale = sale;
@@ -630,6 +698,7 @@ public partial class POSViewModel : BaseViewModel
         }
 
         OnPropertyChanged(nameof(CurrentSale));
+        UpdateDerivedState();
     }
 
     partial void OnSelectedCartItemChanged(SaleCartItemDto? value)
@@ -654,6 +723,7 @@ public partial class POSViewModel : BaseViewModel
         CurrentSale.Summary.AmountPaid = decimal.Round(CurrentSale.AmountPaid, 2);
         CurrentSale.Summary.Change = decimal.Round(Math.Max(CurrentSale.AmountPaid - CurrentSale.Summary.GrandTotal, 0m), 2);
         OnPropertyChanged(nameof(CurrentSale));
+        UpdateDerivedState();
     }
 
     partial void OnReceiptCopiesChanged(int value)
@@ -663,6 +733,23 @@ public partial class POSViewModel : BaseViewModel
         {
             ReceiptCopies = clamped;
         }
+    }
+
+    private void UpdateDerivedState()
+    {
+        var totalQuantity = CurrentSale?.Items.Sum(item => item.Quantity) ?? 0;
+        var lines = CurrentSale?.Items.Count ?? 0;
+        var total = CurrentSale?.Summary.GrandTotal ?? 0m;
+        var paid = CurrentSale?.AmountPaid ?? 0m;
+        var lowStockLines = CurrentSale?.Items.Count(item => item.AvailableQuantity <= 2) ?? 0;
+
+        CartSummaryText = string.Format(_localizationService.T("POS.CartSummary"), lines, totalQuantity, total);
+        PaymentStatusText = paid >= total && total > 0
+            ? string.Format(_localizationService.T("POS.PaymentReady"), paid - total)
+            : string.Format(_localizationService.T("POS.PaymentRemaining"), Math.Max(total - paid, 0m));
+        StockAlertText = lowStockLines == 0
+            ? _localizationService.T("POS.StockHealthy")
+            : string.Format(_localizationService.T("POS.StockWatch"), lowStockLines);
     }
 
     private async Task ExecuteAsync(Func<Task> action)
@@ -678,5 +765,5 @@ public partial class POSViewModel : BaseViewModel
         }
     }
 
-    private Task ShowErrorAsync(string? message) => _dialogService.ShowErrorAsync("POS", string.IsNullOrWhiteSpace(message) ? "The POS operation could not be completed." : message);
+    private Task ShowErrorAsync(string? message) => _dialogService.ShowErrorAsync(_localizationService.T("POS.Title"), string.IsNullOrWhiteSpace(message) ? _localizationService.T("POS.OperationFailed") : message);
 }

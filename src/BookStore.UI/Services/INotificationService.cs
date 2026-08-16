@@ -28,4 +28,9 @@ public interface INotificationService
     /// <param name="severity">The severity.</param>
     /// <param name="duration">The display duration.</param>
     void Show(string title, string message, NotificationSeverity severity, TimeSpan duration);
+
+    /// <summary>
+    /// Clears all active notifications.
+    /// </summary>
+    void Clear();
 }

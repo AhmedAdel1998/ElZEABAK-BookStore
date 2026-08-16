@@ -32,7 +32,7 @@ public sealed class BookStoreReportQueryService : IReportQueryService
                 LowStockProducts = group.Count(product => product.Quantity > 0 && product.Quantity <= product.MinimumStock),
                 OutOfStockProducts = group.Count(product => product.Quantity == 0)
             })
-            .FirstOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(cancellationToken);
         var bestProduct = (await GetBestSellingProductsAsync(new GetBestSellingProductsQuery(query.DateRange, 1), cancellationToken)).FirstOrDefault()?.Product ?? "None";
         var topCustomer = (await GetCustomerReportAsync(new GetCustomerReportQuery(query.DateRange, Top: 1), cancellationToken)).FirstOrDefault()?.Customer ?? "Walk-in";
         var topCashier = (await GetCashierPerformanceAsync(new GetCashierPerformanceQuery(query.DateRange), cancellationToken)).OrderByDescending(row => row.TotalSales).FirstOrDefault()?.Cashier ?? "None";
@@ -76,7 +76,7 @@ public sealed class BookStoreReportQueryService : IReportQueryService
                 GrossRevenue = group.Sum(row => row.Gross),
                 NetRevenue = group.Sum(row => row.Total)
             })
-            .FirstOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(cancellationToken);
 
         return rows is null
             ? new SalesSummaryDto()
@@ -144,7 +144,7 @@ public sealed class BookStoreReportQueryService : IReportQueryService
                 Revenue = group.Sum(row => row.Item.Total),
                 Cost = group.Sum(row => row.Product.PurchasePrice * row.Item.Quantity)
             })
-            .FirstOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(cancellationToken);
 
         var revenue = Math.Round(rows?.Revenue ?? 0, 2);
         var cost = Math.Round(rows?.Cost ?? 0, 2);
@@ -478,26 +478,41 @@ public sealed class BookStoreReportQueryService : IReportQueryService
 
     private async Task<IReadOnlyCollection<ProductSalesRowDto>> BuildProductSalesRowsAsync(ReportDateRange range, CancellationToken cancellationToken)
     {
-        var rows = await SaleItemRows(range)
+        var sourceRows = await SaleItemRows(range)
+            .Select(row => new
+            {
+                ProductId = row.Product.Id,
+                Product = row.Product.Title,
+                Barcode = row.Product.Barcode.Value,
+                Category = row.Category.Name,
+                row.Item.Quantity,
+                row.Item.Total,
+                row.Product.PurchasePrice,
+                row.Item.UnitPrice,
+                SaleId = row.Sale.Id
+            })
+            .ToArrayAsync(cancellationToken);
+
+        var rows = sourceRows
             .GroupBy(row => new
             {
-                row.Product.Id,
-                row.Product.Title,
-                Category = row.Category.Name
+                row.ProductId,
+                row.Product,
+                row.Barcode,
+                row.Category
             })
             .Select(group => new
             {
-                ProductId = group.Key.Id,
-                Product = group.Key.Title,
-                Barcode = group.Max(row => row.Product.Barcode.Value),
+                group.Key.ProductId,
+                group.Key.Product,
+                group.Key.Barcode,
                 group.Key.Category,
-                QuantitySold = group.Sum(row => row.Item.Quantity),
-                Revenue = group.Sum(row => row.Item.Total),
-                Cost = group.Sum(row => row.Product.PurchasePrice * row.Item.Quantity),
-                AverageSellingPrice = group.Average(row => row.Item.UnitPrice),
-                NumberOfTransactions = group.Select(row => row.Sale.Id).Distinct().Count()
-            })
-            .ToArrayAsync(cancellationToken);
+                QuantitySold = group.Sum(row => row.Quantity),
+                Revenue = group.Sum(row => row.Total),
+                Cost = group.Sum(row => row.PurchasePrice * row.Quantity),
+                AverageSellingPrice = group.Average(row => row.UnitPrice),
+                NumberOfTransactions = group.Select(row => row.SaleId).Distinct().Count()
+            });
 
         return rows
             .Select(row =>

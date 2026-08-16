@@ -4,6 +4,8 @@ using BookStore.Application.Features.Inventory.Queries.GetInventoryDashboard;
 using BookStore.Application.Features.Reports.DTOs;
 using BookStore.Application.Features.Reports.Handlers;
 using BookStore.Application.Features.Reports.Queries;
+using BookStore.Application.Interfaces;
+using BookStore.Shared.Constants;
 using BookStore.UI.Navigation;
 using BookStore.UI.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -23,6 +25,8 @@ public partial class DashboardViewModel : BaseViewModel
     private readonly IShellNavigationService _navigationService;
     private readonly INotificationService _notificationService;
     private readonly ILocalizationService _localizationService;
+    private readonly IAuthorizationService _authorizationService;
+    private readonly IInventoryNavigationState _inventoryNavigationState;
 
     [ObservableProperty] private ReportsDashboardDto reports = new();
     [ObservableProperty] private InventoryDashboardDto inventory = new();
@@ -40,7 +44,9 @@ public partial class DashboardViewModel : BaseViewModel
         InventoryHandlers.GetInventoryDashboardHandler inventoryDashboardHandler,
         IShellNavigationService navigationService,
         INotificationService notificationService,
-        ILocalizationService localizationService)
+        ILocalizationService localizationService,
+        IAuthorizationService authorizationService,
+        IInventoryNavigationState inventoryNavigationState)
     {
         _reportsDashboardHandler = reportsDashboardHandler;
         _salesSummaryHandler = salesSummaryHandler;
@@ -48,6 +54,8 @@ public partial class DashboardViewModel : BaseViewModel
         _navigationService = navigationService;
         _notificationService = notificationService;
         _localizationService = localizationService;
+        _authorizationService = authorizationService;
+        _inventoryNavigationState = inventoryNavigationState;
         ApplyLocalizedText();
         _localizationService.CultureChanged += (_, _) => ApplyLocalizedText();
         _ = RefreshAsync();
@@ -95,10 +103,32 @@ public partial class DashboardViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand] private Task OpenSalesAsync() => _navigationService.NavigateToAsync<POSViewModel>(_localizationService.T("Nav.SalesPOS"));
-    [RelayCommand] private Task OpenProductsAsync() => _navigationService.NavigateToAsync<ProductListViewModel>(_localizationService.T("Nav.Products"));
-    [RelayCommand] private Task OpenInventoryAsync() => _navigationService.NavigateToAsync<InventoryDashboardViewModel>(_localizationService.T("Nav.Inventory"));
-    [RelayCommand] private Task OpenReportsAsync() => _navigationService.NavigateToAsync<ReportsDashboardViewModel>(_localizationService.T("Nav.Reports"));
+    [RelayCommand] private Task OpenSalesAsync() => NavigateIfAllowedAsync<POSViewModel>(PermissionConstants.SalesCreate, _localizationService.T("Nav.SalesPOS"));
+    [RelayCommand] private Task OpenProductsAsync() => NavigateIfAllowedAsync<ProductListViewModel>(PermissionConstants.ProductView, _localizationService.T("Nav.Products"));
+    [RelayCommand] private Task OpenInventoryAsync() => NavigateIfAllowedAsync<InventoryDashboardViewModel>(PermissionConstants.InventoryView, _localizationService.T("Nav.Inventory"));
+    [RelayCommand] private Task OpenReportsAsync() => NavigateIfAllowedAsync<ReportsDashboardViewModel>(PermissionConstants.ReportView, _localizationService.T("Nav.Reports"));
+    [RelayCommand] private Task OpenBackupAsync() => NavigateIfAllowedAsync<BackupListViewModel>(PermissionConstants.BackupView, _localizationService.T("Nav.Backup"));
+    [RelayCommand] private Task OpenSalesSummaryAsync() => NavigateIfAllowedAsync<SalesSummaryViewModel>(PermissionConstants.ReportSales, $"{_localizationService.T("Nav.Reports")} > {_localizationService.T("Dashboard.TodaySales")}");
+    [RelayCommand] private Task OpenSalesDetailsAsync() => NavigateIfAllowedAsync<SalesDetailsViewModel>(PermissionConstants.ReportSales, $"{_localizationService.T("Nav.Reports")} > {_localizationService.T("Dashboard.Transactions")}");
+    [RelayCommand] private Task OpenProfitAsync() => NavigateIfAllowedAsync<ProfitReportViewModel>(PermissionConstants.ReportProfit, $"{_localizationService.T("Nav.Reports")} > {_localizationService.T("Dashboard.Profit")}");
+    [RelayCommand] private Task OpenInventoryValueAsync() => NavigateIfAllowedAsync<InventoryReportViewModel>(PermissionConstants.ReportInventory, $"{_localizationService.T("Nav.Reports")} > {_localizationService.T("Dashboard.InventoryValue")}");
+    [RelayCommand] private Task OpenDiscountsAsync() => NavigateIfAllowedAsync<SalesSummaryViewModel>(PermissionConstants.ReportSales, $"{_localizationService.T("Nav.Reports")} > {_localizationService.T("Dashboard.DiscountsToday")}");
+
+    [RelayCommand]
+    private Task OpenLowStockAsync()
+    {
+        _inventoryNavigationState.LowStockOnly = true;
+        _inventoryNavigationState.OutOfStockOnly = false;
+        return NavigateIfAllowedAsync<InventoryListViewModel>(PermissionConstants.InventoryView, $"{_localizationService.T("Nav.Inventory")} > {_localizationService.T("Dashboard.LowStock")}");
+    }
+
+    [RelayCommand]
+    private Task OpenOutOfStockAsync()
+    {
+        _inventoryNavigationState.LowStockOnly = false;
+        _inventoryNavigationState.OutOfStockOnly = true;
+        return NavigateIfAllowedAsync<InventoryListViewModel>(PermissionConstants.InventoryView, $"{_localizationService.T("Nav.Inventory")} > {_localizationService.T("Dashboard.OutOfStock")}");
+    }
 
     private void ApplyLocalizedText()
     {
@@ -111,16 +141,22 @@ public partial class DashboardViewModel : BaseViewModel
     private void RebuildDashboard()
     {
         Metrics.Clear();
-        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.TodaySales"), Reports.TodaysSales.ToString("N2"), _localizationService.T("Dashboard.TodaySalesHint"), "S", "#D99A00"));
-        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.Transactions"), Reports.TodaysTransactions.ToString("N0"), _localizationService.T("Dashboard.TransactionsHint"), "T", "#0F766E"));
-        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.InventoryValue"), Inventory.TotalSellingValue.ToString("N2"), _localizationService.T("Dashboard.InventoryValueHint"), "I", "#7C3AED"));
-        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.LowStock"), Inventory.LowStockCount.ToString("N0"), _localizationService.T("Dashboard.LowStockHint"), "L", "#B91C1C"));
+        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.TodaySales"), Reports.TodaysSales.ToString("N2"), _localizationService.T("Dashboard.TodaySalesHint"), "S", "#D99A00", OpenSalesSummaryCommand));
+        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.Transactions"), Reports.TodaysTransactions.ToString("N0"), _localizationService.T("Dashboard.TransactionsHint"), "T", "#0F766E", OpenSalesDetailsCommand));
+        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.InventoryValue"), Inventory.TotalSellingValue.ToString("N2"), _localizationService.T("Dashboard.InventoryValueHint"), "I", "#7C3AED", OpenInventoryValueCommand));
+        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.LowStock"), Inventory.LowStockCount.ToString("N0"), _localizationService.T("Dashboard.LowStockHint"), "L", "#B91C1C", OpenLowStockCommand));
+        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.Profit"), Reports.TodaysProfit.ToString("N2"), _localizationService.T("Dashboard.ProfitTodayHint"), "P", "#15803D", OpenProfitCommand));
+        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.OutOfStock"), Inventory.OutOfStockCount.ToString("N0"), _localizationService.T("Dashboard.OutOfStockHint"), "O", "#991B1B", OpenOutOfStockCommand));
+        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.PurchaseValue"), Inventory.TotalPurchaseValue.ToString("N2"), _localizationService.T("Dashboard.PurchaseValueHint"), "C", "#0369A1", OpenInventoryValueCommand));
+        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.DiscountsToday"), Reports.TodaysDiscounts.ToString("N2"), _localizationService.T("Dashboard.DiscountsTodayHint"), "D", "#A16207", OpenDiscountsCommand));
 
         Activity.Clear();
         Activity.Add(new DashboardActivity(_localizationService.T("Dashboard.BestSeller"), EmptyAware(Reports.BestSellingProduct), $"{_localizationService.T("Dashboard.Transactions")}: {Reports.TodaysTransactions:N0}"));
         Activity.Add(new DashboardActivity(_localizationService.T("Dashboard.TopCustomer"), EmptyAware(Reports.TopCustomer), $"{_localizationService.T("Dashboard.TodaySales")}: {Reports.TodaysSales:N2}"));
         Activity.Add(new DashboardActivity(_localizationService.T("Dashboard.TopCashier"), EmptyAware(Reports.TopCashier), $"{_localizationService.T("Dashboard.Profit")}: {Reports.TodaysProfit:N2}"));
         Activity.Add(new DashboardActivity(_localizationService.T("Dashboard.StockStatus"), $"{Inventory.LowStockCount:N0} / {Inventory.OutOfStockCount:N0}", $"{_localizationService.T("Dashboard.TotalProducts")}: {Inventory.TotalProducts:N0}"));
+        Activity.Add(new DashboardActivity(_localizationService.T("Dashboard.InventoryValue"), Inventory.TotalSellingValue.ToString("N2"), $"{_localizationService.T("Dashboard.PurchaseValue")}: {Inventory.TotalPurchaseValue:N2}"));
+        Activity.Add(new DashboardActivity(_localizationService.T("Dashboard.DiscountsToday"), Reports.TodaysDiscounts.ToString("N2"), $"{_localizationService.T("Dashboard.TodaySales")}: {Reports.TodaysSales:N2}"));
 
         var stockedProducts = Math.Max(Inventory.TotalProducts - Inventory.OutOfStockCount, 0);
         InventoryHealthPercent = Inventory.TotalProducts == 0 ? 0 : Math.Clamp((int)Math.Round(stockedProducts * 100m / Inventory.TotalProducts), 0, 100);
@@ -133,10 +169,31 @@ public partial class DashboardViewModel : BaseViewModel
     private void BuildQuickActions()
     {
         QuickActions.Clear();
-        QuickActions.Add(new DashboardQuickAction(_localizationService.T("Dashboard.OpenPOS"), _localizationService.T("Dashboard.OpenPOSHint"), OpenSalesCommand));
-        QuickActions.Add(new DashboardQuickAction(_localizationService.T("Dashboard.Products"), _localizationService.T("Dashboard.ProductsHint"), OpenProductsCommand));
-        QuickActions.Add(new DashboardQuickAction(_localizationService.T("Dashboard.Inventory"), _localizationService.T("Dashboard.InventoryHint"), OpenInventoryCommand));
-        QuickActions.Add(new DashboardQuickAction(_localizationService.T("Dashboard.Reports"), _localizationService.T("Dashboard.ReportsHint"), OpenReportsCommand));
+        AddQuickAction(PermissionConstants.SalesCreate, _localizationService.T("Dashboard.OpenPOS"), _localizationService.T("Dashboard.OpenPOSHint"), OpenSalesCommand);
+        AddQuickAction(PermissionConstants.ProductView, _localizationService.T("Dashboard.Products"), _localizationService.T("Dashboard.ProductsHint"), OpenProductsCommand);
+        AddQuickAction(PermissionConstants.InventoryView, _localizationService.T("Dashboard.Inventory"), _localizationService.T("Dashboard.InventoryHint"), OpenInventoryCommand);
+        AddQuickAction(PermissionConstants.ReportView, _localizationService.T("Dashboard.Reports"), _localizationService.T("Dashboard.ReportsHint"), OpenReportsCommand);
+        AddQuickAction(PermissionConstants.BackupView, _localizationService.T("Dashboard.BackupHealth"), _localizationService.T("Dashboard.BackupHealthHint"), OpenBackupCommand);
+    }
+
+    private void AddQuickAction(string permission, string title, string hint, System.Windows.Input.ICommand command)
+    {
+        if (_authorizationService.HasPermission(permission))
+        {
+            QuickActions.Add(new DashboardQuickAction(title, hint, command));
+        }
+    }
+
+    private Task NavigateIfAllowedAsync<TViewModel>(string permission, string breadcrumb)
+        where TViewModel : BaseViewModel
+    {
+        if (!_authorizationService.HasPermission(permission))
+        {
+            _notificationService.Show(_localizationService.T("Dashboard.Title"), _localizationService.T("Auth.PermissionDenied"), NotificationSeverity.Warning);
+            return Task.CompletedTask;
+        }
+
+        return _navigationService.NavigateToAsync<TViewModel>(breadcrumb);
     }
 
     private string EmptyAware(string value)
@@ -170,6 +227,6 @@ public partial class DashboardViewModel : BaseViewModel
     }
 }
 
-public sealed record DashboardMetric(string Title, string Value, string Hint, string Icon, string Accent);
+public sealed record DashboardMetric(string Title, string Value, string Hint, string Icon, string Accent, System.Windows.Input.ICommand Command);
 public sealed record DashboardActivity(string Title, string Value, string Detail);
 public sealed record DashboardQuickAction(string Title, string Hint, System.Windows.Input.ICommand Command);

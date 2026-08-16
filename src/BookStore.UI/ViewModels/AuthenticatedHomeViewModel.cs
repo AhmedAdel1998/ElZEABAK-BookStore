@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using BookStore.Application.Interfaces;
 using BookStore.Shared.Constants;
 using BookStore.UI.Navigation;
@@ -59,6 +60,9 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     [ObservableProperty]
     private int contentColumn = 1;
 
+    [ObservableProperty]
+    private bool isNotificationsOpen;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthenticatedHomeViewModel"/> class.
     /// </summary>
@@ -86,6 +90,7 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
         _localizationService = localizationService;
         _loadingService.StateChanged += OnLoadingStateChanged;
         _localizationService.CultureChanged += OnCultureChanged;
+        _notificationService.Notifications.CollectionChanged += OnNotificationsChanged;
         ApplyLocalizedText();
         BuildNavigationItems();
         CurrentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
@@ -109,6 +114,11 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     /// Gets active notifications.
     /// </summary>
     public ObservableCollection<NotificationMessage> Notifications => _notificationService.Notifications;
+
+    /// <summary>
+    /// Gets active notification count.
+    /// </summary>
+    public int NotificationCount => Notifications.Count;
 
     /// <summary>
     /// Gets the signed-in user's display name.
@@ -148,6 +158,19 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     private async Task ToggleLanguageAsync()
     {
         await _localizationService.ToggleLanguageAsync();
+    }
+
+    [RelayCommand]
+    private void ToggleNotifications()
+    {
+        IsNotificationsOpen = !IsNotificationsOpen;
+    }
+
+    [RelayCommand]
+    private void ClearNotifications()
+    {
+        _notificationService.Clear();
+        IsNotificationsOpen = false;
     }
 
     /// <summary>
@@ -295,6 +318,11 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     {
         IsLoading = _loadingService.IsLoading;
         LoadingText = _loadingService.LoadingText;
+    }
+
+    private void OnNotificationsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(NotificationCount));
     }
 
     private void ApplyLocalizedText()

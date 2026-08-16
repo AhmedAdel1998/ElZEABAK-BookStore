@@ -20,6 +20,7 @@ public partial class InventoryListViewModel : BaseViewModel
     private readonly IShellNavigationService _navigationService;
     private readonly IAuthorizationService _authorizationService;
     private readonly INotificationService _notificationService;
+    private readonly IInventoryNavigationState _navigationState;
 
     [ObservableProperty] private string searchTerm = string.Empty;
     [ObservableProperty] private bool lowStockOnly;
@@ -29,12 +30,17 @@ public partial class InventoryListViewModel : BaseViewModel
     [ObservableProperty] private int totalCount;
 
     /// <summary>Initializes a new instance of the <see cref="InventoryListViewModel"/> class.</summary>
-    public InventoryListViewModel(InventoryHandlers.GetInventoryHandler inventoryHandler, IShellNavigationService navigationService, IAuthorizationService authorizationService, INotificationService notificationService)
+    public InventoryListViewModel(InventoryHandlers.GetInventoryHandler inventoryHandler, IShellNavigationService navigationService, IAuthorizationService authorizationService, INotificationService notificationService, IInventoryNavigationState navigationState)
     {
         _inventoryHandler = inventoryHandler;
         _navigationService = navigationService;
         _authorizationService = authorizationService;
         _notificationService = notificationService;
+        _navigationState = navigationState;
+        lowStockOnly = _navigationState.LowStockOnly;
+        outOfStockOnly = _navigationState.OutOfStockOnly;
+        _navigationState.LowStockOnly = false;
+        _navigationState.OutOfStockOnly = false;
         Title = "Inventory";
         _ = LoadAsync();
     }
