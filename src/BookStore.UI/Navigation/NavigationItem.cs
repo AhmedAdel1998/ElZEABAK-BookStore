@@ -11,7 +11,8 @@ public partial class NavigationItem : ObservableObject
     /// <summary>
     /// Gets or sets the display text.
     /// </summary>
-    public string Text { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string text = string.Empty;
 
     /// <summary>
     /// Gets or sets the icon text.
@@ -22,6 +23,11 @@ public partial class NavigationItem : ObservableObject
     /// Gets or sets the breadcrumb path.
     /// </summary>
     public string Breadcrumb { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the localization key used for the display text.
+    /// </summary>
+    public string TextKey { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the required permission.

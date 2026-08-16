@@ -1,4 +1,5 @@
 using BookStore.Persistence.Context;
+using BookStore.Shared.Constants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,7 +33,8 @@ public class DatabaseInitializer : IHostedService
         var dbContext = scope.ServiceProvider.GetRequiredService<BookStoreDbContext>();
         var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
 
-        Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "Database"));
+        Directory.CreateDirectory(ApplicationPaths.ResolveDataPath(FolderConstants.Database));
+        await ConfigureSqliteRuntimeAsync(dbContext, cancellationToken);
         _logger.LogInformation("Applying database migrations");
         await dbContext.Database.MigrateAsync(cancellationToken);
         await seeder.SeedAsync(cancellationToken);
@@ -42,5 +44,12 @@ public class DatabaseInitializer : IHostedService
     public Task StopAsync(CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
+    }
+
+    private static async Task ConfigureSqliteRuntimeAsync(BookStoreDbContext dbContext, CancellationToken cancellationToken)
+    {
+        await dbContext.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys = ON;", cancellationToken);
+        await dbContext.Database.ExecuteSqlRawAsync("PRAGMA busy_timeout = 30000;", cancellationToken);
+        await dbContext.Database.ExecuteSqlRawAsync("PRAGMA journal_mode = WAL;", cancellationToken);
     }
 }

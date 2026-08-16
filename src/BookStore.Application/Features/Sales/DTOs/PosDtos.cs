@@ -15,6 +15,8 @@ public sealed class PosProductDto
     public string? ISBN { get; set; }
     /// <summary>Gets or sets title.</summary>
     public string Title { get; set; } = string.Empty;
+    /// <summary>Gets or sets category name.</summary>
+    public string? CategoryName { get; set; }
     /// <summary>Gets or sets author.</summary>
     public string? Author { get; set; }
     /// <summary>Gets or sets unit price.</summary>
@@ -38,6 +40,8 @@ public sealed class SaleCartItemDto
     public string Barcode { get; set; } = string.Empty;
     /// <summary>Gets or sets title.</summary>
     public string Title { get; set; } = string.Empty;
+    /// <summary>Gets or sets category name.</summary>
+    public string? CategoryName { get; set; }
     /// <summary>Gets or sets quantity.</summary>
     public int Quantity { get; set; }
     /// <summary>Gets or sets available quantity.</summary>

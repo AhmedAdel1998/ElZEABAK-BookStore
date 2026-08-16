@@ -53,12 +53,25 @@ public partial class POSViewModel : BaseViewModel
     private readonly FindProductByBarcodeHandler _findProductByBarcodeHandler;
     private readonly IDialogService _dialogService;
     private readonly INotificationService _notificationService;
+    private readonly ILocalizationService _localizationService;
 
     [ObservableProperty]
     private SaleSessionDto? currentSale;
 
     [ObservableProperty]
     private string barcodeText = string.Empty;
+
+    [ObservableProperty]
+    private bool autoAddScans = true;
+
+    [ObservableProperty]
+    private string lastScanMessage = string.Empty;
+
+    [ObservableProperty]
+    private string lastScanCategory = string.Empty;
+
+    [ObservableProperty]
+    private string lastScanDestination = string.Empty;
 
     [ObservableProperty]
     private string searchText = string.Empty;
@@ -83,6 +96,9 @@ public partial class POSViewModel : BaseViewModel
 
     [ObservableProperty]
     private decimal amountPaid;
+
+    [ObservableProperty]
+    private int receiptCopies = 1;
 
     [ObservableProperty]
     private string customerSearchText = string.Empty;
@@ -116,7 +132,8 @@ public partial class POSViewModel : BaseViewModel
         CreateCustomerHandler createCustomerHandler,
         FindProductByBarcodeHandler findProductByBarcodeHandler,
         IDialogService dialogService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        ILocalizationService localizationService)
     {
         _startSaleHandler = startSaleHandler;
         _addItemHandler = addItemHandler;
@@ -137,7 +154,9 @@ public partial class POSViewModel : BaseViewModel
         _findProductByBarcodeHandler = findProductByBarcodeHandler;
         _dialogService = dialogService;
         _notificationService = notificationService;
-        Title = "Sales > POS";
+        _localizationService = localizationService;
+        Title = _localizationService.T("POS.Cashier");
+        LastScanMessage = _localizationService.T("POS.ReadyToScan");
         _ = StartSaleAsync();
     }
 
@@ -277,9 +296,17 @@ public partial class POSViewModel : BaseViewModel
 
         await ExecuteAsync(async () =>
         {
+            if (!await EnsureActiveSaleAsync())
+            {
+                return;
+            }
+
             var lookup = await _findProductByBarcodeHandler.HandleAsync(new FindProductByBarcodeRequest(barcode));
             if (!lookup.IsSuccess || lookup.Value is null)
             {
+                LastScanMessage = $"Barcode {barcode} was not added.";
+                LastScanCategory = string.Empty;
+                LastScanDestination = string.Empty;
                 await ShowErrorAsync(lookup.Error);
                 return;
             }
@@ -287,13 +314,30 @@ public partial class POSViewModel : BaseViewModel
             var result = await _addItemHandler.HandleAsync(new AddItemRequest(lookup.Value.ProductId, 1));
             if (!result.IsSuccess || result.Value is null)
             {
+                LastScanMessage = $"{lookup.Value.Title} was not added.";
+                LastScanCategory = lookup.Value.CategoryName ?? "No category";
+                LastScanDestination = CurrentSale?.InvoiceNumber ?? string.Empty;
                 await ShowErrorAsync(result.Error);
                 return;
             }
 
             BarcodeText = string.Empty;
-            SetSale(result.Value);
+            SetSale(result.Value, lookup.Value.ProductId);
+            LastScanMessage = $"Added {lookup.Value.Title}.";
+            LastScanCategory = lookup.Value.CategoryName ?? "No category";
+            LastScanDestination = $"Added to invoice {result.Value.InvoiceNumber}; cart lines: {result.Value.Items.Count}.";
+            _notificationService.Show("Scan", $"{lookup.Value.Title} added to {result.Value.InvoiceNumber}.", NotificationSeverity.Success);
         });
+    }
+
+    /// <summary>Adds the scanned barcode when scanner auto-add is enabled.</summary>
+    [RelayCommand]
+    private async Task AddScannedBarcodeAsync()
+    {
+        if (AutoAddScans)
+        {
+            await AddBarcodeAsync();
+        }
     }
 
     /// <summary>Searches active products for manual selection.</summary>
@@ -334,6 +378,11 @@ public partial class POSViewModel : BaseViewModel
 
         await ExecuteAsync(async () =>
         {
+            if (!await EnsureActiveSaleAsync())
+            {
+                return;
+            }
+
             var result = await _addItemHandler.HandleAsync(new AddItemRequest(SelectedProduct.ProductId, Math.Max(ItemQuantity, 1)));
             if (!result.IsSuccess || result.Value is null)
             {
@@ -341,7 +390,7 @@ public partial class POSViewModel : BaseViewModel
                 return;
             }
 
-            SetSale(result.Value);
+            SetSale(result.Value, SelectedProduct.ProductId);
         });
     }
 
@@ -363,7 +412,7 @@ public partial class POSViewModel : BaseViewModel
                 return;
             }
 
-            SetSale(result.Value);
+            SetSale(result.Value, SelectedCartItem.ProductId);
         });
     }
 
@@ -496,6 +545,12 @@ public partial class POSViewModel : BaseViewModel
     [RelayCommand]
     private async Task CompleteSaleAsync()
     {
+        if (CurrentSale is null || CurrentSale.Items.Count == 0)
+        {
+            await ShowErrorAsync("A sale must contain at least one item.");
+            return;
+        }
+
         var confirmed = await _dialogService.ShowConfirmationAsync("Complete sale", "Complete payment and prepare receipt?");
         if (!confirmed)
         {
@@ -504,7 +559,7 @@ public partial class POSViewModel : BaseViewModel
 
         await ExecuteAsync(async () =>
         {
-            var result = await _completeSaleHandler.HandleAsync(new CompleteSaleRequest(SelectedPaymentMethod, AmountPaid));
+            var result = await _completeSaleHandler.HandleAsync(new CompleteSaleRequest(SelectedPaymentMethod, AmountPaid, Math.Clamp(ReceiptCopies, 1, 5)));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
@@ -514,7 +569,7 @@ public partial class POSViewModel : BaseViewModel
             _notificationService.Show(
                 "POS",
                 result.Value.ReceiptPrintSucceeded
-                    ? $"Receipt printed successfully for {result.Value.InvoiceNumber}."
+                    ? $"{result.Value.ReceiptCopies} receipt copy/copies printed successfully for {result.Value.InvoiceNumber}."
                     : $"Sale completed, but receipt printing failed. {result.Value.ReceiptPrintError}",
                 result.Value.ReceiptPrintSucceeded ? NotificationSeverity.Success : NotificationSeverity.Warning);
             await StartSaleAsync();
@@ -534,18 +589,46 @@ public partial class POSViewModel : BaseViewModel
         }
     }
 
-    private void SetSale(SaleSessionDto sale)
+    private async Task<bool> EnsureActiveSaleAsync()
+    {
+        if (CurrentSale is not null)
+        {
+            return true;
+        }
+
+        var result = await _startSaleHandler.HandleAsync(new StartSaleRequest());
+        if (!result.IsSuccess || result.Value is null)
+        {
+            await ShowErrorAsync(result.Error);
+            return false;
+        }
+
+        SetSale(result.Value);
+        await RefreshHeldSalesAsync();
+        return true;
+    }
+
+    private void SetSale(SaleSessionDto sale, Guid? selectedProductId = null)
     {
         CurrentSale = sale;
         InvoiceDiscount = sale.InvoiceDiscount;
         AmountPaid = sale.AmountPaid;
         SelectedPaymentMethod = sale.PaymentMethod;
-        SelectedCartItem = sale.Items.FirstOrDefault();
+        ReceiptCopies = Math.Clamp(ReceiptCopies, 1, 5);
+        SelectedCartItem = selectedProductId.HasValue
+            ? sale.Items.FirstOrDefault(item => item.ProductId == selectedProductId.Value) ?? sale.Items.FirstOrDefault()
+            : sale.Items.FirstOrDefault();
         if (SelectedCartItem is not null)
         {
             ItemQuantity = SelectedCartItem.Quantity;
             LineDiscount = SelectedCartItem.Discount;
         }
+        else
+        {
+            ItemQuantity = 1;
+            LineDiscount = 0;
+        }
+
         OnPropertyChanged(nameof(CurrentSale));
     }
 
@@ -558,6 +641,28 @@ public partial class POSViewModel : BaseViewModel
 
         ItemQuantity = value.Quantity;
         LineDiscount = value.Discount;
+    }
+
+    partial void OnAmountPaidChanged(decimal value)
+    {
+        if (CurrentSale is null)
+        {
+            return;
+        }
+
+        CurrentSale.AmountPaid = Math.Max(value, 0m);
+        CurrentSale.Summary.AmountPaid = decimal.Round(CurrentSale.AmountPaid, 2);
+        CurrentSale.Summary.Change = decimal.Round(Math.Max(CurrentSale.AmountPaid - CurrentSale.Summary.GrandTotal, 0m), 2);
+        OnPropertyChanged(nameof(CurrentSale));
+    }
+
+    partial void OnReceiptCopiesChanged(int value)
+    {
+        var clamped = Math.Clamp(value, 1, 5);
+        if (value != clamped)
+        {
+            ReceiptCopies = clamped;
+        }
     }
 
     private async Task ExecuteAsync(Func<Task> action)

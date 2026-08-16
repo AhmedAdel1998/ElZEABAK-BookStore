@@ -85,7 +85,11 @@ public sealed class ResumeSaleRequestValidator : AbstractValidator<ResumeSaleReq
 public sealed class CompleteSaleRequestValidator : AbstractValidator<CompleteSaleRequest>
 {
     /// <summary>Initializes a new instance of the <see cref="CompleteSaleRequestValidator"/> class.</summary>
-    public CompleteSaleRequestValidator() => RuleFor(request => request.AmountPaid).GreaterThanOrEqualTo(0);
+    public CompleteSaleRequestValidator()
+    {
+        RuleFor(request => request.AmountPaid).GreaterThanOrEqualTo(0);
+        RuleFor(request => request.ReceiptCopies).InclusiveBetween(1, 5);
+    }
 }
 
 /// <summary>Validates POS product search requests.</summary>

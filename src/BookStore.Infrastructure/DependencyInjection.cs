@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddSingleton<ICurrentUserService, CurrentUserService>();
         services.AddSingleton<IRememberMeStore, RememberMeStore>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
+        services.AddScoped<IFirstRunSetupService, FirstRunSetupService>();
         services.AddScoped<IAuthorizationService, PermissionService>();
         services.AddSingleton<IApplicationFolderService, ApplicationFolderService>();
         services.AddScoped<PermissionService>();

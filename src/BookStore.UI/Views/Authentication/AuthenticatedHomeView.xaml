@@ -20,7 +20,7 @@
             <views:ModulePlaceholderView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:DashboardViewModel}">
-            <views:ModulePlaceholderView />
+            <views:DashboardView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:CategoriesViewModel}">
             <views:ModulePlaceholderView />
@@ -190,16 +190,16 @@
         <KeyBinding Key="L" Modifiers="Control" Command="{Binding LogoutCommand}" />
     </UserControl.InputBindings>
 
-    <Grid Background="{DynamicResource AppBackgroundBrush}">
+    <Grid Background="{DynamicResource BookstorePageBrush}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="#111827">
+        <Border Grid.Column="{Binding SidebarColumn}" Background="{DynamicResource WarmChromeBrush}">
             <Border.Style>
                 <Style TargetType="Border">
-                    <Setter Property="Width" Value="244" />
+                    <Setter Property="Width" Value="272" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
                             <Setter Property="Width" Value="76" />
@@ -212,80 +212,91 @@
                         Height="48"
                         Command="{Binding ToggleSidebarCommand}"
                         Content="☰"
-                        Foreground="White"
-                        Background="#111827"
+                        Foreground="#FFE9A3"
+                        Background="{DynamicResource WarmChromeBrush}"
                         BorderThickness="0" />
-                <ItemsControl ItemsSource="{Binding MenuItems}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Margin="8,3"
-                                    Padding="10,8"
-                                    HorizontalContentAlignment="Stretch"
-                                    Command="{Binding Command}"
-                                    Foreground="White"
-                                    BorderThickness="0">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                        <Setter Property="Background" Value="#1F2937" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                <Setter Property="Background" Value="#2563EB" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                                <DockPanel LastChildFill="True">
-                                    <TextBlock Width="34" FontWeight="SemiBold" Text="{Binding Icon}" />
-                                    <TextBlock Text="{Binding Text}" />
-                                </DockPanel>
-                            </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding MenuItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Margin="10,4"
+                                        MinHeight="46"
+                                        Padding="14,10"
+                                        HorizontalContentAlignment="Stretch"
+                                        Command="{Binding Command}"
+                                        Foreground="White"
+                                        BorderThickness="0">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Setter Property="Background" Value="{DynamicResource WarmChromeAltBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource BookstoreGoldBrush}" />
+                                                    <Setter Property="Foreground" Value="#1E1711" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <DockPanel LastChildFill="True" FlowDirection="{DynamicResource AppFlowDirection}">
+                                        <TextBlock Width="42" FontWeight="SemiBold" Text="{Binding Icon}" />
+                                        <TextBlock Margin="10,0,10,0" VerticalAlignment="Center" Text="{Binding Text}" />
+                                    </DockPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </DockPanel>
         </Border>
 
-        <Grid Grid.Column="1">
+        <Grid Grid.Column="{Binding ContentColumn}" FlowDirection="{DynamicResource AppFlowDirection}">
             <Grid.RowDefinitions>
-                <RowDefinition Height="64" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="42" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="30" />
             </Grid.RowDefinitions>
 
-            <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="#D6DAE1" BorderThickness="0,0,0,1">
-                <DockPanel Margin="18,0">
-                    <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-                        <TextBlock FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{Binding Title}" />
+            <Border Grid.Row="0" Padding="18,8" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" MinWidth="240" VerticalAlignment="Center">
+                        <TextBlock FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{Binding Title}" />
                         <TextBlock FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Opacity="0.65">
-                            <Run Text="{Binding DisplayName}" />
+                            <Run Text="{Binding DisplayName, Mode=OneWay}" />
                             <Run Text=" • " />
-                            <Run Text="{Binding Role}" />
+                            <Run Text="{Binding Role, Mode=OneWay}" />
                         </TextBlock>
                     </StackPanel>
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <controls:SearchBox Width="260" Margin="0,0,10,0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="Global search placeholder" />
-                        <Button Margin="0,0,8,0" Command="{Binding ToggleThemeCommand}" Content="Theme" />
-                        <Button Margin="0,0,8,0" Content="Notifications" />
-                        <Button Margin="0,0,8,0" Command="{Binding ChangePasswordCommand}" Content="Settings" />
-                        <Button Command="{Binding LogoutCommand}" Content="Logout" />
-                    </StackPanel>
-                </DockPanel>
+                    <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
+                        <controls:SearchBox Width="250" Margin="6,3" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="{DynamicResource Shell.SearchTooltip}" />
+                        <Button Margin="6,3" Command="{Binding ToggleLanguageCommand}" Content="{Binding LanguageToggleText}" />
+                        <Button Margin="6,3" Command="{Binding ToggleThemeCommand}" Content="{DynamicResource Shell.Theme}" />
+                        <Button Margin="6,3" Content="{DynamicResource Shell.Notifications}" />
+                        <Button Margin="6,3" Command="{Binding ChangePasswordCommand}" Content="{DynamicResource Shell.Settings}" />
+                        <Button Margin="6,3" Command="{Binding LogoutCommand}" Content="{DynamicResource Nav.Logout}" />
+                    </WrapPanel>
+                </Grid>
             </Border>
 
-            <Border Grid.Row="1" Background="#EEF2F7" BorderBrush="#D6DAE1" BorderThickness="0,0,0,1">
-                <DockPanel Margin="18,0">
+            <Border Grid.Row="1" Background="{DynamicResource SurfaceAltBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                <DockPanel Margin="18,0" FlowDirection="{DynamicResource AppFlowDirection}">
                     <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Width="34" Command="{Binding GoBackCommand}" Content="‹" />
                         <Button Width="34" Margin="6,0,0,0" Command="{Binding GoForwardCommand}" Content="›" />
-                        <Button Width="72" Margin="8,0,0,0" Command="{Binding RefreshCommand}" Content="Refresh" />
+                        <Button Width="84" Margin="8,0,8,0" Command="{Binding RefreshCommand}" Content="{DynamicResource Shell.Refresh}" />
                     </StackPanel>
-                    <TextBlock Margin="18,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextBrush}" Text="{Binding ShellNavigation.Breadcrumb}" />
+                    <TextBlock Margin="18,0,18,0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextBrush}" Text="{Binding ShellNavigation.Breadcrumb}" />
                 </DockPanel>
             </Border>
 
             <Grid Grid.Row="2">
-                <ContentControl Margin="18" Content="{Binding ShellNavigation.CurrentViewModel}" />
+                <Border Margin="18" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
+                    <ContentControl Margin="18" Content="{Binding ShellNavigation.CurrentViewModel}" />
+                </Border>
 
                 <controls:LoadingOverlay IsBusy="{Binding IsLoading}" Message="{Binding LoadingText}" />
 
@@ -303,20 +314,20 @@
                 </ItemsControl>
             </Grid>
 
-            <Border Grid.Row="3" Background="#111827">
+            <Border Grid.Row="3" Background="{DynamicResource WarmChromeBrush}">
                 <DockPanel Margin="12,0">
                     <TextBlock VerticalAlignment="Center" Foreground="White">
-                        <Run Text="User: " />
-                        <Run Text="{Binding DisplayName}" />
-                        <Run Text="   DB: " />
+                        <Run Text="{DynamicResource Shell.User}" />
+                        <Run Text="{Binding DisplayName, Mode=OneWay}" />
+                        <Run Text="{DynamicResource Shell.Database}" />
                         <Run Text="{Binding DatabaseStatus}" />
-                        <Run Text="   Internet: " />
+                        <Run Text="{DynamicResource Shell.Internet}" />
                         <Run Text="{Binding InternetStatus}" />
-                        <Run Text="   Tasks: " />
+                        <Run Text="{DynamicResource Shell.Tasks}" />
                         <Run Text="{Binding PendingBackgroundTasks}" />
                     </TextBlock>
                     <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="White">
-                        <Run Text="{Binding Version}" />
+                        <Run Text="{Binding Version, Mode=OneWay}" />
                         <Run Text="   " />
                         <Run Text="{Binding CurrentTime}" />
                     </TextBlock>

@@ -35,7 +35,7 @@ public class ApplicationFolderService : IApplicationFolderService
         foreach (var folder in folders)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, folder));
+            Directory.CreateDirectory(ApplicationPaths.ResolveDataPath(folder));
             _logger.LogInformation("Runtime folder verified: {Folder}", folder);
         }
 

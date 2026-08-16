@@ -3,5 +3,7 @@
     <FontFamily x:Key="ApplicationFontFamily">Segoe UI</FontFamily>
     <Style TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource ApplicationFontFamily}" />
+        <Setter Property="FlowDirection" Value="{DynamicResource AppFlowDirection}" />
+        <Setter Property="TextAlignment" Value="{DynamicResource AppTextAlignment}" />
     </Style>
 </ResourceDictionary>

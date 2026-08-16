@@ -57,7 +57,7 @@ namespace BookStore.Application.Features.Sales.Commands.ResumeSale
 namespace BookStore.Application.Features.Sales.Commands.CompleteSale
 {
     /// <summary>Requests sale completion.</summary>
-    public sealed record CompleteSaleRequest(PaymentMethod PaymentMethod, decimal AmountPaid);
+    public sealed record CompleteSaleRequest(PaymentMethod PaymentMethod, decimal AmountPaid, int ReceiptCopies = 1);
 }
 
 namespace BookStore.Application.Features.Sales.Commands.SelectCustomer

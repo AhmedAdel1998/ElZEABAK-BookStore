@@ -19,10 +19,10 @@ public sealed class PricingService : IPricingService
     }
 
     /// <inheritdoc />
-    public SaleSummaryDto Recalculate(SaleSessionDto sale)
+    public async Task<SaleSummaryDto> RecalculateAsync(SaleSessionDto sale, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(sale);
-        var taxSettings = _settingsService.GetAsync<TaxSettingsDto>().GetAwaiter().GetResult();
+        var taxSettings = await _settingsService.GetAsync<TaxSettingsDto>(cancellationToken);
         var taxRate = taxSettings.Enabled ? Math.Max(taxSettings.DefaultRate, 0m) : 0m;
 
         var subtotal = 0m;

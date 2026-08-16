@@ -9,14 +9,14 @@
         </Grid.RowDefinitions>
         <DockPanel Margin="0,0,0,12">
             <StackPanel>
-                <TextBlock FontSize="26" FontWeight="SemiBold" Text="Settings" />
-                <TextBlock Opacity="0.7" Text="Centralized store configuration persisted in the bookstore database." />
+                <TextBlock FontSize="26" FontWeight="SemiBold" Text="{DynamicResource Settings.Title}" />
+                <TextBlock Opacity="0.7" Text="{DynamicResource Settings.Subtitle}" />
             </StackPanel>
-            <TextBlock DockPanel.Dock="Right" Foreground="#B45309" Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BooleanToVisibilityConverter}}" Text="Unsaved changes will be lost." />
+            <TextBlock DockPanel.Dock="Right" Foreground="#B45309" Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BooleanToVisibilityConverter}}" Text="{DynamicResource Settings.Unsaved}" />
         </DockPanel>
 
         <TabControl Grid.Row="1">
-            <TabItem Header="Store">
+            <TabItem Header="{DynamicResource Settings.Store}">
                 <ScrollViewer>
                     <UniformGrid Columns="2" Margin="8">
                         <StackPanel Margin="8"><TextBlock Text="Store Name" /><TextBox Text="{Binding Store.StoreName, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
@@ -106,15 +106,27 @@
                     <StackPanel Orientation="Horizontal" Margin="8"><Button Width="110" Command="{Binding SaveBackupCommand}" Content="Save Backup" /><Button Width="115" Margin="8,0,0,0" Command="{Binding SaveSecurityCommand}" Content="Save Security" /></StackPanel>
                 </UniformGrid>
             </TabItem>
-            <TabItem Header="Appearance/App">
+            <TabItem Header="{DynamicResource Settings.AppearanceApp}">
                 <UniformGrid Columns="2" Margin="16">
-                    <StackPanel Margin="8"><TextBlock Text="Theme" /><TextBox Text="{Binding Appearance.Theme}" /></StackPanel>
-                    <StackPanel Margin="8"><TextBlock Text="Language" /><TextBox Text="{Binding Appearance.Language}" /></StackPanel>
+                    <StackPanel Margin="8">
+                        <TextBlock Text="{DynamicResource Settings.Theme}" />
+                        <ComboBox Height="34" SelectedValue="{Binding Appearance.Theme, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Tag">
+                            <ComboBoxItem Content="Light" Tag="Light" />
+                            <ComboBoxItem Content="Dark" Tag="Dark" />
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Margin="8">
+                        <TextBlock Text="{DynamicResource Settings.Language}" />
+                        <ComboBox Height="34" SelectedValue="{Binding Appearance.Language, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Tag">
+                            <ComboBoxItem Content="{DynamicResource Settings.Arabic}" Tag="ar-EG" />
+                            <ComboBoxItem Content="{DynamicResource Settings.English}" Tag="en-US" />
+                        </ComboBox>
+                    </StackPanel>
                     <TextBlock Margin="8" Text="{Binding Application.ApplicationName}" />
                     <TextBlock Margin="8" Text="{Binding Application.ApplicationVersion}" />
                     <TextBlock Margin="8" Text="{Binding Application.InstallationPath}" />
                     <TextBlock Margin="8" Text="{Binding Application.DatabasePath}" />
-                    <Button Width="130" Margin="8" HorizontalAlignment="Left" Command="{Binding SaveAppearanceCommand}" Content="Save Appearance" />
+                    <Button Width="150" Margin="8" HorizontalAlignment="Left" Command="{Binding SaveAppearanceCommand}" Content="{DynamicResource Settings.SaveAppearance}" />
                 </UniformGrid>
             </TabItem>
         </TabControl>

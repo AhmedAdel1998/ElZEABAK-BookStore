@@ -16,6 +16,7 @@ public partial class SettingsViewModel : BaseViewModel
     private readonly SettingsHandlers.SettingsQueryHandler _queryHandler;
     private readonly SettingsHandlers.SettingsCommandHandler _commandHandler;
     private readonly INotificationService _notificationService;
+    private readonly ILocalizationService _localizationService;
 
     [ObservableProperty] private StoreSettingsDto store = new();
     [ObservableProperty] private POSSettingsDto pos = new();
@@ -31,12 +32,13 @@ public partial class SettingsViewModel : BaseViewModel
     [ObservableProperty] private ApplicationSettingsDto application = new();
     [ObservableProperty] private bool hasUnsavedChanges;
 
-    public SettingsViewModel(SettingsHandlers.SettingsQueryHandler queryHandler, SettingsHandlers.SettingsCommandHandler commandHandler, INotificationService notificationService)
+    public SettingsViewModel(SettingsHandlers.SettingsQueryHandler queryHandler, SettingsHandlers.SettingsCommandHandler commandHandler, INotificationService notificationService, ILocalizationService localizationService)
     {
         _queryHandler = queryHandler;
         _commandHandler = commandHandler;
         _notificationService = notificationService;
-        Title = "Settings";
+        _localizationService = localizationService;
+        Title = _localizationService.T("Settings.Title");
         _ = LoadAsync();
     }
 
@@ -90,7 +92,7 @@ public partial class SettingsViewModel : BaseViewModel
     private async Task ResetCategoryAsync(SettingsCategory category)
     {
         var result = await _commandHandler.Handle(new ResetSettingsCommand(category));
-        _notificationService.Show("Settings", result.IsSuccess ? "Settings category reset." : result.Error ?? "Settings could not be reset.", result.IsSuccess ? NotificationSeverity.Success : NotificationSeverity.Warning);
+            _notificationService.Show(_localizationService.T("Settings.Title"), result.IsSuccess ? "Settings category reset." : result.Error ?? "Settings could not be reset.", result.IsSuccess ? NotificationSeverity.Success : NotificationSeverity.Warning);
         if (result.IsSuccess)
         {
             await LoadAsync();
@@ -124,7 +126,7 @@ public partial class SettingsViewModel : BaseViewModel
                 _ => throw new InvalidOperationException("Unsupported settings command.")
             };
 
-            _notificationService.Show("Settings", result.IsSuccess ? "Settings saved." : result.Error ?? "Settings could not be saved.", result.IsSuccess ? NotificationSeverity.Success : NotificationSeverity.Warning);
+            _notificationService.Show(_localizationService.T("Settings.Title"), result.IsSuccess ? _localizationService.T("Settings.Saved") : result.Error ?? _localizationService.T("Settings.NotSaved"), result.IsSuccess ? NotificationSeverity.Success : NotificationSeverity.Warning);
             HasUnsavedChanges = !result.IsSuccess;
         }
         finally

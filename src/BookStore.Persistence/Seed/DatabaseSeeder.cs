@@ -3,6 +3,7 @@ using BookStore.Domain.ValueObjects;
 using BookStore.Shared.Constants;
 using BookStore.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace BookStore.Persistence.Seed;
@@ -12,8 +13,8 @@ namespace BookStore.Persistence.Seed;
 /// </summary>
 public class DatabaseSeeder
 {
-    private const string AdminPasswordHash = "$2a$11$4cIiq8n2V7b7WqtddnMP7uWuBphrvLePAUQV1NQFBnnbaYbWYpJ26";
     private readonly BookStoreDbContext _dbContext;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<DatabaseSeeder> _logger;
 
     /// <summary>
@@ -21,9 +22,10 @@ public class DatabaseSeeder
     /// </summary>
     /// <param name="dbContext">The database context.</param>
     /// <param name="logger">The logger.</param>
-    public DatabaseSeeder(BookStoreDbContext dbContext, ILogger<DatabaseSeeder> logger)
+    public DatabaseSeeder(BookStoreDbContext dbContext, IConfiguration configuration, ILogger<DatabaseSeeder> logger)
     {
         _dbContext = dbContext;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -186,9 +188,37 @@ public class DatabaseSeeder
             return;
         }
 
+        var initialAdmin = new InitialAdminOptions
+        {
+            Username = _configuration["Application:InitialAdmin:Username"] ?? string.Empty,
+            PasswordHash = _configuration["Application:InitialAdmin:PasswordHash"] ?? string.Empty,
+            FullName = _configuration["Application:InitialAdmin:FullName"] ?? string.Empty,
+            Email = _configuration["Application:InitialAdmin:Email"] ?? string.Empty
+        };
+        if (string.IsNullOrWhiteSpace(initialAdmin.Username) || string.IsNullOrWhiteSpace(initialAdmin.PasswordHash))
+        {
+            _logger.LogInformation("No initial administrator was seeded from configuration. First-run setup will create the administrator account.");
+            return;
+        }
+
         var administratorRole = await _dbContext.Roles.FirstAsync(role => role.Name == "Administrator", cancellationToken);
-        var adminUser = new User("admin", AdminPasswordHash, "System Administrator", administratorRole.Id);
-        adminUser.UpdateContact(new Email("admin@bookstore.local"));
+        var adminUser = new User(initialAdmin.Username.Trim(), initialAdmin.PasswordHash.Trim(), string.IsNullOrWhiteSpace(initialAdmin.FullName) ? "System Administrator" : initialAdmin.FullName.Trim(), administratorRole.Id);
+        if (!string.IsNullOrWhiteSpace(initialAdmin.Email))
+        {
+            adminUser.UpdateContact(new Email(initialAdmin.Email.Trim()));
+        }
+
         await _dbContext.Users.AddAsync(adminUser, cancellationToken);
+    }
+
+    private sealed class InitialAdminOptions
+    {
+        public string Username { get; set; } = string.Empty;
+
+        public string PasswordHash { get; set; } = string.Empty;
+
+        public string FullName { get; set; } = string.Empty;
+
+        public string Email { get; set; } = string.Empty;
     }
 }

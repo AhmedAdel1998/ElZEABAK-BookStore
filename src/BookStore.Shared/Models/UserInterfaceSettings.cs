@@ -13,5 +13,5 @@ public class UserInterfaceSettings
     /// <summary>
     /// Gets or sets the user interface language.
     /// </summary>
-    public string Language { get; set; } = "en-US";
+    public string Language { get; set; } = "ar-EG";
 }

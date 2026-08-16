@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Data.Sqlite;
+using BookStore.Shared.Constants;
 
 namespace BookStore.Persistence.Context;
 
@@ -11,12 +13,19 @@ public class BookStoreDbContextFactory : IDesignTimeDbContextFactory<BookStoreDb
     /// <inheritdoc />
     public BookStoreDbContext CreateDbContext(string[] args)
     {
-        var databaseDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Database");
+        var databaseDirectory = ApplicationPaths.ResolveDataPath("Database");
         Directory.CreateDirectory(databaseDirectory);
         var databasePath = Path.Combine(databaseDirectory, "bookstore.db");
 
         var optionsBuilder = new DbContextOptionsBuilder<BookStoreDbContext>();
-        optionsBuilder.UseSqlite($"Data Source={databasePath}");
+        var connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = databasePath,
+            ForeignKeys = true,
+            DefaultTimeout = 30
+        }.ToString();
+
+        optionsBuilder.UseSqlite(connectionString);
         return new BookStoreDbContext(optionsBuilder.Options);
     }
 }

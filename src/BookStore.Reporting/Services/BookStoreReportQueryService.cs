@@ -25,13 +25,14 @@ public sealed class BookStoreReportQueryService : IReportQueryService
         var salesSummary = await GetSalesSummaryAsync(new GetSalesSummaryQuery(today), cancellationToken);
         var profit = await GetProfitReportAsync(new GetProfitReportQuery(today), cancellationToken);
         var inventory = await _dbContext.Products.AsNoTracking()
-            .Select(product => new
+            .GroupBy(_ => 1)
+            .Select(group => new
             {
-                product.Quantity,
-                product.MinimumStock,
-                product.PurchasePrice
+                CurrentInventoryValue = group.Sum(product => product.Quantity * product.PurchasePrice),
+                LowStockProducts = group.Count(product => product.Quantity > 0 && product.Quantity <= product.MinimumStock),
+                OutOfStockProducts = group.Count(product => product.Quantity == 0)
             })
-            .ToListAsync(cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken);
         var bestProduct = (await GetBestSellingProductsAsync(new GetBestSellingProductsQuery(query.DateRange, 1), cancellationToken)).FirstOrDefault()?.Product ?? "None";
         var topCustomer = (await GetCustomerReportAsync(new GetCustomerReportQuery(query.DateRange, Top: 1), cancellationToken)).FirstOrDefault()?.Customer ?? "Walk-in";
         var topCashier = (await GetCashierPerformanceAsync(new GetCashierPerformanceQuery(query.DateRange), cancellationToken)).OrderByDescending(row => row.TotalSales).FirstOrDefault()?.Cashier ?? "None";
@@ -43,9 +44,9 @@ public sealed class BookStoreReportQueryService : IReportQueryService
             TodaysProfit = profit.GrossProfit,
             TodaysDiscounts = salesSummary.TotalDiscounts,
             TodaysTax = salesSummary.TotalTax,
-            CurrentInventoryValue = inventory.Sum(product => product.Quantity * product.PurchasePrice),
-            LowStockProducts = inventory.Count(product => product.Quantity > 0 && product.Quantity <= product.MinimumStock),
-            OutOfStockProducts = inventory.Count(product => product.Quantity == 0),
+            CurrentInventoryValue = Math.Round(inventory?.CurrentInventoryValue ?? 0, 2),
+            LowStockProducts = inventory?.LowStockProducts ?? 0,
+            OutOfStockProducts = inventory?.OutOfStockProducts ?? 0,
             BestSellingProduct = bestProduct,
             TopCustomer = topCustomer,
             TopCashier = topCashier,
@@ -162,19 +163,19 @@ public sealed class BookStoreReportQueryService : IReportQueryService
     public async Task<IReadOnlyCollection<ProductSalesRowDto>> GetBestSellingProductsAsync(GetBestSellingProductsQuery query, CancellationToken cancellationToken = default)
     {
         var range = query.DateRange.ToUtcBounds();
-        return await BuildProductSalesQuery(range)
+        return (await BuildProductSalesRowsAsync(range, cancellationToken))
             .OrderByDescending(row => row.QuantitySold)
             .ThenByDescending(row => row.Revenue)
             .Take(query.Limit)
-            .ToArrayAsync(cancellationToken);
+            .ToArray();
     }
 
     public async Task<ProductSalesRowDto?> GetProductSalesAsync(GetProductSalesQuery query, CancellationToken cancellationToken = default)
     {
         var range = query.DateRange.ToUtcBounds();
-        return await BuildProductSalesQuery(range)
+        return (await BuildProductSalesRowsAsync(range, cancellationToken))
             .Where(row => row.ProductId == query.ProductId)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefault();
     }
 
     public async Task<IReadOnlyCollection<CategorySalesRowDto>> GetCategorySalesAsync(GetCategorySalesQuery query, CancellationToken cancellationToken = default)
@@ -475,29 +476,47 @@ public sealed class BookStoreReportQueryService : IReportQueryService
         return rows;
     }
 
-    private IQueryable<ProductSalesRowDto> BuildProductSalesQuery(ReportDateRange range)
+    private async Task<IReadOnlyCollection<ProductSalesRowDto>> BuildProductSalesRowsAsync(ReportDateRange range, CancellationToken cancellationToken)
     {
-        return SaleItemRows(range)
+        var rows = await SaleItemRows(range)
             .GroupBy(row => new
             {
                 row.Product.Id,
                 row.Product.Title,
-                Barcode = row.Product.Barcode.Value,
                 Category = row.Category.Name
             })
-            .Select(group => new ProductSalesRowDto
+            .Select(group => new
             {
                 ProductId = group.Key.Id,
                 Product = group.Key.Title,
-                Barcode = group.Key.Barcode,
-                Category = group.Key.Category,
+                Barcode = group.Max(row => row.Product.Barcode.Value),
+                group.Key.Category,
                 QuantitySold = group.Sum(row => row.Item.Quantity),
                 Revenue = group.Sum(row => row.Item.Total),
                 Cost = group.Sum(row => row.Product.PurchasePrice * row.Item.Quantity),
-                Profit = group.Sum(row => row.Item.Total - (row.Product.PurchasePrice * row.Item.Quantity)),
                 AverageSellingPrice = group.Average(row => row.Item.UnitPrice),
                 NumberOfTransactions = group.Select(row => row.Sale.Id).Distinct().Count()
-            });
+            })
+            .ToArrayAsync(cancellationToken);
+
+        return rows
+            .Select(row =>
+            {
+                return new ProductSalesRowDto
+                {
+                    ProductId = row.ProductId,
+                    Product = row.Product,
+                    Barcode = row.Barcode ?? string.Empty,
+                    Category = row.Category,
+                    QuantitySold = row.QuantitySold,
+                    Revenue = Math.Round(row.Revenue, 2),
+                    Cost = Math.Round(row.Cost, 2),
+                    Profit = Math.Round(row.Revenue - row.Cost, 2),
+                    AverageSellingPrice = Math.Round(row.AverageSellingPrice, 2),
+                    NumberOfTransactions = row.NumberOfTransactions
+                };
+            })
+            .ToArray();
     }
 
     private IQueryable<SaleItemReportRow> SaleItemRows(ReportDateRange range)

@@ -61,19 +61,19 @@ public class AuthenticationService : IAuthenticationService
         var user = await _unitOfWork.Users.GetByUsernameAsync(request.Username.Trim(), cancellationToken);
         if (user is null)
         {
-            _logger.LogWarning("Failed login for unknown user {Username}", request.Username);
+            _logger.LogWarning("Failed login for unknown user.");
             return AuthenticationResult.Failed(InvalidCredentialsMessage);
         }
 
         if (!user.IsActive)
         {
-            _logger.LogWarning("Failed login for inactive user {Username}", user.Username);
+            _logger.LogWarning("Failed login for inactive user. UserId={UserId}", user.Id);
             return AuthenticationResult.Failed("This account is inactive.");
         }
 
         if (user.IsLockedOut)
         {
-            _logger.LogWarning("Locked account login attempt for {Username}", user.Username);
+            _logger.LogWarning("Locked account login attempt. UserId={UserId}", user.Id);
             return AuthenticationResult.Failed($"This account is locked until {user.LockoutUntil:yyyy-MM-dd HH:mm}.");
         }
 
@@ -84,11 +84,11 @@ public class AuthenticationService : IAuthenticationService
 
             if (user.IsLockedOut)
             {
-                _logger.LogWarning("Account locked for user {Username}", user.Username);
+                _logger.LogWarning("Account locked. UserId={UserId}", user.Id);
                 return AuthenticationResult.Failed("Too many failed login attempts. The account has been temporarily locked.");
             }
 
-            _logger.LogWarning("Failed login for user {Username}", user.Username);
+            _logger.LogWarning("Failed login for user. UserId={UserId}", user.Id);
             return AuthenticationResult.Failed(InvalidCredentialsMessage);
         }
 
@@ -111,7 +111,7 @@ public class AuthenticationService : IAuthenticationService
             await _rememberMeStore.ClearAsync(cancellationToken);
         }
 
-        _logger.LogInformation("Successful login for user {Username}", user.Username);
+        _logger.LogInformation("Successful login. UserId={UserId}", user.Id);
         return AuthenticationResult.Authenticated(session);
     }
 
@@ -133,17 +133,17 @@ public class AuthenticationService : IAuthenticationService
 
         var session = CreateSession(user);
         _currentUserService.SignIn(session);
-        _logger.LogInformation("Remembered session restored for user {Username}", user.Username);
+        _logger.LogInformation("Remembered session restored. UserId={UserId}", user.Id);
         return AuthenticationResult.Authenticated(session);
     }
 
     /// <inheritdoc />
     public async Task LogoutAsync(CancellationToken cancellationToken = default)
     {
-        var username = _currentUserService.Username;
+        var userId = _currentUserService.UserId;
         _currentUserService.SignOut();
         await _rememberMeStore.ClearAsync(cancellationToken);
-        _logger.LogInformation("Logout for user {Username}", username ?? "unknown");
+        _logger.LogInformation("Logout. UserId={UserId}", userId);
     }
 
     /// <inheritdoc />
@@ -168,13 +168,13 @@ public class AuthenticationService : IAuthenticationService
 
         if (!_passwordHasher.VerifyPassword(request.CurrentPassword, user.PasswordHash))
         {
-            _logger.LogWarning("Password change failed because current password was invalid for {Username}", user.Username);
+            _logger.LogWarning("Password change failed because current password was invalid. UserId={UserId}", user.Id);
             return OperationResult.Failure(new Error("Authentication.InvalidPassword", "Current password is invalid."));
         }
 
         user.ChangePasswordHash(_passwordHasher.HashPassword(request.NewPassword));
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Password changed for user {Username}", user.Username);
+        _logger.LogInformation("Password changed. UserId={UserId}", user.Id);
         return OperationResult.Success();
     }
 

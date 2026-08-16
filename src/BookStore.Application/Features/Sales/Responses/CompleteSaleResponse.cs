@@ -22,4 +22,7 @@ public sealed class CompleteSaleResponse
 
     /// <summary>Gets or sets print request identifier.</summary>
     public Guid? PrintRequestId { get; set; }
+
+    /// <summary>Gets or sets requested receipt copy count.</summary>
+    public int ReceiptCopies { get; set; } = 1;
 }

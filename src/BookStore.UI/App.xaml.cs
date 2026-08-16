@@ -52,8 +52,19 @@ public partial class App : System.Windows.Application
             _logger.LogInformation("Application start");
 
             await _host.Services.GetRequiredService<IApplicationFolderService>().EnsureRequiredFoldersAsync();
+            await _host.Services.GetRequiredService<ILocalizationService>().ApplyConfiguredCultureAsync();
             await _host.Services.GetRequiredService<IThemeService>().ApplyConfiguredThemeAsync();
             var navigationService = _host.Services.GetRequiredService<INavigationService>();
+            var firstRunSetupService = _host.Services.GetRequiredService<IFirstRunSetupService>();
+            if (await firstRunSetupService.IsSetupRequiredAsync())
+            {
+                await navigationService.NavigateToAsync<FirstRunSetupViewModel>();
+                var setupWindow = _host.Services.GetRequiredService<MainWindow>();
+                setupWindow.Show();
+                base.OnStartup(e);
+                return;
+            }
+
             var authenticationService = _host.Services.GetRequiredService<IAuthenticationService>();
             var sessionTimeoutService = _host.Services.GetRequiredService<ISessionTimeoutService>();
             var rememberedSession = await authenticationService.TryRestoreRememberedSessionAsync();
@@ -111,13 +122,21 @@ public partial class App : System.Windows.Application
             })
             .UseSerilog((context, loggerConfiguration) =>
             {
+                var logFolder = ApplicationPaths.ResolveDataPath(FolderConstants.Logs);
+                Directory.CreateDirectory(logFolder);
                 loggerConfiguration
                     .ReadFrom.Configuration(context.Configuration)
-                    .Enrich.FromLogContext();
+                    .Enrich.FromLogContext()
+                    .WriteTo.File(Path.Combine(logFolder, "bookstore-.log"), rollingInterval: RollingInterval.Day, retainedFileCountLimit: 31);
             })
             .ConfigureServices((context, services) =>
             {
                 services.Configure<ApplicationSettings>(context.Configuration.GetSection("Application"));
+                services.AddLogging(builder =>
+                {
+                    builder.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
+                    builder.AddFilter("Microsoft.EntityFrameworkCore.Infrastructure", LogLevel.Warning);
+                });
 
                 services
                     .AddApplication()
@@ -130,11 +149,12 @@ public partial class App : System.Windows.Application
 
     private static void ConfigureBootstrapLogger()
     {
-        Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, FolderConstants.Logs));
+        var logFolder = ApplicationPaths.ResolveDataPath(FolderConstants.Logs);
+        Directory.CreateDirectory(logFolder);
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
-            .WriteTo.File(Path.Combine(AppContext.BaseDirectory, "Logs", "bookstore-.log"), rollingInterval: RollingInterval.Day)
+            .WriteTo.File(Path.Combine(logFolder, "bookstore-.log"), rollingInterval: RollingInterval.Day)
             .CreateLogger();
     }
 
