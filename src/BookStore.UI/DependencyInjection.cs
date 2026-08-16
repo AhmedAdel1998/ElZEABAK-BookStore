@@ -8,6 +8,7 @@ using SalesHandlers = BookStore.Application.Features.Sales.Handlers;
 using ReportHandlers = BookStore.Application.Features.Reports.Handlers;
 using ReceiptHandlers = BookStore.Application.Features.Receipts.Handlers;
 using BackupHandlers = BookStore.Application.Features.Backup.Handlers;
+using SettingsHandlers = BookStore.Application.Features.Settings.Handlers;
 using BookStore.UI.Dialogs;
 using BookStore.UI.Icons;
 using BookStore.UI.Navigation;
@@ -141,6 +142,8 @@ public static class DependencyInjection
         services.AddTransient<BackupHandlers.RunIntegrityCheckHandler>();
         services.AddTransient<BackupHandlers.GetDatabaseHealthHandler>();
         services.AddTransient<BackupHandlers.RunAutomaticBackupHandler>();
+        services.AddTransient<SettingsHandlers.SettingsQueryHandler>();
+        services.AddTransient<SettingsHandlers.SettingsCommandHandler>();
 
         services.AddTransient<LoginViewModel>();
         services.AddTransient<AuthenticatedHomeViewModel>();

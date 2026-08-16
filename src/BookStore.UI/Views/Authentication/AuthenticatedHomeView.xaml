@@ -12,6 +12,7 @@
              xmlns:reportViews="clr-namespace:BookStore.UI.Views.Reports"
              xmlns:receiptViews="clr-namespace:BookStore.UI.Views.Receipts"
              xmlns:backupViews="clr-namespace:BookStore.UI.Views.Backup"
+             xmlns:settingsViews="clr-namespace:BookStore.UI.Views.Settings"
              xmlns:views="clr-namespace:BookStore.UI.Views.Shell"
              xmlns:viewModels="clr-namespace:BookStore.UI.ViewModels">
     <UserControl.Resources>
@@ -151,7 +152,7 @@
             <receiptViews:PrinterTestView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:SettingsViewModel}">
-            <views:ModulePlaceholderView />
+            <settingsViews:SettingsView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:UsersViewModel}">
             <views:ModulePlaceholderView />

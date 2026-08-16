@@ -17,6 +17,8 @@ using BookStore.Application.Features.Sales.Commands.UpdateItemQuantity;
 using BookStore.Application.Features.Sales.DTOs;
 using BookStore.Application.Features.Sales.Handlers;
 using BookStore.Application.Features.Sales.Validators;
+using BookStore.Application.Features.Settings.DTOs;
+using BookStore.Application.Features.Settings.Services;
 using BookStore.Application.Interfaces;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Enums;
@@ -209,7 +211,7 @@ public class SalesModuleTests
         {
             Authorization = new FakeAuthorizationService(permissions ?? [PermissionConstants.SalesCancel, PermissionConstants.SalesSuspend, PermissionConstants.SalesComplete, PermissionConstants.SalesApplyDiscount]);
             UnitOfWork = new FakeUnitOfWork(ProductRepository, InventoryRepository, SaleRepository);
-            Pricing = new PricingService(Settings);
+            Pricing = new PricingService(new FakeSettingsService(Settings.Value));
             StartSale = new StartSaleHandler(CurrentUser, Store, Pricing, new StartSaleRequestValidator(), NullLogger<StartSaleHandler>.Instance);
             AddItem = new AddItemHandler(UnitOfWork, Store, Pricing, new AddItemRequestValidator());
             UpdateQuantity = new UpdateItemQuantityHandler(Store, Pricing, new UpdateItemQuantityRequestValidator());
@@ -386,5 +388,26 @@ public class SalesModuleTests
         public Task<bool> ReserveAsync(string barcode, CancellationToken cancellationToken = default) => Task.FromResult(true);
         public string GenerateImageSvg(string barcode, BarcodeFormat format) => string.Empty;
         public Task<BarcodeProductDto?> FindProductAsync(string barcode, CancellationToken cancellationToken = default) => Task.FromResult(Product);
+    }
+
+    private sealed class FakeSettingsService(ApplicationSettings settings) : ISettingsService
+    {
+        public Task<T> GetAsync<T>(CancellationToken cancellationToken = default)
+            where T : class, new()
+        {
+            object value = typeof(T) == typeof(TaxSettingsDto)
+                ? new TaxSettingsDto { Enabled = settings.Store.TaxRate > 0, DefaultRate = settings.Store.TaxRate }
+                : new T();
+            return Task.FromResult((T)value);
+        }
+
+        public Task<Result> SetAsync<T>(T settings, CancellationToken cancellationToken = default)
+            where T : class, new() => Task.FromResult(Result.Success());
+
+        public Task<IReadOnlyList<SettingEntryDto>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<SettingEntryDto>>([]);
+        public Task<Result> ResetAsync(CancellationToken cancellationToken = default) => Task.FromResult(Result.Success());
+        public Task<Result> ResetCategoryAsync(SettingsCategory category, CancellationToken cancellationToken = default) => Task.FromResult(Result.Success());
+        public Task SaveAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task ReloadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }

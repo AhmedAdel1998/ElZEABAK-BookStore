@@ -2,6 +2,7 @@ using BookStore.Domain.Interfaces;
 using BookStore.Persistence.Context;
 using BookStore.Persistence.Repositories;
 using BookStore.Persistence.Seed;
+using BookStore.Persistence.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IInventoryRepository, InventoryRepository>();
+        services.AddScoped<ISettingsStore, EfSettingsStore>();
         services.AddScoped<IUnitOfWork, UnitOfWork.UnitOfWork>();
         services.AddScoped<DatabaseSeeder>();
         services.AddHostedService<DatabaseInitializer>();

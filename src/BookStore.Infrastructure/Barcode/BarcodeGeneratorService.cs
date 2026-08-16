@@ -2,11 +2,10 @@ using System.Collections.Concurrent;
 using System.Text;
 using System.Text.RegularExpressions;
 using BookStore.Application.Features.Barcode.DTOs;
+using BookStore.Application.Features.Settings.Services;
 using BookStore.Application.Interfaces;
 using BookStore.Domain.Interfaces;
-using BookStore.Shared.Models;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace BookStore.Infrastructure.Barcode;
 
@@ -17,23 +16,24 @@ public sealed partial class BarcodeGeneratorService : IBarcodeService
 {
     private static readonly ConcurrentDictionary<string, byte> ReservedBarcodes = new(StringComparer.OrdinalIgnoreCase);
     private readonly IProductRepository _productRepository;
-    private readonly IOptions<ApplicationSettings> _settings;
+    private readonly ISettingsService _settingsService;
     private readonly ILogger<BarcodeGeneratorService> _logger;
 
     /// <summary>Initializes a new instance of the <see cref="BarcodeGeneratorService"/> class.</summary>
-    public BarcodeGeneratorService(IProductRepository productRepository, IOptions<ApplicationSettings> settings, ILogger<BarcodeGeneratorService> logger)
+    public BarcodeGeneratorService(IProductRepository productRepository, ISettingsService settingsService, ILogger<BarcodeGeneratorService> logger)
     {
         _productRepository = productRepository;
-        _settings = settings;
+        _settingsService = settingsService;
         _logger = logger;
     }
 
     /// <inheritdoc />
     public async Task<BarcodeDto> GenerateUniqueAsync(BarcodeFormat format, string? prefix = null, CancellationToken cancellationToken = default)
     {
-        var effectivePrefix = string.IsNullOrWhiteSpace(prefix) ? _settings.Value.Barcode.Prefix : prefix.Trim();
-        var sequence = Math.Max(_settings.Value.Barcode.StartingNumber, 1);
-        var length = Math.Clamp(_settings.Value.Barcode.Length, 3, 64);
+        var settings = await _settingsService.GetAsync<BookStore.Application.Features.Settings.DTOs.BarcodeSettingsDto>(cancellationToken);
+        var effectivePrefix = string.IsNullOrWhiteSpace(prefix) ? settings.Prefix : prefix.Trim();
+        var sequence = Math.Max(settings.StartingNumber, 1);
+        var length = 12;
 
         for (var attempt = 0; attempt < 10000; attempt++)
         {

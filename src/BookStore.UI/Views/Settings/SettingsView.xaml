@@ -1,0 +1,122 @@
+<UserControl x:Class="BookStore.UI.Views.Settings.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:settingsDtos="clr-namespace:BookStore.Application.Features.Settings.DTOs;assembly=BookStore.Application">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <DockPanel Margin="0,0,0,12">
+            <StackPanel>
+                <TextBlock FontSize="26" FontWeight="SemiBold" Text="Settings" />
+                <TextBlock Opacity="0.7" Text="Centralized store configuration persisted in the bookstore database." />
+            </StackPanel>
+            <TextBlock DockPanel.Dock="Right" Foreground="#B45309" Visibility="{Binding HasUnsavedChanges, Converter={StaticResource BooleanToVisibilityConverter}}" Text="Unsaved changes will be lost." />
+        </DockPanel>
+
+        <TabControl Grid.Row="1">
+            <TabItem Header="Store">
+                <ScrollViewer>
+                    <UniformGrid Columns="2" Margin="8">
+                        <StackPanel Margin="8"><TextBlock Text="Store Name" /><TextBox Text="{Binding Store.StoreName, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                        <StackPanel Margin="8"><TextBlock Text="Phone" /><TextBox Text="{Binding Store.Phone, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                        <StackPanel Margin="8"><TextBlock Text="Email" /><TextBox Text="{Binding Store.Email, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                        <StackPanel Margin="8"><TextBlock Text="Tax Number" /><TextBox Text="{Binding Store.TaxNumber, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                        <StackPanel Margin="8"><TextBlock Text="Logo Path" /><TextBox Text="{Binding Store.LogoPath, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                        <StackPanel Margin="8"><TextBlock Text="Address" /><TextBox MinHeight="70" AcceptsReturn="True" Text="{Binding Store.Address, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                        <StackPanel Margin="8" Orientation="Horizontal"><Button Width="90" Command="{Binding SaveStoreCommand}" Content="Save" /><Button Width="90" Margin="8,0,0,0" Command="{Binding ResetCategoryCommand}" CommandParameter="{x:Static settingsDtos:SettingsCategory.Store}" Content="Reset" /></StackPanel>
+                    </UniformGrid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="POS">
+                <StackPanel Margin="16">
+                    <TextBox Width="260" HorizontalAlignment="Left" Text="{Binding Pos.DefaultCustomer}" />
+                    <CheckBox Content="Auto-focus barcode input" IsChecked="{Binding Pos.AutoFocusBarcode}" />
+                    <CheckBox Content="Automatic receipt printing" IsChecked="{Binding Pos.AutoPrintReceipt}" />
+                    <CheckBox Content="Allow price override" IsChecked="{Binding Pos.AllowPriceOverride}" />
+                    <CheckBox Content="Allow discounts" IsChecked="{Binding Pos.AllowDiscount}" />
+                    <CheckBox Content="Require customer for credit sales" IsChecked="{Binding Pos.RequireCustomerForCreditSales}" />
+                    <CheckBox Content="Start new sale after checkout" IsChecked="{Binding Pos.StartNewSaleAfterCheckout}" />
+                    <Button Width="90" Margin="0,12,0,0" HorizontalAlignment="Left" Command="{Binding SavePOSCommand}" Content="Save" />
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Receipt">
+                <UniformGrid Columns="2" Margin="16">
+                    <StackPanel Margin="8"><TextBlock Text="Paper Width" /><TextBox Text="{Binding Receipt.PaperWidth}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Copies" /><TextBox Text="{Binding Receipt.Copies}" /></StackPanel>
+                    <CheckBox Margin="8" Content="Show logo" IsChecked="{Binding Receipt.ShowLogo}" />
+                    <CheckBox Margin="8" Content="Show customer" IsChecked="{Binding Receipt.ShowCustomer}" />
+                    <CheckBox Margin="8" Content="Show cashier" IsChecked="{Binding Receipt.ShowCashier}" />
+                    <CheckBox Margin="8" Content="Show barcode" IsChecked="{Binding Receipt.ShowBarcode}" />
+                    <CheckBox Margin="8" Content="Print QR code" IsChecked="{Binding Receipt.PrintQRCode}" />
+                    <CheckBox Margin="8" Content="Cut paper" IsChecked="{Binding Receipt.CutPaper}" />
+                    <CheckBox Margin="8" Content="Open cash drawer" IsChecked="{Binding Receipt.OpenCashDrawer}" />
+                    <StackPanel Margin="8"><TextBlock Text="Footer Text" /><TextBox Text="{Binding Receipt.FooterText}" /></StackPanel>
+                    <Button Width="90" Margin="8" HorizontalAlignment="Left" Command="{Binding SaveReceiptCommand}" Content="Save" />
+                </UniformGrid>
+            </TabItem>
+            <TabItem Header="Printer">
+                <UniformGrid Columns="2" Margin="16">
+                    <StackPanel Margin="8"><TextBlock Text="Printer Name" /><TextBox Text="{Binding Printer.PrinterName}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Printer Type" /><TextBox Text="{Binding Printer.PrinterType}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Connection Type" /><TextBox Text="{Binding Printer.ConnectionType}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Print Timeout" /><TextBox Text="{Binding Printer.PrintTimeout}" /></StackPanel>
+                    <Button Width="90" Margin="8" HorizontalAlignment="Left" Command="{Binding SavePrinterCommand}" Content="Save" />
+                </UniformGrid>
+            </TabItem>
+            <TabItem Header="Tax/Currency">
+                <UniformGrid Columns="2" Margin="16">
+                    <CheckBox Margin="8" Content="Tax enabled" IsChecked="{Binding Tax.Enabled}" />
+                    <StackPanel Margin="8"><TextBlock Text="Default Rate" /><TextBox Text="{Binding Tax.DefaultRate}" /></StackPanel>
+                    <CheckBox Margin="8" Content="Tax included in price" IsChecked="{Binding Tax.TaxIncludedInPrice}" />
+                    <StackPanel Margin="8"><TextBlock Text="Display Mode" /><TextBox Text="{Binding Tax.TaxDisplayMode}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Currency Code" /><TextBox Text="{Binding Currency.CurrencyCode}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Currency Symbol" /><TextBox Text="{Binding Currency.CurrencySymbol}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Decimal Places" /><TextBox Text="{Binding Currency.DecimalPlaces}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Position" /><TextBox Text="{Binding Currency.CurrencyPosition}" /></StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="8"><Button Width="90" Command="{Binding SaveTaxCommand}" Content="Save Tax" /><Button Width="120" Margin="8,0,0,0" Command="{Binding SaveCurrencyCommand}" Content="Save Currency" /></StackPanel>
+                </UniformGrid>
+            </TabItem>
+            <TabItem Header="Barcode/Inventory">
+                <UniformGrid Columns="2" Margin="16">
+                    <StackPanel Margin="8"><TextBlock Text="Barcode Format" /><TextBox Text="{Binding Barcode.DefaultFormat}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Prefix" /><TextBox Text="{Binding Barcode.Prefix}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Starting Number" /><TextBox Text="{Binding Barcode.StartingNumber}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Scan Timeout" /><TextBox Text="{Binding Barcode.ScanTimeout}" /></StackPanel>
+                    <CheckBox Margin="8" Content="Auto-generate barcodes" IsChecked="{Binding Barcode.AutoGenerate}" />
+                    <StackPanel Margin="8"><TextBlock Text="Low Stock Threshold" /><TextBox Text="{Binding Inventory.LowStockThreshold}" /></StackPanel>
+                    <CheckBox Margin="8" Content="Allow negative stock" IsChecked="{Binding Inventory.AllowNegativeStock}" />
+                    <CheckBox Margin="8" Content="Auto inventory adjustment" IsChecked="{Binding Inventory.AutoInventoryAdjustment}" />
+                    <StackPanel Orientation="Horizontal" Margin="8"><Button Width="120" Command="{Binding SaveBarcodeCommand}" Content="Save Barcode" /><Button Width="130" Margin="8,0,0,0" Command="{Binding SaveInventoryCommand}" Content="Save Inventory" /></StackPanel>
+                </UniformGrid>
+            </TabItem>
+            <TabItem Header="Backup/Security">
+                <UniformGrid Columns="2" Margin="16">
+                    <CheckBox Margin="8" Content="Backup enabled" IsChecked="{Binding Backup.Enabled}" />
+                    <StackPanel Margin="8"><TextBlock Text="Frequency" /><TextBox Text="{Binding Backup.Frequency}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Location" /><TextBox Text="{Binding Backup.BackupLocation}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Retention Count" /><TextBox Text="{Binding Backup.RetentionCount}" /></StackPanel>
+                    <CheckBox Margin="8" Content="Validate after backup" IsChecked="{Binding Backup.ValidateAfterBackup}" />
+                    <CheckBox Margin="8" Content="Create pre-restore backup" IsChecked="{Binding Backup.CreatePreRestoreBackup}" />
+                    <StackPanel Margin="8"><TextBlock Text="Session Timeout" /><TextBox Text="{Binding Security.SessionTimeout}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Max Login Attempts" /><TextBox Text="{Binding Security.MaxLoginAttempts}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Lockout Duration" /><TextBox Text="{Binding Security.LockoutDuration}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Password Policy" /><TextBox Text="{Binding Security.PasswordPolicy}" /></StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="8"><Button Width="110" Command="{Binding SaveBackupCommand}" Content="Save Backup" /><Button Width="115" Margin="8,0,0,0" Command="{Binding SaveSecurityCommand}" Content="Save Security" /></StackPanel>
+                </UniformGrid>
+            </TabItem>
+            <TabItem Header="Appearance/App">
+                <UniformGrid Columns="2" Margin="16">
+                    <StackPanel Margin="8"><TextBlock Text="Theme" /><TextBox Text="{Binding Appearance.Theme}" /></StackPanel>
+                    <StackPanel Margin="8"><TextBlock Text="Language" /><TextBox Text="{Binding Appearance.Language}" /></StackPanel>
+                    <TextBlock Margin="8" Text="{Binding Application.ApplicationName}" />
+                    <TextBlock Margin="8" Text="{Binding Application.ApplicationVersion}" />
+                    <TextBlock Margin="8" Text="{Binding Application.InstallationPath}" />
+                    <TextBlock Margin="8" Text="{Binding Application.DatabasePath}" />
+                    <Button Width="130" Margin="8" HorizontalAlignment="Left" Command="{Binding SaveAppearanceCommand}" Content="Save Appearance" />
+                </UniformGrid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

@@ -1,11 +1,12 @@
 using System.Windows.Input;
 using System.Windows.Threading;
+using BookStore.Application.Features.Settings.DTOs;
+using BookStore.Application.Features.Settings.Services;
 using BookStore.Application.Interfaces;
-using BookStore.Shared.Models;
 using BookStore.UI.Navigation;
 using BookStore.UI.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace BookStore.UI.Services;
 
@@ -16,9 +17,10 @@ public class SessionTimeoutService : ISessionTimeoutService
 {
     private readonly IAuthenticationService _authenticationService;
     private readonly INavigationService _navigationService;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<SessionTimeoutService> _logger;
     private readonly DispatcherTimer _timer;
-    private readonly TimeSpan _timeout;
+    private TimeSpan _timeout;
     private DateTimeOffset _lastActivity;
     private bool _isStarted;
 
@@ -28,13 +30,22 @@ public class SessionTimeoutService : ISessionTimeoutService
     public SessionTimeoutService(
         IAuthenticationService authenticationService,
         INavigationService navigationService,
-        IOptions<ApplicationSettings> options,
+        IServiceScopeFactory scopeFactory,
+        ISettingsChangedNotifier notifier,
         ILogger<SessionTimeoutService> logger)
     {
         _authenticationService = authenticationService;
         _navigationService = navigationService;
+        _scopeFactory = scopeFactory;
         _logger = logger;
-        _timeout = TimeSpan.FromMinutes(options.Value.Authentication.SessionTimeoutMinutes);
+        _timeout = TimeSpan.FromMinutes(GetSecuritySettings().SessionTimeout);
+        notifier.SettingsChanged += (_, change) =>
+        {
+            if (change.Category == SettingsCategory.Security)
+            {
+                _timeout = TimeSpan.FromMinutes(GetSecuritySettings().SessionTimeout);
+            }
+        };
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
         _timer.Tick += OnTimerTick;
     }
@@ -85,5 +96,11 @@ public class SessionTimeoutService : ISessionTimeoutService
         await _authenticationService.LogoutAsync();
         await _navigationService.NavigateToAsync<LoginViewModel>();
         _logger.LogInformation("Session expired because of inactivity");
+    }
+
+    private SecuritySettingsDto GetSecuritySettings()
+    {
+        using var scope = _scopeFactory.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<ISettingsService>().GetAsync<SecuritySettingsDto>().GetAwaiter().GetResult();
     }
 }
