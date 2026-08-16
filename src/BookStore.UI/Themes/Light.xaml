@@ -1,13 +1,24 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F6F7F9" />
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#FFF8E7" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="SurfaceAltBrush" Color="#F1F5F9" />
-    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#1F2933" />
-    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#64748B" />
-    <SolidColorBrush x:Key="MutedTextBrush" Color="#94A3B8" />
-    <SolidColorBrush x:Key="BorderBrush" Color="#D6DAE1" />
-    <SolidColorBrush x:Key="AccentBrush" Color="#2563EB" />
-    <SolidColorBrush x:Key="AccentHoverBrush" Color="#1D4ED8" />
-    <SolidColorBrush x:Key="OverlayBrush" Color="#99111827" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="#FFF3C4" />
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#1E1711" />
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#745C2B" />
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#A58A49" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#E9D89A" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#D99A00" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#B87800" />
+    <SolidColorBrush x:Key="OverlayBrush" Color="#991E1711" />
+    <SolidColorBrush x:Key="WarmChromeBrush" Color="#2A2116" />
+    <SolidColorBrush x:Key="WarmChromeAltBrush" Color="#3A2A16" />
+    <LinearGradientBrush x:Key="BookstoreGoldBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFE9A3" Offset="0" />
+        <GradientStop Color="#F2B705" Offset="0.46" />
+        <GradientStop Color="#C77D00" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BookstorePageBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFFDF5" Offset="0" />
+        <GradientStop Color="#FFF4CB" Offset="1" />
+    </LinearGradientBrush>
 </ResourceDictionary>

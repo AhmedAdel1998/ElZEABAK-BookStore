@@ -1,5 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
+using BookStore.Shared.Constants;
 
 namespace BookStore.Infrastructure.Backup.Services;
 
@@ -21,13 +22,14 @@ public sealed class DatabasePathResolver
             throw new InvalidOperationException("A file-based SQLite database is required for backup operations.");
         }
 
-        return Path.GetFullPath(Path.IsPathRooted(builder.DataSource)
-            ? builder.DataSource
-            : Path.Combine(AppContext.BaseDirectory, builder.DataSource));
+        var expandedDataSource = Environment.ExpandEnvironmentVariables(builder.DataSource);
+        return Path.GetFullPath(Path.IsPathRooted(expandedDataSource)
+            ? expandedDataSource
+            : ApplicationPaths.ResolveDataPath(expandedDataSource));
     }
 
     public static string BuildConnectionString(string databasePath)
     {
-        return new SqliteConnectionStringBuilder { DataSource = databasePath }.ToString();
+        return new SqliteConnectionStringBuilder { DataSource = databasePath, ForeignKeys = true, DefaultTimeout = 30 }.ToString();
     }
 }

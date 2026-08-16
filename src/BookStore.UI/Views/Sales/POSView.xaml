@@ -6,7 +6,8 @@
              mc:Ignorable="d"
              d:DesignHeight="760"
              d:DesignWidth="1180">
-    <Grid Background="{DynamicResource AppBackgroundBrush}">
+    <Grid Background="{DynamicResource BookstorePageBrush}"
+          FocusManager.FocusedElement="{Binding ElementName=BarcodeInput}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -14,19 +15,19 @@
 
         <Border Grid.Row="0"
                 Padding="14"
-                Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="#D6DAE1"
+                Background="{DynamicResource WarmChromeBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,0,0,1">
             <DockPanel LastChildFill="True">
                     <StackPanel DockPanel.Dock="Left">
                         <TextBlock FontSize="20"
                                    FontWeight="SemiBold"
-                                   Foreground="{DynamicResource PrimaryTextBrush}"
-                                   Text="POS Cashier" />
+                                   Foreground="#FFE9A3"
+                                   Text="{DynamicResource POS.Cashier}" />
                     <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
-                        <TextBlock Foreground="{DynamicResource PrimaryTextBrush}" Opacity="0.68" Text="{Binding CurrentSale.InvoiceNumber}" />
-                        <TextBlock Margin="12,0,0,0" Foreground="{DynamicResource PrimaryTextBrush}" Opacity="0.68" Text="{Binding CurrentSale.CustomerName}" />
-                        <TextBlock Margin="6,0,0,0" Foreground="{DynamicResource PrimaryTextBrush}" Opacity="0.68" Text="{Binding CurrentSale.CustomerPhone}" />
+                        <TextBlock Foreground="#FFF3C4" Opacity="0.9" Text="{Binding CurrentSale.InvoiceNumber}" />
+                        <TextBlock Margin="12,0,0,0" Foreground="#FFF3C4" Opacity="0.9" Text="{Binding CurrentSale.CustomerName}" />
+                        <TextBlock Margin="6,0,0,0" Foreground="#FFF3C4" Opacity="0.9" Text="{Binding CurrentSale.CustomerPhone}" />
                     </StackPanel>
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Right"
@@ -34,15 +35,15 @@
                     <Button Margin="8,0,0,0"
                             Padding="14,8"
                             Command="{Binding StartSaleCommand}"
-                            Content="New Sale" />
+                            Content="{DynamicResource POS.NewSale}" />
                     <Button Margin="8,0,0,0"
                             Padding="14,8"
                             Command="{Binding SuspendSaleCommand}"
-                            Content="Suspend" />
+                            Content="{DynamicResource POS.Suspend}" />
                     <Button Margin="8,0,0,0"
                             Padding="14,8"
                             Command="{Binding CancelSaleCommand}"
-                            Content="Cancel" />
+                            Content="{DynamicResource POS.Cancel}" />
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -58,33 +59,66 @@
             <Border Grid.Column="0"
                     Padding="14"
                     Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="#D6DAE1"
+                    BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0">
                 <DockPanel LastChildFill="True">
                     <StackPanel DockPanel.Dock="Top">
                         <TextBlock FontWeight="SemiBold"
                                    Foreground="{DynamicResource PrimaryTextBrush}"
-                                   Text="Scan" />
+                                   Text="{DynamicResource POS.Scan}" />
                         <DockPanel Margin="0,8,0,14">
                             <Button DockPanel.Dock="Right"
                                     Width="72"
                                     Margin="8,0,0,0"
                                     Command="{Binding AddBarcodeCommand}"
-                                    Content="Add" />
-                            <TextBox Height="34"
+                                    Click="OnBarcodeAddClicked"
+                                    Content="{DynamicResource POS.Add}" />
+                            <TextBox x:Name="BarcodeInput"
+                                     Height="34"
                                      VerticalContentAlignment="Center"
-                                     Text="{Binding BarcodeText, UpdateSourceTrigger=PropertyChanged}" />
+                                     Text="{Binding BarcodeText, UpdateSourceTrigger=PropertyChanged}">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Return" Command="{Binding AddScannedBarcodeCommand}" />
+                                    <KeyBinding Key="Enter" Command="{Binding AddScannedBarcodeCommand}" />
+                                </TextBox.InputBindings>
+                            </TextBox>
                         </DockPanel>
+                        <CheckBox Margin="0,0,0,8"
+                                  Content="{DynamicResource POS.AutoAdd}"
+                                  IsChecked="{Binding AutoAddScans}" />
+                        <Border Margin="0,0,0,14"
+                                Padding="10"
+                                Background="{DynamicResource SurfaceAltBrush}"
+                                BorderBrush="{DynamicResource AccentBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                            <StackPanel>
+                                <TextBlock FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           Text="{Binding LastScanMessage}" />
+                                <TextBlock Margin="0,4,0,0"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           Opacity="0.72">
+                                    <Run Text="{DynamicResource POS.Category}" />
+                                    <Run Text="{Binding LastScanCategory}" />
+                                </TextBlock>
+                                <TextBlock FontSize="12"
+                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                           Opacity="0.72"
+                                           Text="{Binding LastScanDestination}" />
+                            </StackPanel>
+                        </Border>
 
                         <TextBlock FontWeight="SemiBold"
                                    Foreground="{DynamicResource PrimaryTextBrush}"
-                                   Text="Search" />
+                                   Text="{DynamicResource POS.Search}" />
                         <DockPanel Margin="0,8,0,10">
                             <Button DockPanel.Dock="Right"
                                     Width="72"
                                     Margin="8,0,0,0"
                                     Command="{Binding SearchProductsCommand}"
-                                    Content="Find" />
+                                    Content="{DynamicResource POS.Find}" />
                             <TextBox Height="34"
                                      VerticalContentAlignment="Center"
                                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
@@ -93,13 +127,13 @@
                         <TextBlock Margin="0,10,0,0"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource PrimaryTextBrush}"
-                                   Text="Customer" />
+                                   Text="{DynamicResource POS.Customer}" />
                         <DockPanel Margin="0,8,0,8">
                             <Button DockPanel.Dock="Right"
                                     Width="72"
                                     Margin="8,0,0,0"
                                     Command="{Binding SearchCustomersCommand}"
-                                    Content="Find" />
+                                    Content="{DynamicResource POS.Find}" />
                             <TextBox Height="34"
                                      VerticalContentAlignment="Center"
                                      Text="{Binding CustomerSearchText, UpdateSourceTrigger=PropertyChanged}" />
@@ -117,8 +151,8 @@
                             </ListBox.ItemTemplate>
                         </ListBox>
                         <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
-                            <Button Width="82" Command="{Binding SelectCustomerCommand}" Content="Select" />
-                            <Button Width="82" Margin="8,0,0,0" Command="{Binding ClearCustomerCommand}" Content="Walk-in" />
+                            <Button Width="82" Command="{Binding SelectCustomerCommand}" Content="{DynamicResource POS.Select}" />
+                            <Button Width="82" Margin="8,0,0,0" Command="{Binding ClearCustomerCommand}" Content="{DynamicResource POS.WalkIn}" />
                         </StackPanel>
                         <TextBox Margin="0,10,0,0"
                                  Height="32"
@@ -131,14 +165,14 @@
                         <Button Margin="0,8,0,14"
                                 Padding="12,6"
                                 Command="{Binding CreateCustomerFromPosCommand}"
-                                Content="Create Customer" />
+                                Content="{DynamicResource POS.CreateCustomer}" />
                     </StackPanel>
 
                     <StackPanel DockPanel.Dock="Bottom"
                                 Margin="0,12,0,0">
                         <TextBlock FontWeight="SemiBold"
                                    Foreground="{DynamicResource PrimaryTextBrush}"
-                                   Text="Selected Quantity" />
+                                   Text="{DynamicResource POS.SelectedQuantity}" />
                         <DockPanel Margin="0,8,0,0">
                             <TextBox Width="68"
                                      Height="32"
@@ -147,7 +181,7 @@
                             <Button Margin="8,0,0,0"
                                     Padding="12,6"
                                     Command="{Binding AddSelectedProductCommand}"
-                                    Content="Add Product" />
+                                    Content="{DynamicResource POS.AddProduct}" />
                         </DockPanel>
                     </StackPanel>
 
@@ -167,6 +201,8 @@
                                                FontSize="12"
                                                Opacity="0.7">
                                         <Run Text="{Binding Barcode}" />
+                                        <Run Text=" | " />
+                                        <Run Text="{Binding CategoryName}" />
                                         <Run Text=" | Qty " />
                                         <Run Text="{Binding AvailableQuantity}" />
                                         <Run Text=" | " />
@@ -195,33 +231,39 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Width="2*"
                                             Binding="{Binding Title}"
-                                            Header="Product" />
+                                            Header="{DynamicResource POS.Product}" />
+                        <DataGridTextColumn Width="120"
+                                            Binding="{Binding CategoryName}"
+                                            Header="{DynamicResource POS.Category}" />
                         <DataGridTextColumn Width="90"
                                             Binding="{Binding Barcode}"
-                                            Header="Barcode" />
+                                            Header="{DynamicResource POS.Barcode}" />
                         <DataGridTextColumn Width="70"
                                             Binding="{Binding Quantity}"
-                                            Header="Qty" />
+                                            Header="{DynamicResource POS.Qty}" />
+                        <DataGridTextColumn Width="90"
+                                            Binding="{Binding AvailableQuantity}"
+                                            Header="{DynamicResource POS.StockLeft}" />
                         <DataGridTextColumn Width="90"
                                             Binding="{Binding UnitPrice, StringFormat=N2}"
-                                            Header="Price" />
+                                            Header="{DynamicResource POS.Price}" />
                         <DataGridTextColumn Width="90"
                                             Binding="{Binding Discount, StringFormat=N2}"
-                                            Header="Discount" />
+                                            Header="{DynamicResource POS.Discount}" />
                         <DataGridTextColumn Width="80"
                                             Binding="{Binding Tax, StringFormat=N2}"
-                                            Header="Tax" />
+                                            Header="{DynamicResource POS.Tax}" />
                         <DataGridTextColumn Width="100"
                                             Binding="{Binding LineTotal, StringFormat=N2}"
-                                            Header="Total" />
+                                            Header="{DynamicResource POS.Total}" />
                     </DataGrid.Columns>
                 </DataGrid>
 
                 <Border Grid.Row="1"
                         Margin="0,12,0,0"
                         Padding="12"
-                        Background="{DynamicResource SurfaceBrush}"
-                        BorderBrush="#D6DAE1"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1">
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Left"
@@ -233,7 +275,7 @@
                             <Button Margin="8,0,0,0"
                                     Padding="12,6"
                                     Command="{Binding UpdateQuantityCommand}"
-                                    Content="Update Qty" />
+                                    Content="{DynamicResource POS.UpdateQty}" />
                             <TextBox Width="90"
                                      Height="32"
                                      Margin="18,0,0,0"
@@ -242,12 +284,12 @@
                             <Button Margin="8,0,0,0"
                                     Padding="12,6"
                                     Command="{Binding ApplyLineDiscountCommand}"
-                                    Content="Line Discount" />
+                                    Content="{DynamicResource POS.LineDiscount}" />
                         </StackPanel>
                         <Button DockPanel.Dock="Right"
                                 Padding="12,6"
                                 Command="{Binding RemoveSelectedItemCommand}"
-                                Content="Remove" />
+                                Content="{DynamicResource POS.Remove}" />
                     </DockPanel>
                 </Border>
             </Grid>
@@ -255,14 +297,14 @@
             <Border Grid.Column="2"
                     Padding="14"
                     Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="#D6DAE1"
+                    BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1,0,0,0">
                 <DockPanel LastChildFill="True">
                     <StackPanel DockPanel.Dock="Top">
                         <TextBlock FontSize="16"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource PrimaryTextBrush}"
-                                   Text="Payment" />
+                                   Text="{DynamicResource POS.Payment}" />
 
                         <Grid Margin="0,12,0,0">
                             <Grid.ColumnDefinitions>
@@ -277,45 +319,47 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <TextBlock Text="Subtotal" />
+                            <TextBlock Text="{DynamicResource POS.Subtotal}" />
                             <TextBlock Grid.Column="1"
                                        Text="{Binding CurrentSale.Summary.Subtotal, StringFormat=N2}" />
                             <TextBlock Grid.Row="1"
                                        Margin="0,8,0,0"
-                                       Text="Discounts" />
+                                       Text="{DynamicResource POS.Discounts}" />
                             <TextBlock Grid.Row="1"
                                        Grid.Column="1"
                                        Margin="0,8,0,0"
                                        Text="{Binding CurrentSale.Summary.LineDiscount, StringFormat=N2}" />
                             <TextBlock Grid.Row="2"
                                        Margin="0,8,0,0"
-                                       Text="Invoice Discount" />
+                                       Text="{DynamicResource POS.InvoiceDiscount}" />
                             <TextBlock Grid.Row="2"
                                        Grid.Column="1"
                                        Margin="0,8,0,0"
                                        Text="{Binding CurrentSale.Summary.InvoiceDiscount, StringFormat=N2}" />
                             <TextBlock Grid.Row="3"
                                        Margin="0,8,0,0"
-                                       Text="Tax" />
+                                       Text="{DynamicResource POS.Tax}" />
                             <TextBlock Grid.Row="3"
                                        Grid.Column="1"
                                        Margin="0,8,0,0"
                                        Text="{Binding CurrentSale.Summary.Tax, StringFormat=N2}" />
                             <TextBlock Grid.Row="4"
-                                       Margin="0,14,0,0"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Text="Total" />
+                           Margin="0,14,0,0"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource AccentBrush}"
+                           Text="{DynamicResource POS.Total}" />
                             <TextBlock Grid.Row="4"
                                        Grid.Column="1"
-                                       Margin="0,14,0,0"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Text="{Binding CurrentSale.Summary.GrandTotal, StringFormat=N2}" />
+                           Margin="0,14,0,0"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource AccentBrush}"
+                           Text="{Binding CurrentSale.Summary.GrandTotal, StringFormat=N2}" />
                             <TextBlock Grid.Row="5"
                                        Margin="0,8,0,0"
                                        FontWeight="SemiBold"
-                                       Text="Change" />
+                                       Text="{DynamicResource POS.Change}" />
                             <TextBlock Grid.Row="5"
                                        Grid.Column="1"
                                        Margin="0,8,0,0"
@@ -324,23 +368,28 @@
                         </Grid>
 
                         <TextBlock Margin="0,18,0,6"
-                                   Text="Payment Method" />
+                                   Text="{DynamicResource POS.PaymentMethod}" />
                         <ComboBox Height="32"
                                   ItemsSource="{Binding PaymentMethods}"
                                   SelectedItem="{Binding SelectedPaymentMethod}" />
                         <TextBlock Margin="0,12,0,6"
-                                   Text="Amount Paid" />
+                                   Text="{DynamicResource POS.AmountPaid}" />
                         <TextBox Height="32"
                                  VerticalContentAlignment="Center"
                                  Text="{Binding AmountPaid, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBlock Margin="0,12,0,6"
-                                   Text="Invoice Discount" />
+                                   Text="{DynamicResource POS.ReceiptCopies}" />
+                        <TextBox Height="32"
+                                 VerticalContentAlignment="Center"
+                                 Text="{Binding ReceiptCopies, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Margin="0,12,0,6"
+                                   Text="{DynamicResource POS.InvoiceDiscount}" />
                         <DockPanel>
                             <Button DockPanel.Dock="Right"
                                     Width="74"
                                     Margin="8,0,0,0"
                                     Command="{Binding ApplyInvoiceDiscountCommand}"
-                                    Content="Apply" />
+                                    Content="{DynamicResource POS.Apply}" />
                             <TextBox Height="32"
                                      VerticalContentAlignment="Center"
                                      Text="{Binding InvoiceDiscount, UpdateSourceTrigger=PropertyChanged}" />
@@ -348,12 +397,12 @@
                         <Button Margin="0,18,0,0"
                                 Height="42"
                                 Command="{Binding CompleteSaleCommand}"
-                                Content="Complete Sale" />
+                                Content="{DynamicResource POS.CompleteSale}" />
                     </StackPanel>
 
                     <GroupBox DockPanel.Dock="Bottom"
                               Margin="0,18,0,0"
-                              Header="Held Sales">
+                              Header="{DynamicResource POS.HeldSales}">
                         <ListBox MaxHeight="190"
                                  ItemsSource="{Binding HeldSales}">
                             <ListBox.ItemTemplate>
@@ -363,7 +412,7 @@
                                                 Padding="8,4"
                                                 Command="{Binding DataContext.ResumeSaleCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                                 CommandParameter="{Binding}"
-                                                Content="Resume" />
+                                                Content="{DynamicResource POS.Resume}" />
                                         <StackPanel>
                                             <TextBlock FontWeight="SemiBold"
                                                        Text="{Binding InvoiceNumber}" />

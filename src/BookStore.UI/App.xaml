@@ -4,6 +4,8 @@
     <Application.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <FlowDirection x:Key="AppFlowDirection">LeftToRight</FlowDirection>
+            <TextAlignment x:Key="AppTextAlignment">Left</TextAlignment>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Themes/Colors.xaml" />
                 <ResourceDictionary Source="Themes/Brushes.xaml" />

@@ -126,6 +126,6 @@ public sealed class AppearanceSettingsValidator : AbstractValidator<AppearanceSe
     public AppearanceSettingsValidator()
     {
         RuleFor(settings => settings.Theme).Must(theme => theme is "Light" or "Dark" or "System");
-        RuleFor(settings => settings.Language).NotEmpty().MaximumLength(20);
+        RuleFor(settings => settings.Language).Must(language => language is "ar-EG" or "en-US").WithMessage("Language must be Arabic or English.");
     }
 }

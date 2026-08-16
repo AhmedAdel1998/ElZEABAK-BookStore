@@ -195,9 +195,9 @@ public class CategoryModuleTests
             return Task.FromResult(result);
         }
 
-        public Task<int> CountAsync(string? searchTerm = null, CancellationToken cancellationToken = default)
+        public async Task<int> CountAsync(string? searchTerm = null, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(SearchAsync(searchTerm, 1, int.MaxValue, cancellationToken).Result.Count);
+            return (await SearchAsync(searchTerm, 1, int.MaxValue, cancellationToken)).Count;
         }
 
         public Task<bool> ExistsByNameAsync(string name, Guid? excludedCategoryId = null, CancellationToken cancellationToken = default)

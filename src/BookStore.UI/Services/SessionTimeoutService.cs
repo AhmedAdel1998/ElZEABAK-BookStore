@@ -38,12 +38,13 @@ public class SessionTimeoutService : ISessionTimeoutService
         _navigationService = navigationService;
         _scopeFactory = scopeFactory;
         _logger = logger;
-        _timeout = TimeSpan.FromMinutes(GetSecuritySettings().SessionTimeout);
-        notifier.SettingsChanged += (_, change) =>
+        _timeout = TimeSpan.FromMinutes(30);
+        _ = RefreshSecuritySettingsAsync();
+        notifier.SettingsChanged += async (_, change) =>
         {
             if (change.Category == SettingsCategory.Security)
             {
-                _timeout = TimeSpan.FromMinutes(GetSecuritySettings().SessionTimeout);
+                await RefreshSecuritySettingsAsync();
             }
         };
         _timer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
@@ -98,9 +99,17 @@ public class SessionTimeoutService : ISessionTimeoutService
         _logger.LogInformation("Session expired because of inactivity");
     }
 
-    private SecuritySettingsDto GetSecuritySettings()
+    private async Task RefreshSecuritySettingsAsync(CancellationToken cancellationToken = default)
     {
-        using var scope = _scopeFactory.CreateScope();
-        return scope.ServiceProvider.GetRequiredService<ISettingsService>().GetAsync<SecuritySettingsDto>().GetAwaiter().GetResult();
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var settings = await scope.ServiceProvider.GetRequiredService<ISettingsService>().GetAsync<SecuritySettingsDto>(cancellationToken);
+            _timeout = TimeSpan.FromMinutes(Math.Max(settings.SessionTimeout, 1));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Security settings could not be loaded for session timeout. Keeping current timeout.");
+        }
     }
 }

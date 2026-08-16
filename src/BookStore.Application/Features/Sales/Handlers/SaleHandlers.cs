@@ -64,7 +64,7 @@ public sealed class StartSaleHandler
             CashierName = _currentUserService.FullName ?? _currentUserService.Username ?? "Cashier",
             CustomerName = request.CustomerName.Trim()
         };
-        _pricingService.Recalculate(sale);
+        await _pricingService.RecalculateAsync(sale, cancellationToken);
         await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
         _logger.LogInformation("POS sale started. Invoice={InvoiceNumber} Cashier={Cashier}", sale.InvoiceNumber, sale.CashierName);
         return Result<SaleSessionDto>.Success(sale);
@@ -123,10 +123,11 @@ public sealed class AddItemHandler
         else
         {
             existing.Quantity = requestedQuantity;
-            existing.AvailableQuantity = product.Quantity;
+            existing.AvailableQuantity = product.Quantity - requestedQuantity;
+            existing.CategoryName = product.Category?.Name;
         }
 
-        _pricingService.Recalculate(sale);
+        await _pricingService.RecalculateAsync(sale, cancellationToken);
         await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
@@ -136,8 +137,9 @@ public sealed class AddItemHandler
         ProductId = product.Id,
         Barcode = product.Barcode.Value,
         Title = product.Title,
+        CategoryName = product.Category?.Name,
         Quantity = quantity,
-        AvailableQuantity = product.Quantity,
+        AvailableQuantity = product.Quantity - quantity,
         UnitPrice = product.SellingPrice
     };
 }
@@ -173,13 +175,15 @@ public sealed class UpdateItemQuantityHandler
             return Result<SaleSessionDto>.Failure("Cart item was not found.");
         }
 
-        if (request.Quantity > item.AvailableQuantity)
+        var maximumQuantity = item.Quantity + item.AvailableQuantity;
+        if (request.Quantity > maximumQuantity)
         {
             return Result<SaleSessionDto>.Failure("Requested quantity exceeds available stock.");
         }
 
         item.Quantity = request.Quantity;
-        _pricingService.Recalculate(sale);
+        item.AvailableQuantity = maximumQuantity - request.Quantity;
+        await _pricingService.RecalculateAsync(sale, cancellationToken);
         await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
@@ -216,7 +220,7 @@ public sealed class RemoveItemHandler
             return Result<SaleSessionDto>.Failure("Cart item was not found.");
         }
 
-        _pricingService.Recalculate(sale);
+        await _pricingService.RecalculateAsync(sale, cancellationToken);
         await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
@@ -266,7 +270,7 @@ public sealed class ApplyLineDiscountHandler
         }
 
         item.Discount = request.Discount;
-        _pricingService.Recalculate(sale);
+        await _pricingService.RecalculateAsync(sale, cancellationToken);
         await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
@@ -310,7 +314,7 @@ public sealed class ApplyInvoiceDiscountHandler
         }
 
         sale.InvoiceDiscount = request.Discount;
-        _pricingService.Recalculate(sale);
+        await _pricingService.RecalculateAsync(sale, cancellationToken);
         await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
@@ -431,11 +435,12 @@ public sealed class CompleteSaleHandler
     private readonly IPosSaleSessionStore _sessionStore;
     private readonly IPricingService _pricingService;
     private readonly IReceiptService _receiptService;
+    private readonly ICheckoutConcurrencyGuard _checkoutGuard;
     private readonly IValidator<CompleteSaleRequest> _validator;
     private readonly ILogger<CompleteSaleHandler> _logger;
 
     /// <summary>Initializes a new instance of the <see cref="CompleteSaleHandler"/> class.</summary>
-    public CompleteSaleHandler(IAuthorizationService authorizationService, ICurrentUserService currentUserService, IUnitOfWork unitOfWork, IPosSaleSessionStore sessionStore, IPricingService pricingService, IReceiptService receiptService, IValidator<CompleteSaleRequest> validator, ILogger<CompleteSaleHandler> logger)
+    public CompleteSaleHandler(IAuthorizationService authorizationService, ICurrentUserService currentUserService, IUnitOfWork unitOfWork, IPosSaleSessionStore sessionStore, IPricingService pricingService, IReceiptService receiptService, ICheckoutConcurrencyGuard checkoutGuard, IValidator<CompleteSaleRequest> validator, ILogger<CompleteSaleHandler> logger)
     {
         _authorizationService = authorizationService;
         _currentUserService = currentUserService;
@@ -443,12 +448,30 @@ public sealed class CompleteSaleHandler
         _sessionStore = sessionStore;
         _pricingService = pricingService;
         _receiptService = receiptService;
+        _checkoutGuard = checkoutGuard;
         _validator = validator;
         _logger = logger;
     }
 
     /// <summary>Handles the request.</summary>
     public async Task<Result<CompleteSaleResponse>> HandleAsync(CompleteSaleRequest request, CancellationToken cancellationToken = default)
+    {
+        if (!await _checkoutGuard.TryEnterAsync(cancellationToken))
+        {
+            return Result<CompleteSaleResponse>.Failure("Checkout is already in progress.");
+        }
+
+        try
+        {
+            return await CompleteAsync(request, cancellationToken);
+        }
+        finally
+        {
+            _checkoutGuard.Exit();
+        }
+    }
+
+    private async Task<Result<CompleteSaleResponse>> CompleteAsync(CompleteSaleRequest request, CancellationToken cancellationToken)
     {
         if (!_authorizationService.HasPermission(PermissionConstants.SalesComplete))
         {
@@ -469,7 +492,7 @@ public sealed class CompleteSaleHandler
 
         session.PaymentMethod = request.PaymentMethod;
         session.AmountPaid = request.AmountPaid;
-        _pricingService.Recalculate(session);
+        await _pricingService.RecalculateAsync(session, cancellationToken);
         if (session.AmountPaid < session.Summary.GrandTotal)
         {
             return Result<CompleteSaleResponse>.Failure("Paid amount cannot be less than the total.");
@@ -542,7 +565,7 @@ public sealed class CompleteSaleHandler
         ReceiptPrintResult printResult;
         try
         {
-            printResult = await _receiptService.PrintCompletedSaleAsync(completedSaleId, PrintRequestKind.Automatic, copies: 0, cancellationToken: cancellationToken);
+            printResult = await _receiptService.PrintCompletedSaleAsync(completedSaleId, PrintRequestKind.Automatic, copies: request.ReceiptCopies, cancellationToken: cancellationToken);
         }
         catch (Exception ex)
         {
@@ -560,7 +583,8 @@ public sealed class CompleteSaleHandler
             Receipt = printResult.Receipt ?? new BookStore.Application.Features.Receipts.DTOs.ReceiptModel { SaleId = completedSaleId, InvoiceNumber = completedInvoiceNumber },
             ReceiptPrintSucceeded = printResult.Succeeded,
             ReceiptPrintError = printResult.Error,
-            PrintRequestId = printResult.PrintRequestId
+            PrintRequestId = printResult.PrintRequestId,
+            ReceiptCopies = request.ReceiptCopies
         });
     }
 }
@@ -665,6 +689,7 @@ public sealed class SearchProductHandler
             Barcode = product.Barcode.Value,
             ISBN = product.ISBN?.Value,
             Title = product.Title,
+            CategoryName = product.Category?.Name,
             Author = product.Author,
             UnitPrice = product.SellingPrice,
             AvailableQuantity = product.Quantity,
@@ -716,6 +741,6 @@ public sealed class GetSaleSummaryHandler
     public async Task<Result<SaleSummaryDto>> HandleAsync(GetSaleSummaryRequest request, CancellationToken cancellationToken = default)
     {
         var sale = await _sessionStore.GetCurrentAsync(cancellationToken);
-        return Result<SaleSummaryDto>.Success(sale is null ? new SaleSummaryDto() : _pricingService.Recalculate(sale));
+        return Result<SaleSummaryDto>.Success(sale is null ? new SaleSummaryDto() : await _pricingService.RecalculateAsync(sale, cancellationToken));
     }
 }

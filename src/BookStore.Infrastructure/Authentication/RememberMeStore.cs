@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using BookStore.Shared.Constants;
 
 namespace BookStore.Infrastructure.Authentication;
 
@@ -16,7 +17,7 @@ public class RememberMeStore : IRememberMeStore
     /// </summary>
     public RememberMeStore()
     {
-        _tokenPath = Path.Combine(AppContext.BaseDirectory, "Temp", "remember-me.dat");
+        _tokenPath = Path.Combine(ApplicationPaths.ResolveDataPath(FolderConstants.Temp), "remember-me.dat");
     }
 
     /// <inheritdoc />
@@ -31,6 +32,7 @@ public class RememberMeStore : IRememberMeStore
         var payload = JsonSerializer.Serialize(new RememberMePayload(userId, expiresAt));
         var protectedBytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(payload), null, DataProtectionScope.CurrentUser);
         await File.WriteAllBytesAsync(_tokenPath, protectedBytes, cancellationToken);
+        File.SetAttributes(_tokenPath, File.GetAttributes(_tokenPath) | FileAttributes.Hidden);
     }
 
     /// <inheritdoc />

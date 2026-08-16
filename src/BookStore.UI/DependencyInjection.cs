@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddSingleton<IShellNavigationService, ShellNavigationService>();
         services.AddSingleton<IViewModelFactory, ViewModelFactory>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<ILocalizationService, LocalizationService>();
         services.AddSingleton<IApplicationShutdownService, ApplicationShutdownService>();
         services.AddSingleton<ISessionTimeoutService, SessionTimeoutService>();
         services.AddSingleton<INotificationService, NotificationService>();
@@ -146,6 +147,7 @@ public static class DependencyInjection
         services.AddTransient<SettingsHandlers.SettingsCommandHandler>();
 
         services.AddTransient<LoginViewModel>();
+        services.AddTransient<FirstRunSetupViewModel>();
         services.AddTransient<AuthenticatedHomeViewModel>();
         services.AddTransient<ChangePasswordViewModel>();
         services.AddTransient<CategoryListViewModel>();
@@ -205,6 +207,7 @@ public static class DependencyInjection
             new Dictionary<Type, Func<BaseViewModel>>
             {
                 [typeof(LoginViewModel)] = () => provider.GetRequiredService<LoginViewModel>(),
+                [typeof(FirstRunSetupViewModel)] = () => provider.GetRequiredService<FirstRunSetupViewModel>(),
                 [typeof(AuthenticatedHomeViewModel)] = () => provider.GetRequiredService<AuthenticatedHomeViewModel>(),
                 [typeof(ChangePasswordViewModel)] = () => provider.GetRequiredService<ChangePasswordViewModel>(),
                 [typeof(CategoryListViewModel)] = () => provider.GetRequiredService<CategoryListViewModel>(),

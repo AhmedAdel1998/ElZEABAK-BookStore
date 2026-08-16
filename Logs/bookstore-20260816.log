@@ -1,0 +1,38 @@
+2026-08-16 11:57:31.928 +03:00 [INF] Applying database migrations
+2026-08-16 11:57:32.060 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-08-16 11:57:32.123 +03:00 [INF] No migrations were applied. The database is already up to date.
+2026-08-16 11:57:32.513 +03:00 [INF] Database seed completed
+2026-08-16 11:57:32.516 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-08-16 11:57:32.516 +03:00 [INF] Hosting environment: Production
+2026-08-16 11:57:32.517 +03:00 [INF] Content root path: E:\EL ZEABAK BookStore\EL ZEABAK BookStore
+2026-08-16 11:57:32.517 +03:00 [INF] Application start
+2026-08-16 11:57:32.518 +03:00 [INF] Runtime folder verified: Database
+2026-08-16 11:57:32.518 +03:00 [INF] Runtime folder verified: Logs
+2026-08-16 11:57:32.518 +03:00 [INF] Runtime folder verified: Backups
+2026-08-16 11:57:32.518 +03:00 [INF] Runtime folder verified: Exports
+2026-08-16 11:57:32.518 +03:00 [INF] Runtime folder verified: Temp
+2026-08-16 11:57:32.595 +03:00 [INF] UI culture applied: en-US
+2026-08-16 11:57:32.636 +03:00 [INF] Theme applied: Light
+2026-08-16 11:57:32.749 +03:00 [INF] Remembered session restored for user admin
+2026-08-16 11:57:32.757 +03:00 [WRN] Unauthorized permission check: Barcode.View
+2026-08-16 11:57:32.783 +03:00 [INF] Report opened: Reports Dashboard
+2026-08-16 11:57:32.808 +03:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-08-16 11:57:32.833 +03:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2026-08-16 11:57:32.882 +03:00 [INF] Report generated: Reports Dashboard in 98 ms
+2026-08-16 11:57:32.884 +03:00 [INF] Report opened: Sales Summary
+2026-08-16 11:57:32.885 +03:00 [INF] Report generated: Sales Summary in 1 ms
+2026-08-16 12:45:36.867 +03:00 [INF] Applying database migrations
+2026-08-16 12:45:37.011 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-08-16 12:45:37.074 +03:00 [INF] No migrations were applied. The database is already up to date.
+2026-08-16 12:45:37.447 +03:00 [INF] Database seed completed
+2026-08-16 12:45:37.450 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-08-16 12:45:37.450 +03:00 [INF] Hosting environment: Production
+2026-08-16 12:45:37.451 +03:00 [INF] Content root path: E:\EL ZEABAK BookStore\EL ZEABAK BookStore
+2026-08-16 12:45:37.451 +03:00 [INF] Application start
+2026-08-16 12:45:37.452 +03:00 [INF] Runtime folder verified: Database
+2026-08-16 12:45:37.452 +03:00 [INF] Runtime folder verified: Logs
+2026-08-16 12:45:37.452 +03:00 [INF] Runtime folder verified: Backups
+2026-08-16 12:45:37.452 +03:00 [INF] Runtime folder verified: Exports
+2026-08-16 12:45:37.452 +03:00 [INF] Runtime folder verified: Temp
+2026-08-16 12:45:37.542 +03:00 [INF] UI culture applied: en-US
+2026-08-16 12:45:37.587 +03:00 [INF] Theme applied: Light

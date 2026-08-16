@@ -12,6 +12,7 @@ using ReceiptHandlers = BookStore.Application.Features.Receipts.Handlers;
 using BackupHandlers = BookStore.Application.Features.Backup.Handlers;
 using SettingsHandlers = BookStore.Application.Features.Settings.Handlers;
 using BookStore.Application.Features.Settings.Services;
+using BookStore.Application.Features.Sales.Services;
 using BookStore.Application.Features.Receipts.Services;
 using BookStore.Application.Interfaces;
 
@@ -83,6 +84,7 @@ public static class DependencyInjection
         services.AddTransient<BarcodeHandlers.GetBarcodeSettingsHandler>();
         services.AddScoped<IPricingService, SalesHandlers.PricingService>();
         services.AddScoped<IReceiptService, ReceiptService>();
+        services.AddSingleton<ICheckoutConcurrencyGuard, CheckoutConcurrencyGuard>();
         services.AddTransient<SalesHandlers.StartSaleHandler>();
         services.AddTransient<SalesHandlers.AddItemHandler>();
         services.AddTransient<SalesHandlers.UpdateItemQuantityHandler>();

@@ -3,7 +3,10 @@ using BookStore.Persistence.Context;
 using BookStore.Persistence.Repositories;
 using BookStore.Persistence.Seed;
 using BookStore.Persistence.Settings;
+using BookStore.Shared.Constants;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,13 +25,15 @@ public static class DependencyInjection
     /// <returns>The configured service collection.</returns>
     public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("BookStoreDb")
-            ?? "Data Source=bookstore.db";
+        var connectionString = BuildSqliteConnectionString(configuration.GetConnectionString("BookStoreDb")
+            ?? "Data Source=bookstore.db");
 
         services.AddDbContext<BookStoreDbContext>(options =>
         {
-            options.UseSqlite(connectionString, sqliteOptions =>
-                sqliteOptions.MigrationsAssembly(typeof(BookStoreDbContext).Assembly.FullName));
+            options
+                .UseSqlite(connectionString, sqliteOptions =>
+                    sqliteOptions.MigrationsAssembly(typeof(BookStoreDbContext).Assembly.FullName))
+                .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.CommandExecuted));
         });
 
         services.AddScoped<IProductRepository, ProductRepository>();
@@ -45,5 +50,20 @@ public static class DependencyInjection
         services.AddHostedService<DatabaseInitializer>();
 
         return services;
+    }
+
+    private static string BuildSqliteConnectionString(string connectionString)
+    {
+        var builder = new SqliteConnectionStringBuilder(connectionString)
+        {
+            ForeignKeys = true,
+            DefaultTimeout = 30
+        };
+        if (!string.IsNullOrWhiteSpace(builder.DataSource) && builder.DataSource != ":memory:" && !Path.IsPathRooted(Environment.ExpandEnvironmentVariables(builder.DataSource)))
+        {
+            builder.DataSource = ApplicationPaths.ResolveDataPath(builder.DataSource);
+        }
+
+        return builder.ToString();
     }
 }

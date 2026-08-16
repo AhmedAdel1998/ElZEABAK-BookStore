@@ -6,13 +6,43 @@
         <KeyBinding Key="Escape" Command="{Binding ExitCommand}" />
     </UserControl.InputBindings>
 
-    <Grid Background="{DynamicResource AppBackgroundBrush}">
-        <Border Width="420"
-                Padding="28"
+    <Grid Background="{DynamicResource BookstorePageBrush}" FlowDirection="{DynamicResource AppFlowDirection}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="520" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Button Grid.ColumnSpan="3"
+                MinWidth="96"
+                Margin="20"
+                Padding="14,8"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Command="{Binding ToggleLanguageCommand}"
+                Content="{Binding LanguageToggleText}" />
+        <Border Grid.Column="0" Background="{DynamicResource WarmChromeBrush}">
+            <Grid Margin="48">
+                <StackPanel VerticalAlignment="Center">
+                    <Border Width="92" Height="92" HorizontalAlignment="Left" Background="{DynamicResource BookstoreGoldBrush}" CornerRadius="8">
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#1E1711" FontSize="30" FontWeight="Bold" Text="BZ" />
+                    </Border>
+                    <TextBlock Margin="0,24,0,0" FontSize="34" FontWeight="SemiBold" Foreground="#FFE9A3" Text="EL ZEABAK" />
+                    <TextBlock FontSize="22" Foreground="#FFF3C4" Text="{DynamicResource App.Product}" />
+                    <Border Width="160" Height="4" Margin="0,24,0,18" HorizontalAlignment="Left" Background="{DynamicResource BookstoreGoldBrush}" CornerRadius="2" />
+                    <TextBlock MaxWidth="340" Foreground="#FFF8E7" FontSize="14" Text="{DynamicResource Auth.SignInSubtitle}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Grid>
+        </Border>
+        <Border Grid.Column="1"
+                Width="430"
+                Padding="30"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Background="{DynamicResource SurfaceBrush}"
-                CornerRadius="6">
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Effect="{DynamicResource CardShadow}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -25,20 +55,17 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Margin="0,0,0,24">
-                    <Border Width="72" Height="72" CornerRadius="6" Background="{DynamicResource AccentBrush}" HorizontalAlignment="Center">
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="24" FontWeight="Bold" Text="BZ" />
-                    </Border>
-                    <TextBlock Margin="0,16,0,0" HorizontalAlignment="Center" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="EL ZEABAK BookStore" />
-                    <TextBlock HorizontalAlignment="Center" Foreground="{DynamicResource PrimaryTextBrush}" Opacity="0.65" Text="BookStore POS v1.0" />
+                    <TextBlock FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{DynamicResource Auth.SignIn}" />
+                    <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource SecondaryTextBrush}" Text="{DynamicResource Auth.SignInSubtitle}" />
                 </StackPanel>
 
-                <TextBlock Grid.Row="1" Margin="0,0,0,6" Text="Username" />
+                <TextBlock Grid.Row="1" Margin="0,0,0,6" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{DynamicResource Auth.Username}" />
                 <TextBox Grid.Row="2"
                          MinHeight="38"
                          TabIndex="0"
                          Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" />
 
-                <TextBlock Grid.Row="3" Margin="0,14,0,6" Text="Password" />
+                <TextBlock Grid.Row="3" Margin="0,14,0,6" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{DynamicResource Auth.Password}" />
                 <Grid Grid.Row="4">
                     <PasswordBox x:Name="PasswordInput"
                                  MinHeight="38"
@@ -51,14 +78,14 @@
                              Visibility="{Binding IsPasswordVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <ToggleButton Width="64"
                                   HorizontalAlignment="Right"
-                                  Content="Show"
+                                  Content="{DynamicResource Auth.ShowPassword}"
                                   IsChecked="{Binding IsPasswordVisible}"
                                   TabIndex="2" />
                 </Grid>
 
                 <Grid Grid.Row="5" Margin="0,16,0,0">
-                    <CheckBox VerticalAlignment="Center" Content="Remember me" IsChecked="{Binding RememberMe}" TabIndex="3" />
-                    <TextBlock HorizontalAlignment="Right" Foreground="#B91C1C" Text="{Binding ValidationMessage}" TextWrapping="Wrap" />
+                    <CheckBox VerticalAlignment="Center" Content="{DynamicResource Auth.RememberMe}" IsChecked="{Binding RememberMe}" TabIndex="3" />
+                    <TextBlock HorizontalAlignment="Right" Foreground="{DynamicResource DangerBrush}" Text="{Binding ValidationMessage}" TextWrapping="Wrap" />
                 </Grid>
 
                 <Grid Grid.Row="6" Margin="0,24,0,0">
@@ -67,13 +94,13 @@
                         <ColumnDefinition Width="12" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Command="{Binding ExitCommand}" Content="Exit" TabIndex="5" />
-                    <Button Grid.Column="2" Command="{Binding LoginCommand}" Content="Login" TabIndex="4" />
+                    <Button Grid.Column="0" Command="{Binding ExitCommand}" Content="{DynamicResource Auth.Exit}" TabIndex="5" />
+                    <Button Grid.Column="2" Command="{Binding LoginCommand}" Content="{DynamicResource Auth.Login}" TabIndex="4" />
                 </Grid>
 
-                <Border Background="#99000000"
+                <Border Background="{DynamicResource OverlayBrush}"
                         Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="18" Text="Signing in..." />
+                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="18" Text="{DynamicResource Auth.SigningIn}" />
                 </Border>
             </Grid>
         </Border>

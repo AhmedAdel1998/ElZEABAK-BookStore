@@ -9,8 +9,10 @@ using BookStore.Application.Features.Receipts.Queries;
 using BookStore.Application.Features.Receipts.Services;
 using BookStore.Application.Features.Sales.Commands.AddItem;
 using BookStore.Application.Features.Sales.Commands.ApplyInvoiceDiscount;
+using BookStore.Application.Features.Sales.Commands.ApplyLineDiscount;
 using BookStore.Application.Features.Sales.Commands.CompleteSale;
 using BookStore.Application.Features.Sales.Commands.RemoveItem;
+using BookStore.Application.Features.Sales.Commands.ResumeSale;
 using BookStore.Application.Features.Sales.Commands.StartSale;
 using BookStore.Application.Features.Sales.Commands.SuspendSale;
 using BookStore.Application.Features.Sales.Commands.UpdateItemQuantity;
@@ -61,6 +63,7 @@ public class SalesModuleTests
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value!.Items);
         Assert.Equal(3, result.Value.Items[0].Quantity);
+        Assert.Equal(7, result.Value.Items[0].AvailableQuantity);
     }
 
     [Fact]
@@ -91,6 +94,22 @@ public class SalesModuleTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("BK100", result.Value!.Items[0].Barcode);
+        Assert.Equal(4, result.Value.Items[0].AvailableQuantity);
+    }
+
+    [Fact]
+    public async Task UpdateQuantity_RecalculatesVisibleStockLeft()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 10);
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+        var sale = (await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1))).Value!;
+
+        var result = await fixture.UpdateQuantity.HandleAsync(new UpdateItemQuantityRequest(sale.Items[0].Id, 4));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(4, result.Value!.Items[0].Quantity);
+        Assert.Equal(6, result.Value.Items[0].AvailableQuantity);
     }
 
     [Fact]
@@ -115,6 +134,23 @@ public class SalesModuleTests
         var result = await fixture.ApplyInvoiceDiscount.HandleAsync(new ApplyInvoiceDiscountRequest(5));
 
         Assert.False(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task LineDiscount_UpdatesSelectedLineAndTotals()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 5, price: 100);
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+        var sale = (await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 2))).Value!;
+
+        var result = await fixture.ApplyLineDiscount.HandleAsync(new ApplyLineDiscountRequest(sale.Items[0].Id, 25));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(25, result.Value!.Items[0].Discount);
+        Assert.Equal(200, result.Value.Summary.Subtotal);
+        Assert.Equal(25, result.Value.Summary.LineDiscount);
+        Assert.Equal(175, result.Value.Summary.GrandTotal);
     }
 
     [Fact]
@@ -150,6 +186,24 @@ public class SalesModuleTests
     }
 
     [Fact]
+    public async Task ResumeSale_RestoresHeldSaleAsCurrentSale()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 5);
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+        var activeSale = (await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1))).Value!;
+        await fixture.SuspendSale.HandleAsync(new SuspendSaleRequest());
+
+        var result = await fixture.ResumeSale.HandleAsync(new ResumeSaleRequest(activeSale.SaleId));
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value!.IsSuspended);
+        Assert.Equal(activeSale.SaleId, result.Value.SaleId);
+        Assert.Empty(await fixture.Store.GetHeldAsync());
+        Assert.Equal(activeSale.SaleId, (await fixture.Store.GetCurrentAsync())!.SaleId);
+    }
+
+    [Fact]
     public async Task CompleteSale_PersistsSaleAndUpdatesInventory()
     {
         var fixture = new Fixture();
@@ -164,6 +218,39 @@ public class SalesModuleTests
         Assert.Single(fixture.InventoryRepository.Transactions);
         Assert.Single(fixture.SaleRepository.Sales);
         Assert.NotNull(fixture.ReceiptService.LastReceipt);
+        Assert.Equal(1, fixture.ReceiptService.LastCopies);
+    }
+
+    [Fact]
+    public async Task CompleteSale_RejectsPaidAmountBelowTotal()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 5, price: 100);
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 2));
+
+        var result = await fixture.CompleteSale.HandleAsync(new CompleteSaleRequest(PaymentMethod.Cash, 199));
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Paid amount cannot be less than the total.", result.Error);
+        Assert.Equal(5, product.Quantity);
+        Assert.Empty(fixture.InventoryRepository.Transactions);
+        Assert.Empty(fixture.SaleRepository.Sales);
+    }
+
+    [Fact]
+    public async Task CompleteSale_PrintsRequestedReceiptCopies()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 5, price: 100);
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 2));
+
+        var result = await fixture.CompleteSale.HandleAsync(new CompleteSaleRequest(PaymentMethod.Cash, 200, ReceiptCopies: 3));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(3, result.Value!.ReceiptCopies);
+        Assert.Equal(3, fixture.ReceiptService.LastCopies);
     }
 
     [Fact]
@@ -205,6 +292,19 @@ public class SalesModuleTests
         Assert.Equal(1, product.Quantity);
     }
 
+    [Fact]
+    public async Task CompleteSale_RejectsOverlappingCheckout()
+    {
+        var fixture = new Fixture();
+        fixture.CheckoutGuard.IsLocked = true;
+
+        var result = await fixture.CompleteSale.HandleAsync(new CompleteSaleRequest(PaymentMethod.Cash, 200));
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Checkout is already in progress.", result.Error);
+        Assert.Empty(fixture.SaleRepository.Sales);
+    }
+
     private sealed class Fixture
     {
         public Fixture(IReadOnlyCollection<string>? permissions = null)
@@ -216,9 +316,12 @@ public class SalesModuleTests
             AddItem = new AddItemHandler(UnitOfWork, Store, Pricing, new AddItemRequestValidator());
             UpdateQuantity = new UpdateItemQuantityHandler(Store, Pricing, new UpdateItemQuantityRequestValidator());
             RemoveItem = new RemoveItemHandler(Store, Pricing, new RemoveItemRequestValidator());
+            ApplyLineDiscount = new ApplyLineDiscountHandler(Authorization, Store, Pricing, new ApplyLineDiscountRequestValidator());
             ApplyInvoiceDiscount = new ApplyInvoiceDiscountHandler(Authorization, Store, Pricing, new ApplyInvoiceDiscountRequestValidator());
             SuspendSale = new SuspendSaleHandler(Authorization, Store);
-            CompleteSale = new CompleteSaleHandler(Authorization, CurrentUser, UnitOfWork, Store, Pricing, ReceiptService, new CompleteSaleRequestValidator(), NullLogger<CompleteSaleHandler>.Instance);
+            ResumeSale = new ResumeSaleHandler(Store, new ResumeSaleRequestValidator());
+            CheckoutGuard = new FakeCheckoutConcurrencyGuard();
+            CompleteSale = new CompleteSaleHandler(Authorization, CurrentUser, UnitOfWork, Store, Pricing, ReceiptService, CheckoutGuard, new CompleteSaleRequestValidator(), NullLogger<CompleteSaleHandler>.Instance);
         }
 
         public OptionsWrapper<ApplicationSettings> Settings { get; } = new(new ApplicationSettings());
@@ -230,14 +333,17 @@ public class SalesModuleTests
         public FakeSaleRepository SaleRepository { get; } = new();
         public FakeReceiptService ReceiptService { get; } = new();
         public FakeBarcodeService BarcodeService { get; } = new();
+        public FakeCheckoutConcurrencyGuard CheckoutGuard { get; }
         public PricingService Pricing { get; }
         public FakeUnitOfWork UnitOfWork { get; }
         public StartSaleHandler StartSale { get; }
         public AddItemHandler AddItem { get; }
         public UpdateItemQuantityHandler UpdateQuantity { get; }
         public RemoveItemHandler RemoveItem { get; }
+        public ApplyLineDiscountHandler ApplyLineDiscount { get; }
         public ApplyInvoiceDiscountHandler ApplyInvoiceDiscount { get; }
         public SuspendSaleHandler SuspendSale { get; }
+        public ResumeSaleHandler ResumeSale { get; }
         public CompleteSaleHandler CompleteSale { get; }
 
         public Product AddProduct(string barcode = "BK100", int quantity = 5, decimal price = 50)
@@ -338,6 +444,7 @@ public class SalesModuleTests
     private sealed class FakeReceiptService : IReceiptService
     {
         public ReceiptModel? LastReceipt { get; private set; }
+        public int LastCopies { get; private set; }
         public bool ThrowOnPrint { get; set; }
         public Task<Result<ReceiptModel>> BuildReceiptAsync(Guid saleId, CancellationToken cancellationToken = default) => Task.FromResult(Result<ReceiptModel>.Success(LastReceipt ?? new ReceiptModel { SaleId = saleId, InvoiceNumber = "TEST" }));
         public Task<Result<ReceiptModel>> BuildReceiptByInvoiceAsync(string invoiceNumber, CancellationToken cancellationToken = default) => Task.FromResult(Result<ReceiptModel>.Success(LastReceipt ?? new ReceiptModel { InvoiceNumber = invoiceNumber }));
@@ -348,6 +455,7 @@ public class SalesModuleTests
                 throw new InvalidOperationException("Printer driver failed.");
             }
 
+            LastCopies = copies;
             LastReceipt = new ReceiptModel { SaleId = saleId, InvoiceNumber = "TEST" };
             return Task.FromResult(ReceiptPrintResult.Success(LastReceipt.PrintRequestId, printerName, LastReceipt));
         }
@@ -388,6 +496,27 @@ public class SalesModuleTests
         public Task<bool> ReserveAsync(string barcode, CancellationToken cancellationToken = default) => Task.FromResult(true);
         public string GenerateImageSvg(string barcode, BarcodeFormat format) => string.Empty;
         public Task<BarcodeProductDto?> FindProductAsync(string barcode, CancellationToken cancellationToken = default) => Task.FromResult(Product);
+    }
+
+    private sealed class FakeCheckoutConcurrencyGuard : ICheckoutConcurrencyGuard
+    {
+        public bool IsLocked { get; set; }
+
+        public Task<bool> TryEnterAsync(CancellationToken cancellationToken = default)
+        {
+            if (IsLocked)
+            {
+                return Task.FromResult(false);
+            }
+
+            IsLocked = true;
+            return Task.FromResult(true);
+        }
+
+        public void Exit()
+        {
+            IsLocked = false;
+        }
     }
 
     private sealed class FakeSettingsService(ApplicationSettings settings) : ISettingsService

@@ -8,5 +8,5 @@ namespace BookStore.Application.Interfaces;
 public interface IPricingService
 {
     /// <summary>Recalculates totals for a sale session.</summary>
-    SaleSummaryDto Recalculate(SaleSessionDto sale);
+    Task<SaleSummaryDto> RecalculateAsync(SaleSessionDto sale, CancellationToken cancellationToken = default);
 }

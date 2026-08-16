@@ -7,7 +7,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:AppCard}">
-                    <Border Padding="16"
+                    <Border Padding="18"
                             Background="{DynamicResource SurfaceBrush}"
                             BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1"
@@ -15,7 +15,16 @@
                             Effect="{DynamicResource CardShadow}">
                         <StackPanel>
                             <DockPanel>
-                                <TextBlock DockPanel.Dock="Left" Margin="0,0,10,0" FontSize="18" Foreground="{DynamicResource AccentBrush}" Text="{TemplateBinding Icon}" />
+                                <Border DockPanel.Dock="Left"
+                                        Width="36"
+                                        Height="36"
+                                        Margin="0,0,12,0"
+                                        Background="{DynamicResource SurfaceAltBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="{DynamicResource CornerRadiusMedium}">
+                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" Foreground="{DynamicResource AccentBrush}" Text="{TemplateBinding Icon}" />
+                                </Border>
                                 <StackPanel>
                                     <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{TemplateBinding Title}" />
                                     <TextBlock FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Text="{TemplateBinding Subtitle}" />

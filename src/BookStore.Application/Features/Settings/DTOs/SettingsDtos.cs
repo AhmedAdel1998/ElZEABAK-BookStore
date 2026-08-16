@@ -116,7 +116,7 @@ public sealed class SecuritySettingsDto
 public sealed class AppearanceSettingsDto
 {
     public string Theme { get; set; } = "Light";
-    public string Language { get; set; } = "en-US";
+    public string Language { get; set; } = "ar-EG";
 }
 
 public sealed class ApplicationSettingsDto

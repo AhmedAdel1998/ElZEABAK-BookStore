@@ -9,4 +9,13 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="src\**;tests\**;docs\**" />
+    <Page Remove="src\**;tests\**;docs\**" />
+    <ApplicationDefinition Remove="src\**;tests\**;docs\**" />
+    <EmbeddedResource Remove="src\**;tests\**;docs\**" />
+    <None Remove="src\**;tests\**;docs\**" />
+    <Content Remove="src\**;tests\**;docs\**" />
+  </ItemGroup>
+
 </Project>

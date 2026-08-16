@@ -23,6 +23,7 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     private readonly INotificationService _notificationService;
     private readonly ILoadingService _loadingService;
     private readonly IThemeService _themeService;
+    private readonly ILocalizationService _localizationService;
     private readonly DispatcherTimer _clockTimer;
 
     [ObservableProperty]
@@ -35,10 +36,10 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     private string currentTime = string.Empty;
 
     [ObservableProperty]
-    private string databaseStatus = "Connected";
+    private string databaseStatus = string.Empty;
 
     [ObservableProperty]
-    private string internetStatus = "Offline";
+    private string internetStatus = string.Empty;
 
     [ObservableProperty]
     private int pendingBackgroundTasks;
@@ -47,7 +48,16 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     private bool isLoading;
 
     [ObservableProperty]
-    private string loadingText = "Loading...";
+    private string loadingText = string.Empty;
+
+    [ObservableProperty]
+    private string languageToggleText = string.Empty;
+
+    [ObservableProperty]
+    private int sidebarColumn;
+
+    [ObservableProperty]
+    private int contentColumn = 1;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AuthenticatedHomeViewModel"/> class.
@@ -61,7 +71,8 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
         ISessionTimeoutService sessionTimeoutService,
         INotificationService notificationService,
         ILoadingService loadingService,
-        IThemeService themeService)
+        IThemeService themeService,
+        ILocalizationService localizationService)
     {
         _authenticationService = authenticationService;
         _applicationNavigationService = applicationNavigationService;
@@ -72,8 +83,10 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
         _notificationService = notificationService;
         _loadingService = loadingService;
         _themeService = themeService;
+        _localizationService = localizationService;
         _loadingService.StateChanged += OnLoadingStateChanged;
-        Title = ApplicationConstants.ApplicationName;
+        _localizationService.CultureChanged += OnCultureChanged;
+        ApplyLocalizedText();
         BuildNavigationItems();
         CurrentTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -128,7 +141,13 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     private async Task ToggleThemeAsync()
     {
         await _themeService.ToggleThemeAsync();
-        _notificationService.Show("Theme", $"{_themeService.CurrentTheme} theme applied.", NotificationSeverity.Information);
+        _notificationService.Show(_localizationService.T("Shell.Theme"), $"{_themeService.CurrentTheme} theme applied.", NotificationSeverity.Information);
+    }
+
+    [RelayCommand]
+    private async Task ToggleLanguageAsync()
+    {
+        await _localizationService.ToggleLanguageAsync();
     }
 
     /// <summary>
@@ -166,66 +185,67 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     /// Navigates to dashboard.
     /// </summary>
     [RelayCommand]
-    private Task NavigateDashboardAsync() => NavigateAsync<DashboardViewModel>("Dashboard");
+    private Task NavigateDashboardAsync() => NavigateAsync<DashboardViewModel>("Nav.Dashboard");
 
     /// <summary>
     /// Navigates to products.
     /// </summary>
     [RelayCommand]
-    private Task NavigateProductsAsync() => NavigateAsync<ProductListViewModel>("Products > Product List");
+    private Task NavigateProductsAsync() => NavigateAsync<ProductListViewModel>("Nav.Products");
 
     /// <summary>
     /// Navigates to inventory.
     /// </summary>
     [RelayCommand]
-    private Task NavigateInventoryAsync() => NavigateAsync<InventoryDashboardViewModel>("Inventory");
+    private Task NavigateInventoryAsync() => NavigateAsync<InventoryDashboardViewModel>("Nav.Inventory");
 
     /// <summary>
     /// Navigates to barcode management.
     /// </summary>
     [RelayCommand]
-    private Task NavigateBarcodeAsync() => NavigateAsync<BarcodePreviewViewModel>("Barcode");
+    private Task NavigateBarcodeAsync() => NavigateAsync<BarcodePreviewViewModel>("Nav.Barcode");
 
     /// <summary>
     /// Navigates to sales.
     /// </summary>
     [RelayCommand]
-    private Task NavigateSalesAsync() => NavigateAsync<POSViewModel>("Sales > POS");
+    private Task NavigateSalesAsync() => NavigateAsync<POSViewModel>("Nav.SalesPOS");
 
     /// <summary>
     /// Navigates to reports.
     /// </summary>
     [RelayCommand]
-    private Task NavigateReportsAsync() => NavigateAsync<ReportsDashboardViewModel>("Reports");
+    private Task NavigateReportsAsync() => NavigateAsync<ReportsDashboardViewModel>("Nav.Reports");
 
     /// <summary>
     /// Navigates to receipt reprinting.
     /// </summary>
     [RelayCommand]
-    private Task NavigateReceiptsAsync() => NavigateAsync<ReprintReceiptViewModel>("Receipts > Reprint");
+    private Task NavigateReceiptsAsync() => NavigateAsync<ReprintReceiptViewModel>("Nav.Receipts");
 
     /// <summary>
     /// Navigates to backup.
     /// </summary>
     [RelayCommand]
-    private Task NavigateBackupAsync() => NavigateAsync<BackupListViewModel>("Backup");
+    private Task NavigateBackupAsync() => NavigateAsync<BackupListViewModel>("Nav.Backup");
 
     /// <summary>
     /// Navigates to change password.
     /// </summary>
     [RelayCommand]
-    private Task ChangePasswordAsync() => NavigateAsync<ChangePasswordViewModel>("Settings > Change Password");
+    private Task ChangePasswordAsync() => NavigateAsync<ChangePasswordViewModel>("Nav.Settings");
 
-    private async Task NavigateAsync<TViewModel>(string breadcrumb)
+    private async Task NavigateAsync<TViewModel>(string breadcrumbKey)
         where TViewModel : BaseViewModel
     {
-        _loadingService.Show("Opening page...");
+        _loadingService.Show(_localizationService.T("Loading.OpeningPage"));
         try
         {
+            var breadcrumb = _localizationService.T(breadcrumbKey);
             await _shellNavigationService.NavigateToAsync<TViewModel>(breadcrumb);
             foreach (var item in MenuItems)
             {
-                item.IsActive = string.Equals(item.Breadcrumb, breadcrumb, StringComparison.OrdinalIgnoreCase);
+                item.IsActive = string.Equals(item.TextKey, breadcrumbKey, StringComparison.OrdinalIgnoreCase);
             }
         }
         finally
@@ -236,24 +256,24 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
 
     private void BuildNavigationItems()
     {
-        AddMenuItem("Dashboard", "D", null, NavigateDashboardCommand, "Dashboard");
-        AddMenuItem("Categories", "C", PermissionConstants.CategoryView, new AsyncRelayCommand(() => NavigateAsync<CategoryListViewModel>("Categories")), "Categories");
-        AddMenuItem("Products", "P", PermissionConstants.ProductView, NavigateProductsCommand, "Products > Product List");
-        AddMenuItem("Inventory", "I", PermissionConstants.InventoryView, NavigateInventoryCommand, "Inventory");
-        AddMenuItem("Barcode", "BC", PermissionConstants.BarcodeView, NavigateBarcodeCommand, "Barcode");
-        AddMenuItem("Sales (POS)", "S", PermissionConstants.SalesCreate, NavigateSalesCommand, "Sales > POS");
-        AddMenuItem("Customers", "CU", PermissionConstants.CustomerView, new AsyncRelayCommand(() => NavigateAsync<CustomerListViewModel>("Customers")), "Customers");
-        AddMenuItem("Suppliers", "SU", PermissionConstants.SupplierView, new AsyncRelayCommand(() => NavigateAsync<SupplierListViewModel>("Suppliers")), "Suppliers");
-        AddMenuItem("Reports", "R", PermissionConstants.ReportView, NavigateReportsCommand, "Reports");
-        AddMenuItem("Receipts", "RC", PermissionConstants.ReceiptReprint, NavigateReceiptsCommand, "Receipts > Reprint");
-        AddMenuItem("Settings", "ST", PermissionConstants.SettingsView, new AsyncRelayCommand(() => NavigateAsync<SettingsViewModel>("Settings")), "Settings");
-        AddMenuItem("Users", "U", PermissionConstants.UsersManage, new AsyncRelayCommand(() => NavigateAsync<UsersViewModel>("Settings > Users")), "Settings > Users");
-        AddMenuItem("Roles", "RO", PermissionConstants.RolesManage, new AsyncRelayCommand(() => NavigateAsync<RolesViewModel>("Settings > Roles")), "Settings > Roles");
-        AddMenuItem("Backup", "B", PermissionConstants.BackupView, NavigateBackupCommand, "Backup");
-        AddMenuItem("Logout", "L", null, LogoutCommand, "Logout");
+        AddMenuItem("Nav.Dashboard", "D", null, NavigateDashboardCommand);
+        AddMenuItem("Nav.Categories", "C", PermissionConstants.CategoryView, new AsyncRelayCommand(() => NavigateAsync<CategoryListViewModel>("Nav.Categories")));
+        AddMenuItem("Nav.Products", "P", PermissionConstants.ProductView, NavigateProductsCommand);
+        AddMenuItem("Nav.Inventory", "I", PermissionConstants.InventoryView, NavigateInventoryCommand);
+        AddMenuItem("Nav.Barcode", "BC", PermissionConstants.BarcodeView, NavigateBarcodeCommand);
+        AddMenuItem("Nav.SalesPOS", "S", PermissionConstants.SalesCreate, NavigateSalesCommand);
+        AddMenuItem("Nav.Customers", "CU", PermissionConstants.CustomerView, new AsyncRelayCommand(() => NavigateAsync<CustomerListViewModel>("Nav.Customers")));
+        AddMenuItem("Nav.Suppliers", "SU", PermissionConstants.SupplierView, new AsyncRelayCommand(() => NavigateAsync<SupplierListViewModel>("Nav.Suppliers")));
+        AddMenuItem("Nav.Reports", "R", PermissionConstants.ReportView, NavigateReportsCommand);
+        AddMenuItem("Nav.Receipts", "RC", PermissionConstants.ReceiptReprint, NavigateReceiptsCommand);
+        AddMenuItem("Nav.Settings", "ST", PermissionConstants.SettingsView, new AsyncRelayCommand(() => NavigateAsync<SettingsViewModel>("Nav.Settings")));
+        AddMenuItem("Nav.Users", "U", PermissionConstants.UsersManage, new AsyncRelayCommand(() => NavigateAsync<UsersViewModel>("Nav.Users")));
+        AddMenuItem("Nav.Roles", "RO", PermissionConstants.RolesManage, new AsyncRelayCommand(() => NavigateAsync<RolesViewModel>("Nav.Roles")));
+        AddMenuItem("Nav.Backup", "B", PermissionConstants.BackupView, NavigateBackupCommand);
+        AddMenuItem("Nav.Logout", "L", null, LogoutCommand);
     }
 
-    private void AddMenuItem(string text, string icon, string? permission, System.Windows.Input.ICommand command, string breadcrumb)
+    private void AddMenuItem(string textKey, string icon, string? permission, System.Windows.Input.ICommand command)
     {
         if (permission is not null && !_authorizationService.HasPermission(permission))
         {
@@ -262,11 +282,12 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
 
         MenuItems.Add(new NavigationItem
         {
-            Text = text,
+            Text = _localizationService.T(textKey),
             Icon = icon,
+            TextKey = textKey,
             RequiredPermission = permission,
             Command = command,
-            Breadcrumb = breadcrumb
+            Breadcrumb = _localizationService.T(textKey)
         });
     }
 
@@ -274,5 +295,38 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     {
         IsLoading = _loadingService.IsLoading;
         LoadingText = _loadingService.LoadingText;
+    }
+
+    private void ApplyLocalizedText()
+    {
+        Title = _localizationService.T("App.Title");
+        DatabaseStatus = _localizationService.T("Status.Connected");
+        InternetStatus = _localizationService.T("Status.Offline");
+        LoadingText = _localizationService.T("Loading.Default");
+        UpdateLanguageToggleText();
+        UpdateShellColumns();
+    }
+
+    private void OnCultureChanged(object? sender, EventArgs e)
+    {
+        ApplyLocalizedText();
+        foreach (var item in MenuItems)
+        {
+            item.Text = _localizationService.T(item.TextKey);
+            item.Breadcrumb = item.Text;
+        }
+    }
+
+    private void UpdateLanguageToggleText()
+    {
+        LanguageToggleText = _localizationService.IsRightToLeft
+            ? _localizationService.T("Language.SwitchToEnglish")
+            : _localizationService.T("Language.SwitchToArabic");
+    }
+
+    private void UpdateShellColumns()
+    {
+        SidebarColumn = _localizationService.IsRightToLeft ? 1 : 0;
+        ContentColumn = _localizationService.IsRightToLeft ? 0 : 1;
     }
 }

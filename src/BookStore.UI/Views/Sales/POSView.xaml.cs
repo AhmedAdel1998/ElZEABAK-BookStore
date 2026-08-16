@@ -1,4 +1,6 @@
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace BookStore.UI.Views.Sales;
 
@@ -11,5 +13,25 @@ public partial class POSView : UserControl
     public POSView()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        FocusBarcodeInput();
+    }
+
+    private void OnBarcodeAddClicked(object sender, RoutedEventArgs e)
+    {
+        FocusBarcodeInput();
+    }
+
+    private void FocusBarcodeInput()
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            BarcodeInput.Focus();
+            BarcodeInput.SelectAll();
+        }, DispatcherPriority.Input);
     }
 }
