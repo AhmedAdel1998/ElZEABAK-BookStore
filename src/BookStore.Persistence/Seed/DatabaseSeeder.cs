@@ -76,10 +76,25 @@ public class DatabaseSeeder
             new Permission(PermissionConstants.ReceiptTestPrint, "Run printer test print"),
             new Permission(PermissionConstants.ReceiptSettings, "Manage receipt printer settings"),
             new Permission(PermissionConstants.SettingsView, "View settings"),
+            new Permission(PermissionConstants.SettingsStore, "Manage store settings"),
+            new Permission(PermissionConstants.SettingsPOS, "Manage POS settings"),
+            new Permission(PermissionConstants.SettingsReceipt, "Manage receipt settings"),
+            new Permission(PermissionConstants.SettingsPrinter, "Manage printer settings"),
+            new Permission(PermissionConstants.SettingsTax, "Manage tax settings"),
+            new Permission(PermissionConstants.SettingsCurrency, "Manage currency settings"),
+            new Permission(PermissionConstants.SettingsBarcode, "Manage barcode settings"),
+            new Permission(PermissionConstants.SettingsInventory, "Manage inventory settings"),
+            new Permission(PermissionConstants.SettingsBackup, "Manage backup settings"),
+            new Permission(PermissionConstants.SettingsSecurity, "Manage security settings"),
+            new Permission(PermissionConstants.SettingsAppearance, "Manage appearance settings"),
             new Permission(PermissionConstants.UsersManage, "Manage users"),
             new Permission(PermissionConstants.RolesManage, "Manage roles"),
-            new Permission(PermissionConstants.BackupDatabase, "Back up database"),
-            new Permission(PermissionConstants.RestoreDatabase, "Restore database")
+            new Permission(PermissionConstants.BackupView, "View database backups"),
+            new Permission(PermissionConstants.BackupCreate, "Create database backups"),
+            new Permission(PermissionConstants.BackupRestore, "Restore database backups"),
+            new Permission(PermissionConstants.BackupDelete, "Delete database backups"),
+            new Permission(PermissionConstants.BackupValidate, "Validate database backups"),
+            new Permission(PermissionConstants.BackupSettings, "Manage backup settings")
         };
 
         var existingPermissionNames = await _dbContext.Permissions.Select(permission => permission.Name).ToListAsync(cancellationToken);
@@ -109,7 +124,7 @@ public class DatabaseSeeder
             administrator.AddPermission(permission);
         }
 
-        foreach (var permission in storedPermissions.Where(permission => permission.Name is not PermissionConstants.UsersManage and not PermissionConstants.RolesManage and not PermissionConstants.RestoreDatabase))
+        foreach (var permission in storedPermissions.Where(permission => permission.Name is not PermissionConstants.UsersManage and not PermissionConstants.RolesManage and not PermissionConstants.BackupRestore))
         {
             manager.AddPermission(permission);
         }
@@ -137,7 +152,7 @@ public class DatabaseSeeder
         var manager = roles.FirstOrDefault(role => role.Name == "Manager");
         if (manager is not null)
         {
-            foreach (var permission in permissions.Where(permission => permission.Name is not PermissionConstants.UsersManage and not PermissionConstants.RolesManage and not PermissionConstants.RestoreDatabase && manager.Permissions.All(existing => existing.Name != permission.Name)))
+            foreach (var permission in permissions.Where(permission => permission.Name is not PermissionConstants.UsersManage and not PermissionConstants.RolesManage and not PermissionConstants.BackupRestore && manager.Permissions.All(existing => existing.Name != permission.Name)))
             {
                 manager.AddPermission(permission);
             }

@@ -1,15 +1,15 @@
 using BookStore.Application.Features.Receipts.Commands;
 using BookStore.Application.Features.Receipts.DTOs;
 using BookStore.Application.Features.Receipts.Queries;
+using BookStore.Application.Features.Settings.DTOs;
+using BookStore.Application.Features.Settings.Services;
 using BookStore.Application.Interfaces;
 using BookStore.Domain.Entities;
 using BookStore.Domain.Enums;
 using BookStore.Domain.Interfaces;
-using BookStore.Shared.Models;
 using BookStore.Shared.Results;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace BookStore.Application.Features.Receipts.Services;
 
@@ -21,7 +21,7 @@ public sealed class ReceiptService : IReceiptService
     private readonly IReceiptCodeService _receiptCodeService;
     private readonly IPrintQueueService _printQueueService;
     private readonly IValidator<ReceiptModel> _receiptValidator;
-    private readonly ApplicationSettings _settings;
+    private readonly ISettingsService _settingsService;
     private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<ReceiptService> _logger;
 
@@ -32,7 +32,7 @@ public sealed class ReceiptService : IReceiptService
         IReceiptCodeService receiptCodeService,
         IPrintQueueService printQueueService,
         IValidator<ReceiptModel> receiptValidator,
-        IOptions<ApplicationSettings> settings,
+        ISettingsService settingsService,
         ICurrentUserService currentUserService,
         ILogger<ReceiptService> logger)
     {
@@ -42,7 +42,7 @@ public sealed class ReceiptService : IReceiptService
         _receiptCodeService = receiptCodeService;
         _printQueueService = printQueueService;
         _receiptValidator = receiptValidator;
-        _settings = settings.Value;
+        _settingsService = settingsService;
         _currentUserService = currentUserService;
         _logger = logger;
     }
@@ -100,7 +100,7 @@ public sealed class ReceiptService : IReceiptService
             return Result<ReceiptPreviewDto>.Failure(receiptResult.Error ?? "Receipt could not be built.");
         }
 
-        var options = BuildOptions(null, 1);
+        var options = await BuildOptionsAsync(null, 1, cancellationToken);
         return Result<ReceiptPreviewDto>.Success(new ReceiptPreviewDto
         {
             Receipt = receiptResult.Value,
@@ -110,7 +110,7 @@ public sealed class ReceiptService : IReceiptService
 
     private async Task<Result<ReceiptModel>> BuildReceiptResultAsync(Sale sale, bool isReprint, CancellationToken cancellationToken)
     {
-        var receipt = BuildReceipt(sale, isReprint);
+        var receipt = await BuildReceiptAsync(sale, isReprint, cancellationToken);
         var validation = await _receiptValidator.ValidateAsync(receipt, cancellationToken);
         if (!validation.IsValid)
         {
@@ -120,19 +120,21 @@ public sealed class ReceiptService : IReceiptService
         return Result<ReceiptModel>.Success(receipt);
     }
 
-    private ReceiptModel BuildReceipt(Sale sale, bool isReprint)
+    private async Task<ReceiptModel> BuildReceiptAsync(Sale sale, bool isReprint, CancellationToken cancellationToken)
     {
+        var storeSettings = await _settingsService.GetAsync<StoreSettingsDto>(cancellationToken);
+        var receiptSettings = await _settingsService.GetAsync<ReceiptSettingsDto>(cancellationToken);
         var subtotal = sale.SaleItems.Sum(item => item.UnitPrice * item.Quantity);
         var lineDiscount = sale.SaleItems.Sum(item => item.Discount);
         var receipt = new ReceiptModel
         {
             SaleId = sale.Id,
             IsReprint = isReprint,
-            StoreName = _settings.Store.Name,
-            StoreAddress = _settings.Store.Address,
-            StorePhone = _settings.Store.Phone,
-            TaxNumber = _settings.Store.TaxNumber,
-            LogoPath = _settings.Store.LogoPath,
+            StoreName = storeSettings.StoreName,
+            StoreAddress = storeSettings.Address,
+            StorePhone = storeSettings.Phone,
+            TaxNumber = storeSettings.TaxNumber,
+            LogoPath = storeSettings.LogoPath,
             InvoiceNumber = sale.InvoiceNumber,
             SaleDate = sale.SaleDate,
             Cashier = sale.Cashier?.FullName ?? _currentUserService.FullName ?? _currentUserService.Username ?? "Cashier",
@@ -147,8 +149,8 @@ public sealed class ReceiptService : IReceiptService
             AmountPaid = sale.PaidAmount,
             Change = sale.ChangeAmount,
             PaymentMethod = sale.PaymentMethod,
-            Footer = _settings.Printer.ReceiptFooter,
-            ThankYouMessage = _settings.Printer.ThankYouMessage
+            Footer = receiptSettings.FooterText,
+            ThankYouMessage = "Thank you for shopping with us."
         };
 
         receipt.Items = sale.SaleItems.Select(item => new ReceiptItemDto
@@ -162,13 +164,13 @@ public sealed class ReceiptService : IReceiptService
             LineTotal = item.Total
         }).ToList();
         receipt.ReceiptBarcode = _receiptCodeService.BuildBarcode(receipt);
-        receipt.ReceiptQrPayload = _settings.Printer.PrintQrCode ? _receiptCodeService.BuildQrPayload(receipt) : null;
+        receipt.ReceiptQrPayload = receiptSettings.PrintQRCode ? _receiptCodeService.BuildQrPayload(receipt) : null;
         return receipt;
     }
 
     private async Task<ReceiptPrintResult> PrintReceiptAsync(ReceiptModel receipt, PrintRequestKind kind, string? printerName, int copies, CancellationToken cancellationToken)
     {
-        var options = BuildOptions(printerName, copies);
+        var options = await BuildOptionsAsync(printerName, copies, cancellationToken);
         var job = new ReceiptPrintJob
         {
             RequestId = receipt.PrintRequestId,
@@ -208,26 +210,28 @@ public sealed class ReceiptService : IReceiptService
         }
     }
 
-    private ReceiptPrintOptions BuildOptions(string? printerName, int copies)
+    private async Task<ReceiptPrintOptions> BuildOptionsAsync(string? printerName, int copies, CancellationToken cancellationToken)
     {
+        var printerSettings = await _settingsService.GetAsync<PrinterSettingsDto>(cancellationToken);
+        var receiptSettings = await _settingsService.GetAsync<ReceiptSettingsDto>(cancellationToken);
         return new ReceiptPrintOptions
         {
-            PrinterName = string.IsNullOrWhiteSpace(printerName) ? _settings.Printer.DefaultPrinterName : printerName,
-            PaperWidth = _settings.Printer.PaperWidthMm == 58 ? ReceiptPaperWidth.Mm58 : ReceiptPaperWidth.Mm80,
-            Copies = Math.Clamp(copies <= 0 ? _settings.Printer.Copies : copies, 1, 5),
-            CutPaper = _settings.Printer.CutPaper,
-            OpenCashDrawer = _settings.Printer.OpenCashDrawer,
-            PrintLogo = _settings.Printer.PrintLogo,
-            AutoPrint = _settings.Printer.AutoPrint,
-            Timeout = TimeSpan.FromMilliseconds(Math.Max(1000, _settings.Printer.PrintTimeoutMilliseconds)),
+            PrinterName = string.IsNullOrWhiteSpace(printerName) ? printerSettings.PrinterName : printerName,
+            PaperWidth = receiptSettings.PaperWidth == 58 ? ReceiptPaperWidth.Mm58 : ReceiptPaperWidth.Mm80,
+            Copies = Math.Clamp(copies <= 0 ? receiptSettings.Copies : copies, 1, 5),
+            CutPaper = receiptSettings.CutPaper,
+            OpenCashDrawer = receiptSettings.OpenCashDrawer,
+            PrintLogo = receiptSettings.ShowLogo,
+            AutoPrint = true,
+            Timeout = TimeSpan.FromMilliseconds(Math.Max(1000, printerSettings.PrintTimeout)),
             Template = new ReceiptTemplateOptions
             {
                 PrintStoreInformation = true,
                 PrintInvoiceInformation = true,
-                PrintCustomerInformation = _settings.Printer.PrintCustomerInformation,
+                PrintCustomerInformation = receiptSettings.ShowCustomer,
                 PrintFooter = true,
-                PrintQrCode = _settings.Printer.PrintQrCode,
-                PrintBarcode = true
+                PrintQrCode = receiptSettings.PrintQRCode,
+                PrintBarcode = receiptSettings.ShowBarcode
             }
         };
     }

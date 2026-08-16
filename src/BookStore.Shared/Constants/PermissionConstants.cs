@@ -266,6 +266,61 @@ public static class PermissionConstants
     public const string SettingsView = "Settings.View";
 
     /// <summary>
+    /// Store settings permission.
+    /// </summary>
+    public const string SettingsStore = "Settings.Store";
+
+    /// <summary>
+    /// POS settings permission.
+    /// </summary>
+    public const string SettingsPOS = "Settings.POS";
+
+    /// <summary>
+    /// Receipt settings permission.
+    /// </summary>
+    public const string SettingsReceipt = "Settings.Receipt";
+
+    /// <summary>
+    /// Printer settings permission.
+    /// </summary>
+    public const string SettingsPrinter = "Settings.Printer";
+
+    /// <summary>
+    /// Tax settings permission.
+    /// </summary>
+    public const string SettingsTax = "Settings.Tax";
+
+    /// <summary>
+    /// Currency settings permission.
+    /// </summary>
+    public const string SettingsCurrency = "Settings.Currency";
+
+    /// <summary>
+    /// Barcode settings permission.
+    /// </summary>
+    public const string SettingsBarcode = "Settings.Barcode";
+
+    /// <summary>
+    /// Inventory settings permission.
+    /// </summary>
+    public const string SettingsInventory = "Settings.Inventory";
+
+    /// <summary>
+    /// Backup settings permission.
+    /// </summary>
+    public const string SettingsBackup = "Settings.Backup";
+
+    /// <summary>
+    /// Security settings permission.
+    /// </summary>
+    public const string SettingsSecurity = "Settings.Security";
+
+    /// <summary>
+    /// Appearance settings permission.
+    /// </summary>
+    public const string SettingsAppearance = "Settings.Appearance";
+
+    /// <summary>
     /// Users manage permission.
     /// </summary>
     public const string UsersManage = "Users.Manage";
@@ -278,10 +333,40 @@ public static class PermissionConstants
     /// <summary>
     /// Database backup permission.
     /// </summary>
-    public const string BackupDatabase = "Backup.Database";
+    public const string BackupView = "Backup.View";
+
+    /// <summary>
+    /// Database backup creation permission.
+    /// </summary>
+    public const string BackupCreate = "Backup.Create";
 
     /// <summary>
     /// Database restore permission.
     /// </summary>
-    public const string RestoreDatabase = "Restore.Database";
+    public const string BackupRestore = "Backup.Restore";
+
+    /// <summary>
+    /// Backup deletion permission.
+    /// </summary>
+    public const string BackupDelete = "Backup.Delete";
+
+    /// <summary>
+    /// Backup validation permission.
+    /// </summary>
+    public const string BackupValidate = "Backup.Validate";
+
+    /// <summary>
+    /// Backup settings permission.
+    /// </summary>
+    public const string BackupSettings = "Backup.Settings";
+
+    /// <summary>
+    /// Legacy database backup permission alias.
+    /// </summary>
+    public const string BackupDatabase = BackupCreate;
+
+    /// <summary>
+    /// Legacy database restore permission alias.
+    /// </summary>
+    public const string RestoreDatabase = BackupRestore;
 }

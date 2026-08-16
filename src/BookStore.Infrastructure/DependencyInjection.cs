@@ -1,7 +1,8 @@
 using BookStore.Application.Interfaces;
 using BookStore.Application.Features.Receipts.Services;
+using BookStore.Application.Features.Backup.Services;
 using BookStore.Infrastructure.Authentication;
-using BookStore.Infrastructure.Backup;
+using BookStore.Infrastructure.Backup.Services;
 using BookStore.Infrastructure.Barcode;
 using BookStore.Infrastructure.Configuration;
 using BookStore.Infrastructure.Logging;
@@ -51,8 +52,12 @@ public static class DependencyInjection
         services.AddSingleton<IReceiptPreparationService, ReceiptPreparationService>();
         services.AddScoped<ReceiptPrinter>();
         services.AddScoped<BarcodePrinter>();
-        services.AddScoped<DatabaseBackupService>();
-        services.AddScoped<DatabaseRestoreService>();
+        services.AddSingleton<DatabasePathResolver>();
+        services.AddSingleton<IDiskSpaceService, DiskSpaceService>();
+        services.AddScoped<IDatabaseIntegrityService, DatabaseIntegrityService>();
+        services.AddScoped<IBackupService, BackupService>();
+        services.AddScoped<IAutomaticBackupService, AutomaticBackupService>();
+        services.AddHostedService<AutomaticBackupHostedService>();
 
         return services;
     }

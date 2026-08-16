@@ -1,7 +1,8 @@
+using BookStore.Application.Features.Settings.DTOs;
+using BookStore.Application.Features.Settings.Services;
 using BookStore.Shared.Constants;
-using BookStore.Shared.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System.Windows;
 using System.Windows.Media;
 
@@ -12,33 +13,37 @@ namespace BookStore.UI.Services;
 /// </summary>
 public class ThemeService : IThemeService
 {
-    private readonly IOptions<ApplicationSettings> _settings;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ThemeService> _logger;
     private string _currentTheme = ApplicationConstants.DefaultTheme;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ThemeService"/> class.
     /// </summary>
-    /// <param name="settings">Application settings.</param>
+    /// <param name="settingsService">Centralized settings service.</param>
+    /// <param name="notifier">Settings change notifier.</param>
     /// <param name="logger">The logger.</param>
-    public ThemeService(IOptions<ApplicationSettings> settings, ILogger<ThemeService> logger)
+    public ThemeService(IServiceScopeFactory scopeFactory, ISettingsChangedNotifier notifier, ILogger<ThemeService> logger)
     {
-        _settings = settings;
+        _scopeFactory = scopeFactory;
         _logger = logger;
+        notifier.SettingsChanged += OnSettingsChanged;
     }
 
     /// <inheritdoc />
     public string CurrentTheme => _currentTheme;
 
     /// <inheritdoc />
-    public Task ApplyConfiguredThemeAsync()
+    public async Task ApplyConfiguredThemeAsync()
     {
-        var theme = string.IsNullOrWhiteSpace(_settings.Value.UserInterface.Theme)
+        using var scope = _scopeFactory.CreateScope();
+        var settingsService = scope.ServiceProvider.GetRequiredService<ISettingsService>();
+        var appearance = await settingsService.GetAsync<AppearanceSettingsDto>();
+        var theme = string.IsNullOrWhiteSpace(appearance.Theme)
             ? ApplicationConstants.DefaultTheme
-            : _settings.Value.UserInterface.Theme;
+            : appearance.Theme;
 
         ApplyTheme(theme);
-        return Task.CompletedTask;
     }
 
     /// <inheritdoc />
@@ -81,5 +86,13 @@ public class ThemeService : IThemeService
         }
 
         _logger.LogInformation("Theme applied: {Theme}", _currentTheme);
+    }
+
+    private async void OnSettingsChanged(object? sender, SettingsChangedEvent e)
+    {
+        if (e.Category == SettingsCategory.Appearance)
+        {
+            await ApplyConfiguredThemeAsync();
+        }
     }
 }

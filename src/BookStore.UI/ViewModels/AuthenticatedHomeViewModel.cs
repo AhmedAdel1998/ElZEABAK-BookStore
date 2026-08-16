@@ -208,7 +208,7 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     /// Navigates to backup.
     /// </summary>
     [RelayCommand]
-    private Task NavigateBackupAsync() => NavigateAsync<BackupViewModel>("Backup");
+    private Task NavigateBackupAsync() => NavigateAsync<BackupListViewModel>("Backup");
 
     /// <summary>
     /// Navigates to change password.
@@ -249,7 +249,7 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
         AddMenuItem("Settings", "ST", PermissionConstants.SettingsView, new AsyncRelayCommand(() => NavigateAsync<SettingsViewModel>("Settings")), "Settings");
         AddMenuItem("Users", "U", PermissionConstants.UsersManage, new AsyncRelayCommand(() => NavigateAsync<UsersViewModel>("Settings > Users")), "Settings > Users");
         AddMenuItem("Roles", "RO", PermissionConstants.RolesManage, new AsyncRelayCommand(() => NavigateAsync<RolesViewModel>("Settings > Roles")), "Settings > Roles");
-        AddMenuItem("Backup", "B", PermissionConstants.BackupDatabase, NavigateBackupCommand, "Backup");
+        AddMenuItem("Backup", "B", PermissionConstants.BackupView, NavigateBackupCommand, "Backup");
         AddMenuItem("Logout", "L", null, LogoutCommand, "Logout");
     }
 

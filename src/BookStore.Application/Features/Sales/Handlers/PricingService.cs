@@ -1,7 +1,7 @@
 using BookStore.Application.Features.Sales.DTOs;
+using BookStore.Application.Features.Settings.DTOs;
+using BookStore.Application.Features.Settings.Services;
 using BookStore.Application.Interfaces;
-using BookStore.Shared.Models;
-using Microsoft.Extensions.Options;
 
 namespace BookStore.Application.Features.Sales.Handlers;
 
@@ -10,19 +10,20 @@ namespace BookStore.Application.Features.Sales.Handlers;
 /// </summary>
 public sealed class PricingService : IPricingService
 {
-    private readonly IOptions<ApplicationSettings> _settings;
+    private readonly ISettingsService _settingsService;
 
     /// <summary>Initializes a new instance of the <see cref="PricingService"/> class.</summary>
-    public PricingService(IOptions<ApplicationSettings> settings)
+    public PricingService(ISettingsService settingsService)
     {
-        _settings = settings;
+        _settingsService = settingsService;
     }
 
     /// <inheritdoc />
     public SaleSummaryDto Recalculate(SaleSessionDto sale)
     {
         ArgumentNullException.ThrowIfNull(sale);
-        var taxRate = Math.Max(_settings.Value.Store.TaxRate, 0m);
+        var taxSettings = _settingsService.GetAsync<TaxSettingsDto>().GetAwaiter().GetResult();
+        var taxRate = taxSettings.Enabled ? Math.Max(taxSettings.DefaultRate, 0m) : 0m;
 
         var subtotal = 0m;
         var lineDiscount = 0m;
