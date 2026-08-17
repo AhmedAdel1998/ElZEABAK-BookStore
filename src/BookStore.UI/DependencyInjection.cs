@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddSingleton<IViewModelFactory, ViewModelFactory>();
         services.AddSingleton<IThemeService, ThemeService>();
         services.AddSingleton<ILocalizationService, LocalizationService>();
+        services.AddSingleton<IUiTreeLocalizer, UiTreeLocalizer>();
         services.AddSingleton<IApplicationShutdownService, ApplicationShutdownService>();
         services.AddSingleton<ISessionTimeoutService, SessionTimeoutService>();
         services.AddSingleton<INotificationService, NotificationService>();

@@ -16,7 +16,12 @@ public sealed class AuditLogEntryConfiguration : EntityConfigurationBase<AuditLo
         builder.Property(entry => entry.Area).HasMaxLength(80).IsRequired();
         builder.Property(entry => entry.Action).HasMaxLength(120).IsRequired();
         builder.Property(entry => entry.Outcome).HasMaxLength(40).IsRequired();
-        builder.Property(entry => entry.OccurredAt).IsRequired();
+        // Stored as UTC ticks, matching Sale.SaleDate and InventoryTransaction.Date. SQLite
+        // supports neither comparison nor ORDER BY on DateTimeOffset, so persisting it directly
+        // made every audit query fail to translate and left the OccurredAt indexes unusable.
+        builder.Property(entry => entry.OccurredAt)
+            .HasConversion(value => value.UtcTicks, value => new DateTimeOffset(value, TimeSpan.Zero))
+            .IsRequired();
         builder.Property(entry => entry.Username).HasMaxLength(150);
         builder.Property(entry => entry.EntityType).HasMaxLength(120);
         builder.Property(entry => entry.Detail).HasMaxLength(1000);

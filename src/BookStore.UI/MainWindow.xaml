@@ -7,7 +7,7 @@
         xmlns:views="clr-namespace:BookStore.UI.Views.Authentication"
         xmlns:viewModels="clr-namespace:BookStore.UI.ViewModels"
         mc:Ignorable="d"
-        Title="BookStore POS"
+        Title="{DynamicResource App.Title}"
         Height="720"
         MinHeight="600"
         MinWidth="960"

@@ -200,8 +200,8 @@
 
     <Grid Background="{DynamicResource BookstorePageBrush}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="{Binding FirstColumnWidth}" />
+            <ColumnDefinition Width="{Binding SecondColumnWidth}" />
         </Grid.ColumnDefinitions>
 
         <Border Grid.Column="{Binding SidebarColumn}" Background="{DynamicResource WarmChromeBrush}">

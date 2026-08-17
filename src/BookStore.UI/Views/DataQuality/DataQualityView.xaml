@@ -15,10 +15,24 @@
             <TextBlock Margin="0,7,8,0" Text="Minimum margin %" />
             <TextBox Width="80" Margin="0,0,8,0" Text="{Binding MinimumMarginPercent, UpdateSourceTrigger=PropertyChanged}" />
             <controls:PrimaryButton Margin="0,0,16,0" Command="{Binding RefreshCommand}" Content="Run Checks" Icon="R" />
-            <TextBlock Margin="0,7,16,0" Text="{Binding Summary.TotalIssues, StringFormat=Issues: {0}}" />
-            <TextBlock Margin="0,7,16,0" Text="{Binding Summary.MissingSupplierCount, StringFormat=Missing supplier: {0}}" />
-            <TextBlock Margin="0,7,16,0" Text="{Binding Summary.InvalidPriceCount, StringFormat=Invalid price: {0}}" />
-            <TextBlock Margin="0,7,16,0" Text="{Binding Summary.NegativeStockCount, StringFormat=Negative stock: {0}}" />
+            <!-- Label and value are separate runs because a binding's StringFormat cannot take a
+                 DynamicResource, which left these four captions untranslated in Arabic. -->
+            <TextBlock Margin="0,7,16,0">
+                <Run Text="{DynamicResource DataQuality.Issues}" />
+                <Run Text="{Binding Summary.TotalIssues, Mode=OneWay}" />
+            </TextBlock>
+            <TextBlock Margin="0,7,16,0">
+                <Run Text="{DynamicResource DataQuality.MissingSupplier}" />
+                <Run Text="{Binding Summary.MissingSupplierCount, Mode=OneWay}" />
+            </TextBlock>
+            <TextBlock Margin="0,7,16,0">
+                <Run Text="{DynamicResource DataQuality.InvalidPrice}" />
+                <Run Text="{Binding Summary.InvalidPriceCount, Mode=OneWay}" />
+            </TextBlock>
+            <TextBlock Margin="0,7,16,0">
+                <Run Text="{DynamicResource DataQuality.NegativeStock}" />
+                <Run Text="{Binding Summary.NegativeStockCount, Mode=OneWay}" />
+            </TextBlock>
         </WrapPanel>
 
         <DataGrid Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" ItemsSource="{Binding Issues}">

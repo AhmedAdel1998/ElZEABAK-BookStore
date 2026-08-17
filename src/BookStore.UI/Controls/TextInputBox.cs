@@ -95,9 +95,42 @@ public class CurrencyTextBox : TextInputBox
     /// <inheritdoc />
     protected override void OnPreviewTextInput(TextCompositionEventArgs e)
     {
-        var candidate = Text.Insert(CaretIndex, e.Text);
-        e.Handled = !decimal.TryParse(candidate, NumberStyles.Number, CultureInfo.CurrentCulture, out _);
+        var candidate = Text.Remove(SelectionStart, SelectionLength).Insert(SelectionStart, e.Text);
+        e.Handled = !IsAcceptable(candidate);
         base.OnPreviewTextInput(e);
+    }
+
+    /// <summary>
+    /// Accepts a partially typed amount under either the current culture or the invariant
+    /// convention. Numeric keypads emit "." regardless of the UI language, and Arabic cultures
+    /// declare U+066B as their decimal separator, so a culture-only check rejects the decimal
+    /// point outright and makes fractional prices impossible to enter.
+    /// </summary>
+    private static bool IsAcceptable(string candidate)
+    {
+        if (string.IsNullOrEmpty(candidate))
+        {
+            return true;
+        }
+
+        // A lone or trailing separator is a valid intermediate state while typing.
+        var separator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+        foreach (var terminator in new[] { ".", separator })
+        {
+            if (candidate == terminator || candidate == "-" || candidate == "-" + terminator)
+            {
+                return true;
+            }
+
+            if (candidate.EndsWith(terminator, StringComparison.Ordinal))
+            {
+                candidate = candidate[..^terminator.Length];
+                break;
+            }
+        }
+
+        return decimal.TryParse(candidate, NumberStyles.Number, CultureInfo.CurrentCulture, out _)
+            || decimal.TryParse(candidate, NumberStyles.Number, CultureInfo.InvariantCulture, out _);
     }
 }
 

@@ -55,8 +55,22 @@ public class ThemeService : IThemeService
 
     private void ApplyTheme(string theme)
     {
+        var application = System.Windows.Application.Current;
+        if (application is null)
+        {
+            return;
+        }
+
+        // Brushes and the resource dictionary are dispatcher-affine, and settings changes can
+        // be raised from a background thread.
+        if (!application.Dispatcher.CheckAccess())
+        {
+            application.Dispatcher.Invoke(() => ApplyTheme(theme));
+            return;
+        }
+
         _currentTheme = string.Equals(theme, "Dark", StringComparison.OrdinalIgnoreCase) ? "Dark" : "Light";
-        var resources = System.Windows.Application.Current.Resources;
+        var resources = application.Resources;
 
         if (_currentTheme == "Dark")
         {
@@ -90,9 +104,18 @@ public class ThemeService : IThemeService
 
     private async void OnSettingsChanged(object? sender, SettingsChangedEvent e)
     {
-        if (e.Category == SettingsCategory.Appearance)
+        if (e.Category != SettingsCategory.Appearance)
+        {
+            return;
+        }
+
+        try
         {
             await ApplyConfiguredThemeAsync();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Failed to reapply the theme after an appearance settings change");
         }
     }
 }

@@ -13,8 +13,26 @@ public class ProductConfiguration : EntityConfigurationBase<Product>
     protected override void ConfigureEntity(EntityTypeBuilder<Product> builder)
     {
         builder.ToTable("Products");
-        builder.Property(product => product.Barcode).HasConversion(ValueObjectConverters.BarcodeConverter).IsRequired().HasMaxLength(64);
-        builder.Property(product => product.ISBN).HasConversion(ValueObjectConverters.IsbnConverter).HasMaxLength(13);
+
+        // Barcode and ISBN are mapped as owned types rather than through a ValueConverter so that
+        // their inner string is a real column to EF. A value-converted property is opaque in a
+        // predicate: EF cannot translate member access or string methods on it, which made every
+        // barcode lookup, uniqueness check, and product search throw
+        // "The LINQ expression ... could not be translated" at runtime. The column names are pinned
+        // to the existing ones, so this is a model change only - the schema is unchanged.
+        builder.OwnsOne(product => product.Barcode, barcode =>
+        {
+            barcode.Property(value => value.Value).HasColumnName("Barcode").IsRequired().HasMaxLength(64);
+            barcode.HasIndex(value => value.Value).IsUnique().HasDatabaseName("IX_Products_Barcode");
+        });
+        builder.Navigation(product => product.Barcode).IsRequired();
+
+        builder.OwnsOne(product => product.ISBN, isbn =>
+        {
+            isbn.Property(value => value.Value).HasColumnName("ISBN").HasMaxLength(13);
+            isbn.HasIndex(value => value.Value).HasDatabaseName("IX_Products_ISBN");
+        });
+
         builder.Property(product => product.Title).IsRequired().HasMaxLength(250);
         builder.Property(product => product.Subtitle).HasMaxLength(250);
         builder.Property(product => product.Description).HasMaxLength(2000);
@@ -31,8 +49,6 @@ public class ProductConfiguration : EntityConfigurationBase<Product>
         builder.Property(product => product.TaxCategory).HasMaxLength(100);
         builder.Property(product => product.PublishDate);
         builder.Property(product => product.IsActive).IsRequired();
-        builder.HasIndex(product => product.Barcode).IsUnique();
-        builder.HasIndex(product => product.ISBN);
         builder.HasIndex(product => product.Title);
         builder.HasIndex(product => new { product.CategoryId, product.IsActive });
         builder.HasIndex(product => new { product.Quantity, product.MinimumStock });

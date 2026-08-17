@@ -26,6 +26,7 @@ using BookStore.UI.Dialogs;
 using BookStore.UI.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Globalization;
 using System.Media;
 
 namespace BookStore.UI.ViewModels;
@@ -627,7 +628,9 @@ public partial class POSViewModel : BaseViewModel
     [RelayCommand]
     private void AddQuickCash(string? amountText)
     {
-        if (decimal.TryParse(amountText, out var amount) && amount > 0)
+        // The denomination arrives as a XAML literal, so it must be read with the invariant
+        // convention rather than the UI culture.
+        if (decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out var amount) && amount > 0)
         {
             AmountPaid += amount;
         }

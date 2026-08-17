@@ -9,33 +9,41 @@ namespace BookStore.UI.Services;
 /// </summary>
 public class DialogService : IDialogService, IMessageDialogService, IConfirmationDialogService, IErrorDialogService
 {
+    private readonly ILocalizationService _localizationService;
+
+    /// <summary>Initializes a new instance of the <see cref="DialogService"/> class.</summary>
+    public DialogService(ILocalizationService localizationService)
+    {
+        _localizationService = localizationService;
+    }
+
     /// <inheritdoc />
     public Task<DialogResultModel> ShowAsync(DialogRequest request)
     {
         var buttons = ResolveButtons(request.Kind, request.Buttons);
         var icon = ResolveIcon(request.Kind);
-        var result = MessageBox.Show(request.Message, request.Title, buttons, icon);
+        var result = Show(request.Message, request.Title, buttons, icon);
         return Task.FromResult(new DialogResultModel(result.ToString()));
     }
 
     /// <inheritdoc />
     public Task ShowInformationAsync(string title, string message)
     {
-        MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+        Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
         return Task.CompletedTask;
     }
 
     /// <inheritdoc />
     public Task ShowWarningAsync(string title, string message)
     {
-        MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
+        Show(message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
         return Task.CompletedTask;
     }
 
     /// <inheritdoc />
     public Task ShowSuccessAsync(string title, string message)
     {
-        MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+        Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
         return Task.CompletedTask;
     }
 
@@ -54,7 +62,7 @@ public class DialogService : IDialogService, IMessageDialogService, IConfirmatio
     /// <inheritdoc />
     public Task<bool> ShowConfirmationAsync(string title, string message)
     {
-        var result = MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var result = Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question);
         return Task.FromResult(result == MessageBoxResult.Yes);
     }
 
@@ -67,9 +75,43 @@ public class DialogService : IDialogService, IMessageDialogService, IConfirmatio
     /// <inheritdoc />
     public Task ShowErrorAsync(string title, string message)
     {
-        MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
+        Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);
         return Task.CompletedTask;
     }
+
+    /// <summary>
+    /// Shows a translated message box, owned by the active window and mirrored for right-to-left
+    /// languages. Without the RTL options the button row and Arabic text stay left-aligned, and
+    /// without an owner the dialog can surface behind the shell.
+    /// </summary>
+    private MessageBoxResult Show(string message, string title, MessageBoxButton buttons, MessageBoxImage icon)
+    {
+        var text = L(message);
+        var caption = L(title);
+        var options = _localizationService.IsRightToLeft
+            ? MessageBoxOptions.RtlReading | MessageBoxOptions.RightAlign
+            : MessageBoxOptions.None;
+        var defaultResult = buttons == MessageBoxButton.YesNo ? MessageBoxResult.No : MessageBoxResult.OK;
+        var owner = ResolveOwner();
+
+        return owner is null
+            ? MessageBox.Show(text, caption, buttons, icon, defaultResult, options)
+            : MessageBox.Show(owner, text, caption, buttons, icon, defaultResult, options);
+    }
+
+    private static Window? ResolveOwner()
+    {
+        var application = System.Windows.Application.Current;
+        if (application is null || !application.Dispatcher.CheckAccess())
+        {
+            return null;
+        }
+
+        return application.Windows.OfType<Window>().FirstOrDefault(window => window.IsActive)
+            ?? application.MainWindow;
+    }
+
+    private string L(string text) => _localizationService.TranslateLiteral(text);
 
     private static MessageBoxButton ResolveButtons(DialogKind kind, IReadOnlyList<DialogButtonModel> buttons)
     {

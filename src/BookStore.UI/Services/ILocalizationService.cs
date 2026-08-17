@@ -18,4 +18,5 @@ public interface ILocalizationService
     void ApplyCulture(string language);
     Task ToggleLanguageAsync();
     string T(string key);
+    string TranslateLiteral(string text);
 }
