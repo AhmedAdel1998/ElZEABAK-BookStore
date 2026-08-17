@@ -6,8 +6,8 @@
         <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
         <Setter Property="MinWidth" Value="88" />
         <Setter Property="Padding" Value="14,8" />
-        <Setter Property="Foreground" Value="#1E1711" />
-        <Setter Property="Background" Value="{DynamicResource BookstoreGoldBrush}" />
+        <Setter Property="Foreground" Value="#052E16" />
+        <Setter Property="Background" Value="{DynamicResource BookstoreGreenBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Cursor" Value="Hand" />

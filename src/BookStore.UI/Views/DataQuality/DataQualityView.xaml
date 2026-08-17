@@ -1,0 +1,34 @@
+<UserControl x:Class="BookStore.UI.Views.DataQuality.DataQualityView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <Grid Margin="{StaticResource Space24}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Data Quality" />
+
+        <WrapPanel Grid.Row="1" Margin="0,16,0,16">
+            <TextBlock Margin="0,7,8,0" Text="Minimum margin %" />
+            <TextBox Width="80" Margin="0,0,8,0" Text="{Binding MinimumMarginPercent, UpdateSourceTrigger=PropertyChanged}" />
+            <controls:PrimaryButton Margin="0,0,16,0" Command="{Binding RefreshCommand}" Content="Run Checks" Icon="R" />
+            <TextBlock Margin="0,7,16,0" Text="{Binding Summary.TotalIssues, StringFormat=Issues: {0}}" />
+            <TextBlock Margin="0,7,16,0" Text="{Binding Summary.MissingSupplierCount, StringFormat=Missing supplier: {0}}" />
+            <TextBlock Margin="0,7,16,0" Text="{Binding Summary.InvalidPriceCount, StringFormat=Invalid price: {0}}" />
+            <TextBlock Margin="0,7,16,0" Text="{Binding Summary.NegativeStockCount, StringFormat=Negative stock: {0}}" />
+        </WrapPanel>
+
+        <DataGrid Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" ItemsSource="{Binding Issues}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding Severity}" Header="Severity" Width="90" />
+                <DataGridTextColumn Binding="{Binding Area}" Header="Area" Width="120" />
+                <DataGridTextColumn Binding="{Binding Issue}" Header="Issue" Width="180" />
+                <DataGridTextColumn Binding="{Binding EntityName}" Header="Item" Width="220" />
+                <DataGridTextColumn Binding="{Binding Recommendation}" Header="Recommendation" Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

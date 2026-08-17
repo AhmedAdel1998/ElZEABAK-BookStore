@@ -361,6 +361,16 @@ public static class PermissionConstants
     public const string BackupSettings = "Backup.Settings";
 
     /// <summary>
+    /// Audit trail view permission.
+    /// </summary>
+    public const string AuditView = "Audit.View";
+
+    /// <summary>
+    /// Data quality center view permission.
+    /// </summary>
+    public const string DataQualityView = "DataQuality.View";
+
+    /// <summary>
     /// Legacy database backup permission alias.
     /// </summary>
     public const string BackupDatabase = BackupCreate;

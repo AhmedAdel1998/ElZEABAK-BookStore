@@ -62,27 +62,27 @@ public class ThemeService : IThemeService
         {
             resources["AppBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(17, 24, 39));
             resources["SurfaceBrush"] = new SolidColorBrush(Color.FromRgb(31, 41, 55));
-            resources["SurfaceAltBrush"] = new SolidColorBrush(Color.FromRgb(39, 52, 73));
+            resources["SurfaceAltBrush"] = new SolidColorBrush(Color.FromRgb(31, 58, 43));
             resources["PrimaryTextBrush"] = new SolidColorBrush(Color.FromRgb(243, 244, 246));
             resources["SecondaryTextBrush"] = new SolidColorBrush(Color.FromRgb(203, 213, 225));
             resources["MutedTextBrush"] = new SolidColorBrush(Color.FromRgb(148, 163, 184));
             resources["BorderBrush"] = new SolidColorBrush(Color.FromRgb(55, 65, 81));
-            resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(96, 165, 250));
-            resources["AccentHoverBrush"] = new SolidColorBrush(Color.FromRgb(147, 197, 253));
+            resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(52, 211, 153));
+            resources["AccentHoverBrush"] = new SolidColorBrush(Color.FromRgb(134, 239, 172));
             resources["OverlayBrush"] = new SolidColorBrush(Color.FromArgb(179, 0, 0, 0));
         }
         else
         {
-            resources["AppBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(255, 248, 231));
+            resources["AppBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(242, 251, 244));
             resources["SurfaceBrush"] = new SolidColorBrush(Colors.White);
-            resources["SurfaceAltBrush"] = new SolidColorBrush(Color.FromRgb(255, 243, 196));
-            resources["PrimaryTextBrush"] = new SolidColorBrush(Color.FromRgb(30, 23, 17));
-            resources["SecondaryTextBrush"] = new SolidColorBrush(Color.FromRgb(116, 92, 43));
-            resources["MutedTextBrush"] = new SolidColorBrush(Color.FromRgb(165, 138, 73));
-            resources["BorderBrush"] = new SolidColorBrush(Color.FromRgb(233, 216, 154));
-            resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(217, 154, 0));
-            resources["AccentHoverBrush"] = new SolidColorBrush(Color.FromRgb(184, 120, 0));
-            resources["OverlayBrush"] = new SolidColorBrush(Color.FromArgb(153, 30, 23, 17));
+            resources["SurfaceAltBrush"] = new SolidColorBrush(Color.FromRgb(228, 246, 232));
+            resources["PrimaryTextBrush"] = new SolidColorBrush(Color.FromRgb(16, 32, 22));
+            resources["SecondaryTextBrush"] = new SolidColorBrush(Color.FromRgb(47, 94, 63));
+            resources["MutedTextBrush"] = new SolidColorBrush(Color.FromRgb(95, 138, 106));
+            resources["BorderBrush"] = new SolidColorBrush(Color.FromRgb(185, 222, 195));
+            resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(22, 131, 58));
+            resources["AccentHoverBrush"] = new SolidColorBrush(Color.FromRgb(15, 106, 46));
+            resources["OverlayBrush"] = new SolidColorBrush(Color.FromArgb(153, 16, 32, 22));
         }
 
         _logger.LogInformation("Theme applied: {Theme}", _currentTheme);

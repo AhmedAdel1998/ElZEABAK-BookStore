@@ -9,6 +9,8 @@ using ReportHandlers = BookStore.Application.Features.Reports.Handlers;
 using ReceiptHandlers = BookStore.Application.Features.Receipts.Handlers;
 using BackupHandlers = BookStore.Application.Features.Backup.Handlers;
 using SettingsHandlers = BookStore.Application.Features.Settings.Handlers;
+using AuditHandlers = BookStore.Application.Features.Audit.Handlers;
+using DataQualityHandlers = BookStore.Application.Features.DataQuality.Handlers;
 using BookStore.UI.Dialogs;
 using BookStore.UI.Icons;
 using BookStore.UI.Navigation;
@@ -144,6 +146,9 @@ public static class DependencyInjection
         services.AddTransient<BackupHandlers.RunIntegrityCheckHandler>();
         services.AddTransient<BackupHandlers.GetDatabaseHealthHandler>();
         services.AddTransient<BackupHandlers.RunAutomaticBackupHandler>();
+        services.AddTransient<AuditHandlers.RecordAuditEntryHandler>();
+        services.AddTransient<AuditHandlers.SearchAuditLogHandler>();
+        services.AddTransient<DataQualityHandlers.GetDataQualitySummaryHandler>();
         services.AddTransient<SettingsHandlers.SettingsQueryHandler>();
         services.AddTransient<SettingsHandlers.SettingsCommandHandler>();
 
@@ -197,6 +202,8 @@ public static class DependencyInjection
         services.AddTransient<BackupDetailsViewModel>();
         services.AddTransient<BackupRestoreViewModel>();
         services.AddTransient<DatabaseHealthViewModel>();
+        services.AddTransient<AuditTrailViewModel>();
+        services.AddTransient<DataQualityViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<UsersViewModel>();
         services.AddTransient<RolesViewModel>();
@@ -257,6 +264,8 @@ public static class DependencyInjection
                 [typeof(BackupDetailsViewModel)] = () => provider.GetRequiredService<BackupDetailsViewModel>(),
                 [typeof(BackupRestoreViewModel)] = () => provider.GetRequiredService<BackupRestoreViewModel>(),
                 [typeof(DatabaseHealthViewModel)] = () => provider.GetRequiredService<DatabaseHealthViewModel>(),
+                [typeof(AuditTrailViewModel)] = () => provider.GetRequiredService<AuditTrailViewModel>(),
+                [typeof(DataQualityViewModel)] = () => provider.GetRequiredService<DataQualityViewModel>(),
                 [typeof(SettingsViewModel)] = () => provider.GetRequiredService<SettingsViewModel>(),
                 [typeof(UsersViewModel)] = () => provider.GetRequiredService<UsersViewModel>(),
                 [typeof(RolesViewModel)] = () => provider.GetRequiredService<RolesViewModel>(),

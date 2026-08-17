@@ -20,6 +20,8 @@ Scope: Phase 18 audit and hardening for the offline BookStore POS WPF applicatio
 ### Medium
 
 - Settings and some UI services still have areas where production UX needs refinement, especially full unsaved-navigation confirmation and category-specific screens.
+- Audit trail now records authentication events and exposes a protected audit screen; broader product, inventory, receipt, backup, and settings event coverage should continue to be added.
+- Data quality checks now expose missing barcode/supplier, invalid price, low margin, negative stock, and inactive-with-stock issues; direct row-to-module navigation remains a follow-up.
 - Hardware-dependent receipt printer and barcode scanner behavior cannot be verified without real devices.
 - Historical profit accuracy remains limited because `SaleItem` stores selling price and discount but not historical purchase cost.
 - Some synchronous settings access remains in the synchronous pricing interface; it is cached but should be redesigned if the pricing API becomes asynchronous.

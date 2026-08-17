@@ -96,7 +96,9 @@ public class DatabaseSeeder
             new Permission(PermissionConstants.BackupRestore, "Restore database backups"),
             new Permission(PermissionConstants.BackupDelete, "Delete database backups"),
             new Permission(PermissionConstants.BackupValidate, "Validate database backups"),
-            new Permission(PermissionConstants.BackupSettings, "Manage backup settings")
+            new Permission(PermissionConstants.BackupSettings, "Manage backup settings"),
+            new Permission(PermissionConstants.AuditView, "View production audit trail"),
+            new Permission(PermissionConstants.DataQualityView, "View data quality center")
         };
 
         var existingPermissionNames = await _dbContext.Permissions.Select(permission => permission.Name).ToListAsync(cancellationToken);

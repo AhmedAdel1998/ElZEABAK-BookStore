@@ -30,15 +30,19 @@ This plan covers the requested application enhancements and intentionally exclud
 
 ## Phase 5 - Audit Trail
 
-- Add an audit list for login/logout, product edits, price changes, stock changes, sale cancellation/refund, receipt reprint, backup/restore, and settings changes.
-- Use database-side paging and filtering.
-- Restrict audit access to privileged roles.
+- Status: implemented for authentication events and the audit trail screen.
+- Added a persisted `AuditLogEntries` table with indexed time, area, user, and entity lookups.
+- Added database-side paging and filtering through the audit query service.
+- Restricted audit access with `Audit.View`.
+- Next expansion: product edits, price changes, stock changes, sale cancellation/refund, receipt reprint, backup/restore, and settings changes.
 
 ## Phase 6 - Data Quality Center
 
-- Add checks for products without category, supplier, barcode, valid price, healthy margin, and valid stock.
-- Add direct navigation from each issue to the owning module.
-- Add summary counts to dashboard notifications.
+- Status: implemented as a permission-protected production screen.
+- Added checks for missing barcode, missing supplier, invalid price, low margin, negative stock, and inactive products that still carry stock.
+- Added summary counts and a grid of issue recommendations.
+- Restricted access with `DataQuality.View`.
+- Next expansion: direct row navigation to the owning product/editor screen and dashboard notification counts.
 
 ## Phase 7 - Arabic Accuracy
 

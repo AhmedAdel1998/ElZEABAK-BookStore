@@ -253,6 +253,18 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     private Task NavigateBackupAsync() => NavigateAsync<BackupListViewModel>("Nav.Backup");
 
     /// <summary>
+    /// Navigates to audit trail.
+    /// </summary>
+    [RelayCommand]
+    private Task NavigateAuditAsync() => NavigateAsync<AuditTrailViewModel>("Nav.Audit");
+
+    /// <summary>
+    /// Navigates to data quality.
+    /// </summary>
+    [RelayCommand]
+    private Task NavigateDataQualityAsync() => NavigateAsync<DataQualityViewModel>("Nav.DataQuality");
+
+    /// <summary>
     /// Navigates to change password.
     /// </summary>
     [RelayCommand]
@@ -293,6 +305,8 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
         AddMenuItem("Nav.Users", "U", PermissionConstants.UsersManage, new AsyncRelayCommand(() => NavigateAsync<UsersViewModel>("Nav.Users")));
         AddMenuItem("Nav.Roles", "RO", PermissionConstants.RolesManage, new AsyncRelayCommand(() => NavigateAsync<RolesViewModel>("Nav.Roles")));
         AddMenuItem("Nav.Backup", "B", PermissionConstants.BackupView, NavigateBackupCommand);
+        AddMenuItem("Nav.Audit", "A", PermissionConstants.AuditView, NavigateAuditCommand);
+        AddMenuItem("Nav.DataQuality", "DQ", PermissionConstants.DataQualityView, NavigateDataQualityCommand);
         AddMenuItem("Nav.Logout", "L", null, LogoutCommand);
     }
 

@@ -85,6 +85,11 @@ public class BookStoreDbContext : DbContext
     /// </summary>
     public DbSet<ApplicationSetting> ApplicationSettings => Set<ApplicationSetting>();
 
+    /// <summary>
+    /// Gets the audit log entries set.
+    /// </summary>
+    public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
+
     /// <inheritdoc />
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

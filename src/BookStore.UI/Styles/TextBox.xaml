@@ -40,7 +40,7 @@
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">
                             <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                             <Setter TargetName="Root" Property="BorderThickness" Value="2" />
-                            <Setter TargetName="Root" Property="Background" Value="#FFFDF5" />
+                            <Setter TargetName="Root" Property="Background" Value="#F7FFF9" />
                         </Trigger>
                         <Trigger Property="Validation.HasError" Value="True">
                             <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
@@ -96,7 +96,7 @@
     <Style TargetType="TextBox">
         <Setter Property="Padding" Value="10,6" />
         <Setter Property="MinHeight" Value="34" />
-        <Setter Property="Background" Value="#FFFDF5" />
+        <Setter Property="Background" Value="#F7FFF9" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
         <Setter Property="FlowDirection" Value="{DynamicResource AppFlowDirection}" />
