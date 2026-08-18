@@ -16,7 +16,7 @@
             </StackPanel>
         </DockPanel>
         <UniformGrid Grid.Row="1" Columns="5">
-            <controls:AppCard Margin="0,0,12,12" Title="Today's Sales" Value="{Binding Dashboard.TodaysSales, StringFormat={}{0:C}}" Icon="$" />
+            <controls:AppCard Margin="0,0,12,12" Title="Today's Sales" Value="{Binding Dashboard.TodaysSales, Converter={StaticResource CurrencyConverter}}" Icon="$" />
             <controls:AppCard Margin="0,0,12,12" Title="Transactions" Value="{Binding Dashboard.TodaysTransactions}" Icon="#" />
             <controls:AppCard Margin="0,0,12,12" Title="Profit" Value="{Binding Dashboard.TodaysProfit, StringFormat={}{0:C}}" Icon="P" />
             <controls:AppCard Margin="0,0,12,12" Title="Inventory Value" Value="{Binding Dashboard.CurrentInventoryValue, StringFormat={}{0:C}}" Icon="I" />

@@ -30,7 +30,7 @@
             <controls:AppCard Margin="0,16,0,0" Title="Product Lookup" Icon="P">
                 <StackPanel>
                     <TextBlock FontSize="20" FontWeight="SemiBold" Text="{Binding ProductTitle}" />
-                    <TextBlock Margin="0,8,0,0" Text="{Binding SellingPrice, StringFormat=Price: {0:C}}" />
+                    <TextBlock Margin="0,8,0,0" Text="{Binding SellingPrice, Converter={StaticResource CurrencyConverter}, StringFormat=Price: {0}}" />
                     <TextBlock Text="{Binding Quantity, StringFormat=Quantity: {0}}" />
                 </StackPanel>
             </controls:AppCard>

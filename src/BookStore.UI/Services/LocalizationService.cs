@@ -198,7 +198,12 @@ public sealed class LocalizationService : ILocalizationService
         ["DataQuality.Issues"] = "Issues: ",
         ["DataQuality.MissingSupplier"] = "Missing supplier: ",
         ["DataQuality.InvalidPrice"] = "Invalid price: ",
-        ["DataQuality.NegativeStock"] = "Negative stock: "
+        ["DataQuality.NegativeStock"] = "Negative stock: ",
+        ["Crash.UnexpectedError"] = "An unexpected error occurred. Please try again or contact support.",
+        ["Crash.Reference"] = "Reference: ",
+        ["Crash.TechnicalDetails"] = "Technical details",
+        ["Crash.CopyDetails"] = "Copy details",
+        ["Crash.Ok"] = "OK"
     };
 
     private static readonly IReadOnlyDictionary<string, string> Arabic = new Dictionary<string, string>
@@ -386,7 +391,12 @@ public sealed class LocalizationService : ILocalizationService
         ["DataQuality.Issues"] = "المشكلات: ",
         ["DataQuality.MissingSupplier"] = "مورد غير محدد: ",
         ["DataQuality.InvalidPrice"] = "سعر غير صالح: ",
-        ["DataQuality.NegativeStock"] = "مخزون سالب: "
+        ["DataQuality.NegativeStock"] = "مخزون سالب: ",
+        ["Crash.UnexpectedError"] = "حدث خطأ غير متوقع. حاول مرة أخرى أو تواصل مع الدعم الفني.",
+        ["Crash.Reference"] = "الرقم المرجعي: ",
+        ["Crash.TechnicalDetails"] = "التفاصيل الفنية",
+        ["Crash.CopyDetails"] = "نسخ التفاصيل",
+        ["Crash.Ok"] = "موافق"
     };
 
     private static readonly IReadOnlyDictionary<string, string> ExtraArabic = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)

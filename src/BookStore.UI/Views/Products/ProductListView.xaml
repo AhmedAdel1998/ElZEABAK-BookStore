@@ -68,8 +68,8 @@
                     <DataGridTextColumn Binding="{Binding Author}" Header="Author" Width="*" />
                     <DataGridTextColumn Binding="{Binding Publisher}" Header="Publisher" Width="*" />
                     <DataGridTextColumn Binding="{Binding CategoryName}" Header="Category" Width="*" />
-                    <DataGridTextColumn Binding="{Binding SellingPrice, StringFormat={}{0:C}}" Header="Selling Price" Width="*" />
-                    <DataGridTextColumn Binding="{Binding PurchasePrice, StringFormat={}{0:C}}" Header="Purchase Price" Width="*" />
+                    <DataGridTextColumn Binding="{Binding SellingPrice, Converter={StaticResource CurrencyConverter}}" Header="Selling Price" Width="*" />
+                    <DataGridTextColumn Binding="{Binding PurchasePrice, Converter={StaticResource CurrencyConverter}}" Header="Purchase Price" Width="*" />
                     <DataGridTextColumn Binding="{Binding Quantity}" Header="Current Quantity" Width="*" />
                     <DataGridTextColumn Binding="{Binding MinimumStock}" Header="Minimum Stock" Width="*" />
                     <DataGridTextColumn Binding="{Binding Status}" Header="Status" Width="*" />

@@ -58,3 +58,13 @@ public sealed class DialogRequest
 /// </summary>
 /// <param name="Result">The selected result key.</param>
 public sealed record DialogResultModel(string Result);
+
+/// <summary>
+/// Presentation data for <see cref="CrashDialogWindow"/>.
+/// </summary>
+/// <param name="CorrelationId">
+/// The identifier this same failure was logged under, so a user report and the log entry it
+/// corresponds to can be matched without asking what the user was doing at the time.
+/// </param>
+/// <param name="Details">The full exception text, offered for copying into a support report.</param>
+public sealed record CrashDialogModel(string CorrelationId, string Details);

@@ -20,8 +20,8 @@
             <controls:AppCard Margin="0,0,12,12" Title="Total Stock" Value="{Binding Dashboard.TotalStock}" Icon="S" />
             <controls:AppCard Margin="0,0,12,12" Title="Low Stock" Value="{Binding Dashboard.LowStockCount}" Icon="!" />
             <controls:AppCard Margin="0,0,12,12" Title="Out of Stock" Value="{Binding Dashboard.OutOfStockCount}" Icon="0" />
-            <controls:AppCard Margin="0,0,12,12" Title="Purchase Value" Value="{Binding Dashboard.TotalPurchaseValue, StringFormat={}{0:C}}" Icon="$" />
-            <controls:AppCard Margin="0,0,12,12" Title="Selling Value" Value="{Binding Dashboard.TotalSellingValue, StringFormat={}{0:C}}" Icon="$" />
+            <controls:AppCard Margin="0,0,12,12" Title="Purchase Value" Value="{Binding Dashboard.TotalPurchaseValue, Converter={StaticResource CurrencyConverter}}" Icon="$" />
+            <controls:AppCard Margin="0,0,12,12" Title="Selling Value" Value="{Binding Dashboard.TotalSellingValue, Converter={StaticResource CurrencyConverter}}" Icon="$" />
         </UniformGrid>
         <controls:LoadingOverlay Grid.RowSpan="2" IsBusy="{Binding IsBusy}" Message="Loading inventory dashboard..." />
     </Grid>

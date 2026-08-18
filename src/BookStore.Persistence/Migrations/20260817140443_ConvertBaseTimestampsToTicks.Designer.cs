@@ -3,6 +3,7 @@ using System;
 using BookStore.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookStore.Persistence.Migrations
 {
     [DbContext(typeof(BookStoreDbContext))]
-    partial class BookStoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260817140443_ConvertBaseTimestampsToTicks")]
+    partial class ConvertBaseTimestampsToTicks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.18");
@@ -773,7 +776,7 @@ namespace BookStore.Persistence.Migrations
 
                             b1.HasKey("CustomerId");
 
-                            b1.ToTable("Customers", (string)null);
+                            b1.ToTable("Customers");
 
                             b1.WithOwner()
                                 .HasForeignKey("CustomerId");
@@ -816,7 +819,7 @@ namespace BookStore.Persistence.Migrations
                                 .IsUnique()
                                 .HasDatabaseName("IX_Products_Barcode");
 
-                            b1.ToTable("Products", (string)null);
+                            b1.ToTable("Products");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductId");
@@ -838,7 +841,7 @@ namespace BookStore.Persistence.Migrations
                             b1.HasIndex("Value")
                                 .HasDatabaseName("IX_Products_ISBN");
 
-                            b1.ToTable("Products", (string)null);
+                            b1.ToTable("Products");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductId");
@@ -938,7 +941,7 @@ namespace BookStore.Persistence.Migrations
 
                             b1.HasKey("SupplierId");
 
-                            b1.ToTable("Suppliers", (string)null);
+                            b1.ToTable("Suppliers");
 
                             b1.WithOwner()
                                 .HasForeignKey("SupplierId");

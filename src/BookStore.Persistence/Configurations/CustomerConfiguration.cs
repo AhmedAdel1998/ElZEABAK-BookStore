@@ -14,12 +14,25 @@ public class CustomerConfiguration : EntityConfigurationBase<Customer>
     {
         builder.ToTable("Customers");
         builder.Property(customer => customer.FullName).IsRequired().HasMaxLength(150);
-        builder.Property(customer => customer.Phone).HasConversion(ValueObjectConverters.PhoneConverter).HasMaxLength(20);
-        builder.Property(customer => customer.Email).HasConversion(ValueObjectConverters.EmailConverter).HasMaxLength(254);
+
+        // Owned types rather than ValueConverter, matching Product.Barcode/ISBN and the existing
+        // Address mapping just below: a value-converted property is opaque inside a predicate, so
+        // the first `Where(c => c.Phone.Value.Contains(term))` written against these would throw
+        // "could not be translated" - the exact failure that broke POS barcode scanning. Column
+        // names are pinned to the existing ones, so this is a model change only.
+        builder.OwnsOne(customer => customer.Phone, phone =>
+        {
+            phone.Property(value => value.Value).HasColumnName("Phone").HasMaxLength(20);
+            phone.HasIndex(value => value.Value).HasDatabaseName("IX_Customers_Phone");
+        });
+        builder.OwnsOne(customer => customer.Email, email =>
+        {
+            email.Property(value => value.Value).HasColumnName("Email").HasMaxLength(254);
+            email.HasIndex(value => value.Value).HasDatabaseName("IX_Customers_Email");
+        });
+
         builder.Property(customer => customer.LoyaltyPoints).IsRequired();
         builder.Property(customer => customer.IsActive).IsRequired();
-        builder.HasIndex(customer => customer.Phone);
-        builder.HasIndex(customer => customer.Email);
         builder.HasIndex(customer => customer.FullName);
         builder.HasIndex(customer => customer.IsDeleted);
         builder.HasIndex(customer => customer.IsActive);

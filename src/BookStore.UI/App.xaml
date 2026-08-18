@@ -1,9 +1,11 @@
 <Application x:Class="BookStore.UI.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:BookStore.UI.Converters">
     <Application.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <converters:CurrencyValueConverter x:Key="CurrencyConverter" />
             <FlowDirection x:Key="AppFlowDirection">LeftToRight</FlowDirection>
             <TextAlignment x:Key="AppTextAlignment">Left</TextAlignment>
             <ResourceDictionary.MergedDictionaries>

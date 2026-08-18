@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddSingleton<IShellNavigationService, ShellNavigationService>();
         services.AddSingleton<IViewModelFactory, ViewModelFactory>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<ICurrencyFormatterService, CurrencyFormatterService>();
         services.AddSingleton<ILocalizationService, LocalizationService>();
         services.AddSingleton<IUiTreeLocalizer, UiTreeLocalizer>();
         services.AddSingleton<IApplicationShutdownService, ApplicationShutdownService>();

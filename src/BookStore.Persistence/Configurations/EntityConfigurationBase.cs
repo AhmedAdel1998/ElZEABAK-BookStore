@@ -15,8 +15,20 @@ public abstract class EntityConfigurationBase<TEntity> : IEntityTypeConfiguratio
     public void Configure(EntityTypeBuilder<TEntity> builder)
     {
         builder.HasKey(entity => entity.Id);
-        builder.Property(entity => entity.CreatedAt).IsRequired();
-        builder.Property(entity => entity.UpdatedAt);
+
+        // Stored as UTC ticks, matching Sale.SaleDate, InventoryTransaction.Date, and
+        // AuditLogEntry.OccurredAt. SQLite supports neither comparison nor ORDER BY on
+        // DateTimeOffset, so persisting it directly is a dormant trap shared by every entity: the
+        // first Where(x => x.CreatedAt >= ...) or OrderBy(x => x.UpdatedAt) written against any of
+        // them throws "could not be translated" - exactly the failure that broke the audit trail.
+        // No caller does that today, but nothing stops the next one from trying.
+        builder.Property(entity => entity.CreatedAt)
+            .HasConversion(value => value.UtcTicks, value => new DateTimeOffset(value, TimeSpan.Zero))
+            .IsRequired();
+        builder.Property(entity => entity.UpdatedAt)
+            .HasConversion(
+                value => value.HasValue ? value.Value.UtcTicks : (long?)null,
+                value => value.HasValue ? new DateTimeOffset(value.Value, TimeSpan.Zero) : null);
         builder.Property(entity => entity.IsDeleted).IsRequired();
         builder.Ignore(entity => entity.DomainEvents);
         ConfigureEntity(builder);
