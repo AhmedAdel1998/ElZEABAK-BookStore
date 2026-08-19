@@ -1,16 +1,26 @@
-2026-08-19 12:12:25.412 +03:00 [INF] Applying database migrations
-2026-08-19 12:12:25.616 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
-2026-08-19 12:12:25.687 +03:00 [INF] No migrations were applied. The database is already up to date.
-2026-08-19 12:12:26.195 +03:00 [INF] Database seed completed
-2026-08-19 12:12:26.199 +03:00 [INF] Application started. Press Ctrl+C to shut down.
-2026-08-19 12:12:26.199 +03:00 [INF] Hosting environment: Production
-2026-08-19 12:12:26.199 +03:00 [INF] Content root path: E:\EL ZEABAK BookStore\EL ZEABAK BookStore
-2026-08-19 12:12:26.200 +03:00 [INF] Application start
-2026-08-19 12:12:26.211 +03:00 [INF] Runtime folder verified: Database
-2026-08-19 12:12:26.211 +03:00 [INF] Runtime folder verified: Logs
-2026-08-19 12:12:26.211 +03:00 [INF] Runtime folder verified: Backups
-2026-08-19 12:12:26.212 +03:00 [INF] Runtime folder verified: Exports
-2026-08-19 12:12:26.212 +03:00 [INF] Runtime folder verified: Temp
-2026-08-19 12:12:26.313 +03:00 [INF] UI culture applied: ar-EG
-2026-08-19 12:12:26.371 +03:00 [INF] Theme applied: Dark
-2026-08-19 12:12:26.400 +03:00 [INF] Currency formatting applied: EGP (Before, 2 dp)
+2026-08-19 12:57:28.079 +03:00 [INF] Applying database migrations
+2026-08-19 12:57:28.305 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-08-19 12:57:28.405 +03:00 [INF] No migrations were applied. The database is already up to date.
+2026-08-19 12:57:28.941 +03:00 [INF] Database seed completed
+2026-08-19 12:57:28.946 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-08-19 12:57:28.946 +03:00 [INF] Hosting environment: Production
+2026-08-19 12:57:28.947 +03:00 [INF] Content root path: E:\EL ZEABAK BookStore\EL ZEABAK BookStore
+2026-08-19 12:57:28.947 +03:00 [INF] Application start
+2026-08-19 12:57:28.948 +03:00 [INF] Runtime folder verified: Database
+2026-08-19 12:57:28.948 +03:00 [INF] Runtime folder verified: Logs
+2026-08-19 12:57:28.949 +03:00 [INF] Runtime folder verified: Backups
+2026-08-19 12:57:28.949 +03:00 [INF] Runtime folder verified: Exports
+2026-08-19 12:57:28.949 +03:00 [INF] Runtime folder verified: Temp
+2026-08-19 12:57:29.095 +03:00 [INF] UI culture applied: ar-EG
+2026-08-19 12:57:29.160 +03:00 [INF] Theme applied: Dark
+2026-08-19 12:57:29.191 +03:00 [INF] Currency formatting applied: EGP (Before, 2 dp)
+2026-08-19 12:57:29.392 +03:00 [INF] Remembered session restored. UserId="cbdae80e-cd81-4891-b80f-8e7faeb03d01"
+2026-08-19 12:57:29.600 +03:00 [INF] Report opened: Reports Dashboard
+2026-08-19 12:57:29.760 +03:00 [INF] Report generated: Reports Dashboard in 159 ms
+2026-08-19 12:57:29.762 +03:00 [INF] Report opened: Sales Summary
+2026-08-19 12:57:29.763 +03:00 [INF] Report generated: Sales Summary in 1 ms
+2026-08-19 12:58:17.574 +03:00 [WRN] You do not have a valid license key for the Lucky Penny software AutoMapper. This is allowed for development and testing scenarios. If you are running in production you are required to have a licensed version. Please visit https://luckypennysoftware.com to obtain a valid license.
+2026-08-19 12:58:17.767 +03:00 [INF] POS sale resumed in progress. Invoice=POS-20260819094959740-A36E Lines=1
+2026-08-19 12:58:22.443 +03:00 [INF] Barcode scanned: QRTEST0001 Found=true
+2026-08-19 12:58:25.537 +03:00 [INF] POS sale resumed in progress. Invoice=POS-20260819094959740-A36E Lines=1
+2026-08-19 12:58:27.650 +03:00 [INF] Barcode scanned: QRTEST0001 Found=true

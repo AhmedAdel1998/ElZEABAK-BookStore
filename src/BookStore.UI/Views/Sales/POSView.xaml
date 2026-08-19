@@ -113,6 +113,8 @@
                                      MinHeight="{DynamicResource ControlHeight}"
                                      FlowDirection="LeftToRight"
                                      VerticalContentAlignment="Center"
+                                     AutomationProperties.Name="{DynamicResource POS.Scan}"
+                                     KeyUp="OnBarcodeKeyUp"
                                      Text="{Binding BarcodeText, UpdateSourceTrigger=PropertyChanged}">
                                 <TextBox.InputBindings>
                                     <KeyBinding Key="Return" Command="{Binding AddScannedBarcodeCommand}" />
@@ -321,9 +323,7 @@
                         Background="{DynamicResource SurfaceAltBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1">
-                    <DockPanel>
-                        <StackPanel DockPanel.Dock="Left"
-                                    Orientation="Horizontal">
+                    <WrapPanel>
                             <Button Width="38"
                                     Padding="0"
                                     Command="{Binding DecreaseQuantityCommand}"
@@ -357,12 +357,11 @@
                                     Padding="12,6"
                                     Command="{Binding ApplyLineDiscountCommand}"
                                     Content="{DynamicResource POS.LineDiscount}" />
-                        </StackPanel>
-                        <Button DockPanel.Dock="Right"
+                            <Button Margin="18,0,0,0"
                                 Padding="12,6"
                                 Command="{Binding RemoveSelectedItemCommand}"
                                 Content="{DynamicResource POS.Remove}" />
-                    </DockPanel>
+                    </WrapPanel>
                 </Border>
             </Grid>
 

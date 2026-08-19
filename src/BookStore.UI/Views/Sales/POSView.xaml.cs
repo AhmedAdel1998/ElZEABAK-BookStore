@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace BookStore.UI.Views.Sales;
@@ -24,6 +25,17 @@ public partial class POSView : UserControl
     private void OnBarcodeAddClicked(object sender, RoutedEventArgs e)
     {
         FocusBarcodeInput();
+    }
+
+    /// <summary>
+    /// Returns focus to the barcode box after a scan so the next one lands in the right place.
+    /// </summary>
+    private void OnBarcodeKeyUp(object sender, KeyEventArgs e)
+    {
+        if (e.Key is Key.Return or Key.Enter)
+        {
+            FocusBarcodeInput();
+        }
     }
 
     private void OnCashierActionClicked(object sender, RoutedEventArgs e)
