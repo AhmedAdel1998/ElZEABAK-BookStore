@@ -13,6 +13,9 @@ namespace BookStore.UI.Services;
 /// </summary>
 public class ThemeService : IThemeService
 {
+    private static readonly Uri LightThemeSource = new("/BookStore.UI;component/Themes/Light.xaml", UriKind.Relative);
+    private static readonly Uri DarkThemeSource = new("/BookStore.UI;component/Themes/Dark.xaml", UriKind.Relative);
+
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ThemeService> _logger;
     private string _currentTheme = ApplicationConstants.DefaultTheme;
@@ -69,37 +72,38 @@ public class ThemeService : IThemeService
             return;
         }
 
-        _currentTheme = string.Equals(theme, "Dark", StringComparison.OrdinalIgnoreCase) ? "Dark" : "Light";
-        var resources = application.Resources;
+        var isDark = string.Equals(theme, "Dark", StringComparison.OrdinalIgnoreCase);
+        _currentTheme = isDark ? "Dark" : "Light";
 
-        if (_currentTheme == "Dark")
+        // Swap the whole palette dictionary rather than overwriting a handful of brushes in code.
+        // The old approach reassigned ten keys and left every other brush -- input backgrounds, grid
+        // rows, status colours -- at its light value, so dark mode rendered near-white text on
+        // near-white fills and Dark.xaml was never loaded at all.
+        var dictionaries = application.Resources.MergedDictionaries;
+        var replacement = new ResourceDictionary { Source = isDark ? DarkThemeSource : LightThemeSource };
+        var existing = dictionaries.FirstOrDefault(IsThemeDictionary);
+
+        if (existing is null)
         {
-            resources["AppBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(17, 24, 39));
-            resources["SurfaceBrush"] = new SolidColorBrush(Color.FromRgb(31, 41, 55));
-            resources["SurfaceAltBrush"] = new SolidColorBrush(Color.FromRgb(31, 58, 43));
-            resources["PrimaryTextBrush"] = new SolidColorBrush(Color.FromRgb(243, 244, 246));
-            resources["SecondaryTextBrush"] = new SolidColorBrush(Color.FromRgb(203, 213, 225));
-            resources["MutedTextBrush"] = new SolidColorBrush(Color.FromRgb(148, 163, 184));
-            resources["BorderBrush"] = new SolidColorBrush(Color.FromRgb(55, 65, 81));
-            resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(52, 211, 153));
-            resources["AccentHoverBrush"] = new SolidColorBrush(Color.FromRgb(134, 239, 172));
-            resources["OverlayBrush"] = new SolidColorBrush(Color.FromArgb(179, 0, 0, 0));
+            dictionaries.Add(replacement);
         }
         else
         {
-            resources["AppBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(242, 251, 244));
-            resources["SurfaceBrush"] = new SolidColorBrush(Colors.White);
-            resources["SurfaceAltBrush"] = new SolidColorBrush(Color.FromRgb(228, 246, 232));
-            resources["PrimaryTextBrush"] = new SolidColorBrush(Color.FromRgb(16, 32, 22));
-            resources["SecondaryTextBrush"] = new SolidColorBrush(Color.FromRgb(47, 94, 63));
-            resources["MutedTextBrush"] = new SolidColorBrush(Color.FromRgb(95, 138, 106));
-            resources["BorderBrush"] = new SolidColorBrush(Color.FromRgb(185, 222, 195));
-            resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(22, 131, 58));
-            resources["AccentHoverBrush"] = new SolidColorBrush(Color.FromRgb(15, 106, 46));
-            resources["OverlayBrush"] = new SolidColorBrush(Color.FromArgb(153, 16, 32, 22));
+            dictionaries[dictionaries.IndexOf(existing)] = replacement;
         }
 
         _logger.LogInformation("Theme applied: {Theme}", _currentTheme);
+    }
+
+    /// <summary>
+    /// Reports whether a merged dictionary is one of the swappable theme palettes.
+    /// </summary>
+    private static bool IsThemeDictionary(ResourceDictionary dictionary)
+    {
+        var source = dictionary.Source?.OriginalString;
+        return source is not null
+            && (source.EndsWith("Themes/Light.xaml", StringComparison.OrdinalIgnoreCase)
+                || source.EndsWith("Themes/Dark.xaml", StringComparison.OrdinalIgnoreCase));
     }
 
     private async void OnSettingsChanged(object? sender, SettingsChangedEvent e)

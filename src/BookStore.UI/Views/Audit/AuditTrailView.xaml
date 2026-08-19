@@ -11,16 +11,16 @@
 
         <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Audit Trail" />
 
-        <StackPanel Grid.Row="1" Margin="0,16,0,16" Orientation="Horizontal">
-            <TextBox Width="220" Margin="0,0,8,0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBox Width="160" Margin="0,0,8,0" Text="{Binding Area, UpdateSourceTrigger=PropertyChanged}" ToolTip="Area" />
-            <DatePicker Width="140" Margin="0,0,8,0" SelectedDate="{Binding From}" />
-            <DatePicker Width="140" Margin="0,0,8,0" SelectedDate="{Binding To}" />
-            <controls:PrimaryButton Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
+        <WrapPanel Grid.Row="1" Margin="0,16,0,16">
+            <TextBox Width="220" Margin="0,0,8,8" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox Width="160" Margin="0,0,8,8" Text="{Binding Area, UpdateSourceTrigger=PropertyChanged}" ToolTip="Area" />
+            <DatePicker Width="140" Margin="0,0,8,8" SelectedDate="{Binding From}" />
+            <DatePicker Width="140" Margin="0,0,8,8" SelectedDate="{Binding To}" />
+            <controls:PrimaryButton Command="{Binding RefreshCommand}" Content="Refresh" Icon="Refresh" />
             <TextBlock Margin="16,8,0,0" Text="{Binding TotalCount, StringFormat=Total: {0}}" />
-        </StackPanel>
+        </WrapPanel>
 
-        <DataGrid Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" ItemsSource="{Binding Entries}">
+        <DataGrid Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" HorizontalScrollBarVisibility="Auto" ItemsSource="{Binding Entries}">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding OccurredAt}" Header="Time" Width="160" />
                 <DataGridTextColumn Binding="{Binding Area}" Header="Area" Width="120" />
@@ -28,8 +28,12 @@
                 <DataGridTextColumn Binding="{Binding Outcome}" Header="Outcome" Width="100" />
                 <DataGridTextColumn Binding="{Binding Username}" Header="User" Width="140" />
                 <DataGridTextColumn Binding="{Binding EntityType}" Header="Entity" Width="120" />
-                <DataGridTextColumn Binding="{Binding Detail}" Header="Detail" Width="*" />
+                <DataGridTextColumn Binding="{Binding Detail}" Header="Detail" Width="*" MinWidth="110" />
             </DataGrid.Columns>
         </DataGrid>
+        <controls:NoDataView Grid.Row="2"
+                            Title="Audit Trail"
+                            Message="No records found."
+                            Visibility="{Binding Entries.Count, Converter={StaticResource EmptyCollectionToVisibilityConverter}}" />
     </Grid>
 </UserControl>

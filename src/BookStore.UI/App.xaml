@@ -4,11 +4,10 @@
              xmlns:converters="clr-namespace:BookStore.UI.Converters">
     <Application.Resources>
         <ResourceDictionary>
-            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-            <converters:CurrencyValueConverter x:Key="CurrencyConverter" />
             <FlowDirection x:Key="AppFlowDirection">LeftToRight</FlowDirection>
             <TextAlignment x:Key="AppTextAlignment">Left</TextAlignment>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Converters.xaml" />
                 <ResourceDictionary Source="Themes/Colors.xaml" />
                 <ResourceDictionary Source="Themes/Brushes.xaml" />
                 <ResourceDictionary Source="Themes/Typography.xaml" />

@@ -1,4 +1,7 @@
 using BookStore.Application.Features.Authentication.Responses;
+using BookStore.Shared.Results;
+using BookStore.Application.Features.Settings.Services;
+using BookStore.Application.Features.Settings.DTOs;
 using BookStore.Application.Features.Backup.DTOs;
 using BookStore.Application.Features.Backup.Services;
 using BookStore.Application.Interfaces;
@@ -167,7 +170,15 @@ public sealed class BackupServiceTests
             var resolver = new DatabasePathResolver(configuration);
             var disk = new FakeDiskSpaceService(hasEnoughSpace);
             var currentUser = new FakeCurrentUserService();
-            var backupService = new BackupService(resolver, disk, currentUser, settings, NullLogger<BackupService>.Instance);
+            // Mirrors the configured values, so these tests exercise the stored-settings path that
+            // production now uses while keeping their original intent.
+            var storedSettings = new StubSettingsService(new BackupSettingsDto
+            {
+                BackupLocation = Path.Combine(root, "Backups"),
+                RetentionCount = retentionCount,
+                CreatePreRestoreBackup = true
+            });
+            var backupService = new BackupService(resolver, disk, currentUser, settings, storedSettings, NullLogger<BackupService>.Instance);
             var integrityService = new DatabaseIntegrityService(resolver, disk, NullLogger<DatabaseIntegrityService>.Instance);
             return new BackupFixture(root, databasePath, backupService, integrityService);
         }
@@ -215,6 +226,25 @@ public sealed class BackupServiceTests
         await using var stream = new FileStream(filePath, FileMode.Truncate, FileAccess.Write, FileShare.ReadWrite);
         await using var writer = new StreamWriter(stream);
         await writer.WriteAsync("not a sqlite database");
+    }
+
+    private sealed class StubSettingsService(BackupSettingsDto backup) : ISettingsService
+    {
+        public Task<T> GetAsync<T>(CancellationToken cancellationToken = default)
+            where T : class, new()
+        {
+            object value = typeof(T) == typeof(BackupSettingsDto) ? backup : new T();
+            return Task.FromResult((T)value);
+        }
+
+        public Task<Result> SetAsync<T>(T settings, CancellationToken cancellationToken = default)
+            where T : class, new() => Task.FromResult(Result.Success());
+
+        public Task<IReadOnlyList<SettingEntryDto>> GetAllAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<SettingEntryDto>>([]);
+        public Task<Result> ResetAsync(CancellationToken cancellationToken = default) => Task.FromResult(Result.Success());
+        public Task<Result> ResetCategoryAsync(SettingsCategory category, CancellationToken cancellationToken = default) => Task.FromResult(Result.Success());
+        public Task SaveAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task ReloadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
     private sealed class FakeDiskSpaceService(bool hasEnoughSpace) : IDiskSpaceService

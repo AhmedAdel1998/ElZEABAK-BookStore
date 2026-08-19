@@ -8,6 +8,7 @@
         xmlns:viewModels="clr-namespace:BookStore.UI.ViewModels"
         mc:Ignorable="d"
         Title="{DynamicResource App.Title}"
+        FlowDirection="{DynamicResource AppFlowDirection}"
         Height="720"
         MinHeight="600"
         MinWidth="960"

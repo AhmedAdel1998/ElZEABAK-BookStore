@@ -48,7 +48,14 @@ public partial class BackupListViewModel : BaseViewModel
         _ = LoadAsync();
     }
 
+    /// <summary>The exact sentence a user must type before a restore is allowed.</summary>
     public const string RequiredRestoreConfirmation = "I understand that restoring will replace the current database.";
+
+    /// <summary>
+    /// Gets the phrase the user has to type. Surfaced so the screen can display it -- the backup list
+    /// demanded an exact match while showing only an empty box, which made restore impossible there.
+    /// </summary>
+    public static string RequiredConfirmationText => RequiredRestoreConfirmation;
 
     public ObservableCollection<BackupMetadataDto> Backups { get; } = [];
 
@@ -196,6 +203,9 @@ public partial class BackupRestoreViewModel : BaseViewModel
         _confirmationDialogService = confirmationDialogService;
         Title = "Restore Backup";
     }
+
+    /// <summary>Gets the phrase the user has to type before restore is permitted.</summary>
+    public static string RequiredConfirmationText => BackupListViewModel.RequiredRestoreConfirmation;
 
     [RelayCommand]
     private async Task RestoreAsync()

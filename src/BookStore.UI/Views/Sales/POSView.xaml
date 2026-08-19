@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls"
              mc:Ignorable="d"
              d:DesignHeight="760"
              d:DesignWidth="1180">
@@ -32,16 +33,16 @@
                     <StackPanel DockPanel.Dock="Left">
                         <TextBlock FontSize="20"
                                    FontWeight="SemiBold"
-                                   Foreground="#BBF7D0"
+                                   Foreground="{DynamicResource BrandOnChromeTextBrush}"
                                    Text="{DynamicResource POS.Cashier}" />
                     <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
-                        <TextBlock Foreground="#DCFCE7" Opacity="0.9" Text="{Binding CurrentSale.InvoiceNumber}" />
-                        <TextBlock Margin="12,0,0,0" Foreground="#DCFCE7" Opacity="0.9" Text="{Binding CurrentSale.CustomerName}" />
-                        <TextBlock Margin="6,0,0,0" Foreground="#DCFCE7" Opacity="0.9" Text="{Binding CurrentSale.CustomerPhone}" />
+                        <TextBlock Foreground="{DynamicResource BrandOnChromeTextBrush}" Opacity="0.9" Text="{Binding CurrentSale.InvoiceNumber}" />
+                        <TextBlock Margin="12,0,0,0" Foreground="{DynamicResource BrandOnChromeTextBrush}" Opacity="0.9" Text="{Binding CurrentSale.CustomerName}" />
+                        <TextBlock Margin="6,0,0,0" Foreground="{DynamicResource BrandOnChromeTextBrush}" Opacity="0.9" Text="{Binding CurrentSale.CustomerPhone}" />
                     </StackPanel>
                     <TextBlock Margin="0,6,0,0"
                                FontSize="12"
-                               Foreground="#DCFCE7"
+                               Foreground="{DynamicResource BrandOnChromeTextBrush}"
                                Opacity="0.95"
                                Text="{Binding CartSummaryText}" />
                 </StackPanel>
@@ -69,9 +70,14 @@
         <Grid Grid.Row="1"
               Margin="0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="310" />
+                <!--
+                    Proportional with bounds rather than hard pixels. 300 + 310 fixed left the cart
+                    roughly 350px at the window minimum, which collapsed the star-sized product
+                    column to nothing while eight numeric columns kept their pixels.
+                -->
+                <ColumnDefinition Width="0.24*" MinWidth="250" MaxWidth="340" />
+                <ColumnDefinition Width="*" MinWidth="320" />
+                <ColumnDefinition Width="0.26*" MinWidth="270" MaxWidth="360" />
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0"
@@ -79,8 +85,20 @@
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0">
-                <DockPanel LastChildFill="True">
-                    <StackPanel DockPanel.Dock="Top">
+                <!--
+                    A DockPanel gave the top and bottom children their full desired height and left
+                    the fill child (the product results list) with nothing, so the main way of adding
+                    an item without a scanner silently disappeared. A three-row grid with a minimum
+                    on the results row guarantees it space, and the top block scrolls if it cannot fit.
+                -->
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" MinHeight="120" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ScrollViewer Grid.Row="0" MaxHeight="330" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
                         <TextBlock FontWeight="SemiBold"
                                    Foreground="{DynamicResource PrimaryTextBrush}"
                                    Text="{DynamicResource POS.Scan}" />
@@ -92,7 +110,7 @@
                                     Click="OnBarcodeAddClicked"
                                     Content="{DynamicResource POS.Add}" />
                             <TextBox x:Name="BarcodeInput"
-                                     Height="34"
+                                     MinHeight="{DynamicResource ControlHeight}"
                                      FlowDirection="LeftToRight"
                                      VerticalContentAlignment="Center"
                                      Text="{Binding BarcodeText, UpdateSourceTrigger=PropertyChanged}">
@@ -138,7 +156,7 @@
                                     Margin="8,0,0,0"
                                     Command="{Binding SearchProductsCommand}"
                                     Content="{DynamicResource POS.Find}" />
-                            <TextBox Height="34"
+                            <TextBox MinHeight="{DynamicResource ControlHeight}"
                                      FlowDirection="{DynamicResource AppFlowDirection}"
                                      VerticalContentAlignment="Center"
                                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
@@ -154,7 +172,7 @@
                                     Margin="8,0,0,0"
                                     Command="{Binding SearchCustomersCommand}"
                                     Content="{DynamicResource POS.Find}" />
-                            <TextBox Height="34"
+                            <TextBox MinHeight="{DynamicResource ControlHeight}"
                                      FlowDirection="{DynamicResource AppFlowDirection}"
                                      VerticalContentAlignment="Center"
                                      Text="{Binding CustomerSearchText, UpdateSourceTrigger=PropertyChanged}" />
@@ -176,12 +194,12 @@
                             <Button Width="82" Margin="8,0,0,0" Command="{Binding ClearCustomerCommand}" Content="{DynamicResource POS.WalkIn}" />
                         </StackPanel>
                         <TextBox Margin="0,10,0,0"
-                                 Height="32"
+                                 MinHeight="{DynamicResource ControlHeight}"
                                  FlowDirection="{DynamicResource AppFlowDirection}"
                                  VerticalContentAlignment="Center"
                                  Text="{Binding NewCustomerName, UpdateSourceTrigger=PropertyChanged}" />
                         <TextBox Margin="0,6,0,0"
-                                 Height="32"
+                                 MinHeight="{DynamicResource ControlHeight}"
                                  FlowDirection="LeftToRight"
                                  VerticalContentAlignment="Center"
                                  Text="{Binding NewCustomerPhone, UpdateSourceTrigger=PropertyChanged}" />
@@ -190,15 +208,16 @@
                                 Command="{Binding CreateCustomerFromPosCommand}"
                                 Content="{DynamicResource POS.CreateCustomer}" />
                     </StackPanel>
+                    </ScrollViewer>
 
-                    <StackPanel DockPanel.Dock="Bottom"
+                    <StackPanel Grid.Row="2"
                                 Margin="0,12,0,0">
                         <TextBlock FontWeight="SemiBold"
                                    Foreground="{DynamicResource PrimaryTextBrush}"
                                    Text="{DynamicResource POS.SelectedQuantity}" />
                         <DockPanel Margin="0,8,0,0">
                             <TextBox Width="68"
-                                     Height="32"
+                                     MinHeight="{DynamicResource ControlHeight}"
                                      FlowDirection="LeftToRight"
                                      VerticalContentAlignment="Center"
                                      Text="{Binding ItemQuantity, UpdateSourceTrigger=PropertyChanged}" />
@@ -209,7 +228,9 @@
                         </DockPanel>
                     </StackPanel>
 
-                    <ListBox ItemsSource="{Binding SearchResults}"
+                    <ListBox Grid.Row="1"
+                             Margin="0,10,0,0"
+                             ItemsSource="{Binding SearchResults}"
                              SelectedItem="{Binding SelectedProduct}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
@@ -236,7 +257,7 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                </DockPanel>
+                </Grid>
             </Border>
 
             <Grid Grid.Column="1"
@@ -250,35 +271,45 @@
                           AutoGenerateColumns="False"
                           CanUserAddRows="False"
                           IsReadOnly="True"
+                          HorizontalScrollBarVisibility="Auto"
                           FlowDirection="{DynamicResource AppFlowDirection}"
                           ItemsSource="{Binding CurrentSale.Items}"
                           SelectedItem="{Binding SelectedCartItem}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Width="2*"
+                        <DataGridTextColumn Width="*"
+                                            MinWidth="150"
                                             Binding="{Binding Title}"
                                             Header="{DynamicResource POS.Product}" />
-                        <DataGridTextColumn Width="120"
+                        <DataGridTextColumn Width="Auto"
+                                            MinWidth="90"
                                             Binding="{Binding CategoryName}"
                                             Header="{DynamicResource POS.Category}" />
-                        <DataGridTextColumn Width="90"
+                        <DataGridTextColumn Width="Auto"
+                                            MinWidth="90"
                                             Binding="{Binding Barcode}"
                                             Header="{DynamicResource POS.Barcode}" />
-                        <DataGridTextColumn Width="70"
+                        <DataGridTextColumn Width="Auto"
+                                            MinWidth="56"
                                             Binding="{Binding Quantity}"
                                             Header="{DynamicResource POS.Qty}" />
-                        <DataGridTextColumn Width="90"
+                        <DataGridTextColumn Width="Auto"
+                                            MinWidth="72"
                                             Binding="{Binding AvailableQuantity}"
                                             Header="{DynamicResource POS.StockLeft}" />
-                        <DataGridTextColumn Width="90"
+                        <DataGridTextColumn Width="Auto"
+                                            MinWidth="78"
                                             Binding="{Binding UnitPrice, StringFormat=N2}"
                                             Header="{DynamicResource POS.Price}" />
-                        <DataGridTextColumn Width="90"
+                        <DataGridTextColumn Width="Auto"
+                                            MinWidth="78"
                                             Binding="{Binding Discount, StringFormat=N2}"
                                             Header="{DynamicResource POS.Discount}" />
-                        <DataGridTextColumn Width="80"
+                        <DataGridTextColumn Width="Auto"
+                                            MinWidth="66"
                                             Binding="{Binding Tax, StringFormat=N2}"
                                             Header="{DynamicResource POS.Tax}" />
-                        <DataGridTextColumn Width="100"
+                        <DataGridTextColumn Width="Auto"
+                                            MinWidth="88"
                                             Binding="{Binding LineTotal, StringFormat=N2}"
                                             Header="{DynamicResource POS.Total}" />
                     </DataGrid.Columns>
@@ -296,9 +327,11 @@
                             <Button Width="38"
                                     Padding="0"
                                     Command="{Binding DecreaseQuantityCommand}"
+                                    AutomationProperties.Name="{DynamicResource POS.DecreaseQty}"
+                                    ToolTip="{DynamicResource POS.DecreaseQty}"
                                     Content="{DynamicResource POS.DecreaseQty}" />
                             <TextBox Width="70"
-                                     Height="32"
+                                     MinHeight="{DynamicResource ControlHeight}"
                                      Margin="8,0,0,0"
                                      FlowDirection="LeftToRight"
                                      VerticalContentAlignment="Center"
@@ -307,13 +340,15 @@
                                     Margin="8,0,0,0"
                                     Padding="0"
                                     Command="{Binding IncreaseQuantityCommand}"
+                                    AutomationProperties.Name="{DynamicResource POS.IncreaseQty}"
+                                    ToolTip="{DynamicResource POS.IncreaseQty}"
                                     Content="{DynamicResource POS.IncreaseQty}" />
                             <Button Margin="8,0,0,0"
                                     Padding="12,6"
                                     Command="{Binding UpdateQuantityCommand}"
                                     Content="{DynamicResource POS.UpdateQty}" />
                             <TextBox Width="90"
-                                     Height="32"
+                                     MinHeight="{DynamicResource ControlHeight}"
                                      Margin="18,0,0,0"
                                      FlowDirection="LeftToRight"
                                      VerticalContentAlignment="Center"
@@ -336,12 +371,27 @@
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1,0,0,0">
-                <DockPanel LastChildFill="True">
-                    <StackPanel DockPanel.Dock="Top">
-                        <TextBlock FontSize="16"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource PrimaryTextBrush}"
-                                   Text="{DynamicResource POS.Payment}" />
+                <!--
+                    Complete Sale is pinned to the bottom row and the payment detail scrolls above it.
+                    Previously everything sat in one docked StackPanel, which put the most important
+                    button in a point-of-sale system below the fold at 1366x768 with no scrollbar to
+                    reach it.
+                -->
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}"
+                               Text="{DynamicResource POS.Payment}" />
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
 
                         <Grid Margin="0,12,0,0">
                             <Grid.ColumnDefinitions>
@@ -406,7 +456,7 @@
 
                         <TextBlock Margin="0,18,0,6"
                                    Text="{DynamicResource POS.PaymentMethod}" />
-                        <ComboBox Height="32"
+                        <ComboBox MinHeight="{DynamicResource ControlHeight}"
                                   ItemsSource="{Binding PaymentMethods}"
                                   SelectedItem="{Binding SelectedPaymentMethod}" />
                         <TextBlock Margin="0,12,0,6"
@@ -418,7 +468,7 @@
                                     Command="{Binding PayExactCommand}"
                                     Click="OnCashierActionClicked"
                                     Content="{DynamicResource POS.PayExact}" />
-                            <TextBox Height="32"
+                            <TextBox MinHeight="{DynamicResource ControlHeight}"
                                      FlowDirection="LeftToRight"
                                      VerticalContentAlignment="Center"
                                      Text="{Binding AmountPaid, UpdateSourceTrigger=PropertyChanged}" />
@@ -438,7 +488,7 @@
                                    Text="{Binding PaymentStatusText}" />
                         <TextBlock Margin="0,12,0,6"
                                    Text="{DynamicResource POS.ReceiptCopies}" />
-                        <TextBox Height="32"
+                        <TextBox MinHeight="{DynamicResource ControlHeight}"
                                  FlowDirection="LeftToRight"
                                  VerticalContentAlignment="Center"
                                  Text="{Binding ReceiptCopies, UpdateSourceTrigger=PropertyChanged}" />
@@ -450,7 +500,7 @@
                                     Margin="8,0,0,0"
                                     Command="{Binding ApplyInvoiceDiscountCommand}"
                                     Content="{DynamicResource POS.Apply}" />
-                            <TextBox Height="32"
+                            <TextBox MinHeight="{DynamicResource ControlHeight}"
                                      FlowDirection="LeftToRight"
                                      VerticalContentAlignment="Center"
                                      Text="{Binding InvoiceDiscount, UpdateSourceTrigger=PropertyChanged}" />
@@ -458,18 +508,10 @@
                         <TextBlock Margin="0,12,0,0"
                                    FontSize="12"
                                    Foreground="{DynamicResource SecondaryTextBrush}"
-                                   Text="{Binding StockAlertText}"
+                                   Text="{Binding StockAlertText, Converter={StaticResource LocalizeConverter}}"
                                    TextWrapping="Wrap" />
-                        <Button Margin="0,18,0,0"
-                                Height="42"
-                                Command="{Binding CompleteSaleCommand}"
-                                Click="OnCashierActionClicked"
-                                Content="{DynamicResource POS.CompleteSale}" />
-                    </StackPanel>
-
-                    <GroupBox DockPanel.Dock="Bottom"
-                              Margin="0,18,0,0"
-                              Header="{DynamicResource POS.HeldSales}">
+                        <GroupBox Margin="0,18,0,0"
+                                  Header="{DynamicResource POS.HeldSales}">
                         <ListBox MaxHeight="190"
                                  ItemsSource="{Binding HeldSales}">
                             <ListBox.ItemTemplate>
@@ -491,9 +533,26 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                    </GroupBox>
-                </DockPanel>
+                        </GroupBox>
+                    </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Always visible, whatever the window height. -->
+                    <controls:PrimaryButton Grid.Row="2"
+                                            Margin="0,14,0,0"
+                                            MinHeight="48"
+                                            Command="{Binding CompleteSaleCommand}"
+                                            Click="OnCashierActionClicked"
+                                            AutomationProperties.Name="{DynamicResource POS.CompleteSale}"
+                                            Content="{DynamicResource POS.CompleteSale}" />
+                </Grid>
             </Border>
         </Grid>
+
+        <!-- POSView had no busy state at all, so nothing stopped a second tap on Complete Sale
+             while the sale was committing and printing. -->
+        <controls:LoadingOverlay Grid.RowSpan="2"
+                                 IsBusy="{Binding IsBusy}"
+                                 Message="{DynamicResource Loading.Default}" />
     </Grid>
 </UserControl>

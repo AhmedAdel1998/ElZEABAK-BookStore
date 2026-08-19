@@ -2,24 +2,26 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:BookStore.UI.Controls">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <DockPanel Margin="0,0,0,14">
-            <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Database Health" />
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <controls:PrimaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
-                <controls:SecondaryButton Command="{Binding RunIntegrityCommand}" Content="Integrity Check" Icon="V" />
-            </StackPanel>
-        </DockPanel>
-        <UniformGrid Grid.Row="1" Columns="2">
-            <controls:AppCard Margin="0,0,12,12" Title="Health" Value="{Binding Health.Message}" Icon="H" />
-            <controls:AppCard Margin="0,0,12,12" Title="Schema Version" Value="{Binding Health.SchemaVersion}" Icon="S" />
-            <controls:AppCard Margin="0,0,12,12" Title="Disk Bytes" Value="{Binding Health.AvailableDiskSpaceBytes}" Icon="D" />
-            <controls:AppCard Margin="0,0,12,12" Title="Integrity" Value="{Binding Integrity.Message}" Icon="V" />
-        </UniformGrid>
-        <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Checking database..." />
-    </Grid>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <DockPanel Margin="0,0,0,14">
+                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Database Health" />
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <controls:PrimaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="Refresh" />
+                    <controls:SecondaryButton Command="{Binding RunIntegrityCommand}" Content="Integrity Check" Icon="Validate" />
+                </StackPanel>
+            </DockPanel>
+            <UniformGrid Grid.Row="1" Columns="2">
+                <controls:AppCard Margin="0,0,12,12" Title="Health" Value="{Binding Health.Message}" />
+                <controls:AppCard Margin="0,0,12,12" Title="Schema Version" Value="{Binding Health.SchemaVersion}" />
+                <controls:AppCard Margin="0,0,12,12" Title="Disk Bytes" Value="{Binding Health.AvailableDiskSpaceBytes}" />
+                <controls:AppCard Margin="0,0,12,12" Title="Integrity" Value="{Binding Integrity.Message}" />
+            </UniformGrid>
+            <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Checking database..." />
+        </Grid>
+    </ScrollViewer>
 </UserControl>

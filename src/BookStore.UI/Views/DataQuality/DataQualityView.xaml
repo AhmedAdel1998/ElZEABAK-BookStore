@@ -14,7 +14,7 @@
         <WrapPanel Grid.Row="1" Margin="0,16,0,16">
             <TextBlock Margin="0,7,8,0" Text="Minimum margin %" />
             <TextBox Width="80" Margin="0,0,8,0" Text="{Binding MinimumMarginPercent, UpdateSourceTrigger=PropertyChanged}" />
-            <controls:PrimaryButton Margin="0,0,16,0" Command="{Binding RefreshCommand}" Content="Run Checks" Icon="R" />
+            <controls:PrimaryButton Margin="0,0,16,0" Command="{Binding RefreshCommand}" Content="Run Checks" Icon="Refresh" />
             <!-- Label and value are separate runs because a binding's StringFormat cannot take a
                  DynamicResource, which left these four captions untranslated in Arabic. -->
             <TextBlock Margin="0,7,16,0">
@@ -35,14 +35,18 @@
             </TextBlock>
         </WrapPanel>
 
-        <DataGrid Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" ItemsSource="{Binding Issues}">
+        <DataGrid Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" HorizontalScrollBarVisibility="Auto" ItemsSource="{Binding Issues}">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Severity}" Header="Severity" Width="90" />
                 <DataGridTextColumn Binding="{Binding Area}" Header="Area" Width="120" />
                 <DataGridTextColumn Binding="{Binding Issue}" Header="Issue" Width="180" />
                 <DataGridTextColumn Binding="{Binding EntityName}" Header="Item" Width="220" />
-                <DataGridTextColumn Binding="{Binding Recommendation}" Header="Recommendation" Width="*" />
+                <DataGridTextColumn Binding="{Binding Recommendation}" Header="Recommendation" Width="*" MinWidth="110" />
             </DataGrid.Columns>
         </DataGrid>
+        <controls:NoDataView Grid.Row="2"
+                            Title="Data Quality"
+                            Message="No records found."
+                            Visibility="{Binding Issues.Count, Converter={StaticResource EmptyCollectionToVisibilityConverter}}" />
     </Grid>
 </UserControl>

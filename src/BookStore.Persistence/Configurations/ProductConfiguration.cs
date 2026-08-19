@@ -23,7 +23,8 @@ public class ProductConfiguration : EntityConfigurationBase<Product>
         builder.OwnsOne(product => product.Barcode, barcode =>
         {
             barcode.Property(value => value.Value).HasColumnName("Barcode").IsRequired().HasMaxLength(64);
-            barcode.HasIndex(value => value.Value).IsUnique().HasDatabaseName("IX_Products_Barcode");
+            // Filtered so a soft-deleted product releases its barcode for reuse.
+            barcode.HasIndex(value => value.Value).IsUnique().HasDatabaseName("IX_Products_Barcode").HasFilter("\"IsDeleted\" = 0");
         });
         builder.Navigation(product => product.Barcode).IsRequired();
 

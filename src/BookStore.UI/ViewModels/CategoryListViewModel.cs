@@ -239,6 +239,46 @@ public partial class CategoryListViewModel : BaseViewModel
 
     private bool CanSelectCategory() => CanView && SelectedCategory is not null;
 
+/// <summary>Gets the number of pages available for the current filters.</summary>
+    public int TotalPages => PageSize <= 0 ? 1 : Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
+
+    /// <summary>Gets whether an earlier page exists.</summary>
+    public bool CanGoToPreviousPage => PageNumber > 1;
+
+    /// <summary>Gets whether a later page exists.</summary>
+    public bool CanGoToNextPage => PageNumber < TotalPages;
+
+    partial void OnPageNumberChanged(int value) => NotifyPagingChanged();
+
+    partial void OnTotalCountChanged(int value) => NotifyPagingChanged();
+
+    partial void OnPageSizeChanged(int value) => NotifyPagingChanged();
+
+    private void NotifyPagingChanged()
+    {
+        OnPropertyChanged(nameof(TotalPages));
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+        NextPageCommand.NotifyCanExecuteChanged();
+        PreviousPageCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>Moves to the next page of results.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoToNextPage))]
+    private async Task NextPageAsync()
+    {
+        PageNumber++;
+        await LoadAsync();
+    }
+
+    /// <summary>Moves to the previous page of results.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoToPreviousPage))]
+    private async Task PreviousPageAsync()
+    {
+        PageNumber--;
+        await LoadAsync();
+    }
+
     private async Task LoadAsync()
     {
         IsBusy = true;

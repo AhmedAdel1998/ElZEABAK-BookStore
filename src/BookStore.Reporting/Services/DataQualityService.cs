@@ -25,66 +25,90 @@ public sealed class DataQualityService : IDataQualityService
         var minimumMargin = Math.Max(0, query.MinimumMarginPercent);
         var maxIssues = Math.Clamp(query.MaxIssues, 1, 500);
         var products = _dbContext.Products.AsNoTracking();
-        var issues = new List<DataQualityIssueDto>();
 
-        var missingBarcode = await products
-            .Where(product => product.Barcode == null || product.Barcode.Value == string.Empty)
-            .Select(product => new { product.Id, product.Title })
+        // Each check reports a true count over the whole table and separately takes a bounded sample
+        // for the grid. Counting the sample instead presented the page size as the total, so 900
+        // products missing a supplier were reported as exactly 200.
+        var missingBarcode = await CheckAsync(
+            products.Where(product => product.Barcode == null || product.Barcode.Value == string.Empty),
+            "High", "Products", "Missing barcode", "Assign a unique barcode before production checkout.",
+            maxIssues, cancellationToken);
+
+        var missingSupplier = await CheckAsync(
+            products.Where(product => !_dbContext.ProductSuppliers.Any(link => link.ProductId == product.Id)),
+            "Medium", "Products", "Missing supplier", "Connect the product to at least one supplier.",
+            maxIssues, cancellationToken);
+
+        var invalidPrice = await CheckAsync(
+            products.Where(product => product.PurchasePrice < 0 || product.SellingPrice <= 0 || product.SellingPrice < product.PurchasePrice),
+            "High", "Pricing", "Invalid price", "Review purchase and selling prices.",
+            maxIssues, cancellationToken);
+
+        var lowMargin = await CheckAsync(
+            products.Where(product => product.SellingPrice > 0 && product.SellingPrice >= product.PurchasePrice && ((product.SellingPrice - product.PurchasePrice) / product.SellingPrice) * 100 < minimumMargin),
+            "Medium", "Pricing", "Low margin", $"Review margin below {minimumMargin:N0}%.",
+            maxIssues, cancellationToken);
+
+        var negativeStock = await CheckAsync(
+            products.Where(product => product.Quantity < 0),
+            "High", "Inventory", "Negative stock", "Reconcile stock through an inventory adjustment.",
+            maxIssues, cancellationToken);
+
+        var inactiveWithStock = await CheckAsync(
+            products.Where(product => !product.IsActive && product.Quantity > 0),
+            "Low", "Inventory", "Inactive product has stock", "Activate the product or clear remaining stock.",
+            maxIssues, cancellationToken);
+
+        var checks = new[] { missingBarcode, missingSupplier, invalidPrice, lowMargin, negativeStock, inactiveWithStock };
+
+        // Severest first, so truncating the list can never hide a High finding behind a flood of
+        // Medium ones -- which is what buried invalid prices and negative stock.
+        var issues = checks
+            .SelectMany(check => check.Issues)
+            .OrderBy(issue => SeverityRank(issue.Severity))
+            .ThenBy(issue => issue.Area, StringComparer.Ordinal)
             .Take(maxIssues)
-            .ToListAsync(cancellationToken);
-
-        issues.AddRange(missingBarcode.Select(product => Issue("High", "Products", "Missing barcode", product.Id, product.Title, "Assign a unique barcode before production checkout.")));
-
-        var missingSupplier = await products
-            .Where(product => !_dbContext.ProductSuppliers.Any(link => link.ProductId == product.Id))
-            .Select(product => new { product.Id, product.Title })
-            .Take(maxIssues)
-            .ToListAsync(cancellationToken);
-
-        issues.AddRange(missingSupplier.Select(product => Issue("Medium", "Products", "Missing supplier", product.Id, product.Title, "Connect the product to at least one supplier.")));
-
-        var invalidPrice = await products
-            .Where(product => product.PurchasePrice < 0 || product.SellingPrice <= 0 || product.SellingPrice < product.PurchasePrice)
-            .Select(product => new { product.Id, product.Title })
-            .Take(maxIssues)
-            .ToListAsync(cancellationToken);
-
-        issues.AddRange(invalidPrice.Select(product => Issue("High", "Pricing", "Invalid price", product.Id, product.Title, "Review purchase and selling prices.")));
-
-        var lowMargin = await products
-            .Where(product => product.SellingPrice > 0 && product.SellingPrice >= product.PurchasePrice && ((product.SellingPrice - product.PurchasePrice) / product.SellingPrice) * 100 < minimumMargin)
-            .Select(product => new { product.Id, product.Title })
-            .Take(maxIssues)
-            .ToListAsync(cancellationToken);
-
-        issues.AddRange(lowMargin.Select(product => Issue("Medium", "Pricing", "Low margin", product.Id, product.Title, $"Review margin below {minimumMargin:N0}%.")));
-
-        var negativeStock = await products
-            .Where(product => product.Quantity < 0)
-            .Select(product => new { product.Id, product.Title })
-            .Take(maxIssues)
-            .ToListAsync(cancellationToken);
-
-        issues.AddRange(negativeStock.Select(product => Issue("High", "Inventory", "Negative stock", product.Id, product.Title, "Reconcile stock through an inventory adjustment.")));
-
-        var inactiveWithStock = await products
-            .Where(product => !product.IsActive && product.Quantity > 0)
-            .Select(product => new { product.Id, product.Title })
-            .Take(maxIssues)
-            .ToListAsync(cancellationToken);
-
-        issues.AddRange(inactiveWithStock.Select(product => Issue("Low", "Inventory", "Inactive product has stock", product.Id, product.Title, "Activate the product or clear remaining stock.")));
+            .ToArray();
 
         return new DataQualitySummaryDto(
-            issues.Count,
+            checks.Sum(check => check.Count),
             missingBarcode.Count,
             missingSupplier.Count,
             invalidPrice.Count,
             lowMargin.Count,
             negativeStock.Count,
             inactiveWithStock.Count,
-            issues.Take(maxIssues).ToArray());
+            issues);
     }
+
+    /// <summary>
+    /// Counts every row matching a check and materialises a bounded sample of them.
+    /// </summary>
+    private static async Task<(int Count, List<DataQualityIssueDto> Issues)> CheckAsync(
+        IQueryable<Domain.Entities.Product> query,
+        string severity,
+        string area,
+        string issue,
+        string recommendation,
+        int maxIssues,
+        CancellationToken cancellationToken)
+    {
+        var count = await query.CountAsync(cancellationToken);
+        var sample = await query
+            .OrderBy(product => product.Title)
+            .Select(product => new { product.Id, product.Title })
+            .Take(maxIssues)
+            .ToListAsync(cancellationToken);
+
+        return (count, sample.Select(product => Issue(severity, area, issue, product.Id, product.Title, recommendation)).ToList());
+    }
+
+    private static int SeverityRank(string severity) => severity switch
+    {
+        "High" => 0,
+        "Medium" => 1,
+        _ => 2
+    };
 
     private static DataQualityIssueDto Issue(string severity, string area, string issue, Guid entityId, string entityName, string recommendation)
     {

@@ -12,6 +12,10 @@ internal static class ProductHandlerHelpers
     {
         var product = new Product(new BookStore.Domain.ValueObjects.Barcode(model.Barcode), model.Title, model.PurchasePrice, model.SellingPrice, model.CategoryId);
         ApplyEditor(product, model);
+
+        // Only a brand new product may have its quantity assigned directly; this is its opening
+        // balance. Every later movement goes through the inventory ledger.
+        product.SetQuantity(Math.Max(model.Quantity, 0));
         return product;
     }
 
@@ -22,7 +26,9 @@ internal static class ProductHandlerHelpers
         product.UpdateDetails(string.IsNullOrWhiteSpace(model.ISBN) ? null : new ISBN(model.ISBN), model.Description, model.Author, model.Publisher, model.Language, model.PublishDate);
         product.UpdateBookMetadata(model.Edition, model.TaxCategory);
         product.UpdatePrice(model.PurchasePrice, model.SellingPrice);
-        product.SetQuantity(model.Quantity);
+
+        // Deliberately does NOT touch Quantity. Stock is owned by the inventory ledger, so editing
+        // a product must never move it; use a stock adjustment instead.
         product.UpdateInventoryMetadata(model.MinimumStock, model.ShelfLocation, model.ImagePath);
         product.ChangeCategory(model.CategoryId);
 

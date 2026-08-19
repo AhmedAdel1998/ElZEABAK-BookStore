@@ -166,8 +166,11 @@ public class SalesModuleTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(200, result.Value!.Summary.Subtotal);
-        Assert.Equal(28, result.Value.Summary.Tax);
-        Assert.Equal(208, result.Value.Summary.GrandTotal);
+
+        // The invoice discount reduces the taxable base, so tax is 14% of 180 rather than of 200.
+        // This previously expected 28.00/208.00, which charged tax on the discounted-away 20.
+        Assert.Equal(25.20m, result.Value.Summary.Tax);
+        Assert.Equal(205.20m, result.Value.Summary.GrandTotal);
     }
 
     [Fact]
@@ -183,6 +186,79 @@ public class SalesModuleTests
         Assert.True(result.IsSuccess);
         Assert.Null(await fixture.Store.GetCurrentAsync());
         Assert.Single(await fixture.Store.GetHeldAsync());
+    }
+
+    [Fact]
+    public async Task StartSale_ResumesACartAlreadyInProgress()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 5);
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+        var first = (await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 3))).Value!;
+
+        // Navigating away from the POS and back constructs a new view model, which starts a sale.
+        // That must not discard the cart the cashier is halfway through.
+        var result = await fixture.StartSale.HandleAsync(new StartSaleRequest());
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(first.InvoiceNumber, result.Value!.InvoiceNumber);
+        Assert.Single(result.Value.Items);
+        Assert.Equal(3, result.Value.Items[0].Quantity);
+    }
+
+    [Fact]
+    public async Task StartSale_WithForceNew_SuspendsTheCurrentCartInsteadOfDiscardingIt()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 5);
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+        var first = (await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 2))).Value!;
+
+        var result = await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true));
+
+        Assert.True(result.IsSuccess);
+        Assert.NotEqual(first.InvoiceNumber, result.Value!.InvoiceNumber);
+        Assert.Empty(result.Value.Items);
+
+        var held = await fixture.Store.GetHeldAsync();
+        Assert.Single(held);
+        Assert.Equal(first.InvoiceNumber, held.Single().InvoiceNumber);
+    }
+
+    [Fact]
+    public async Task StartSale_StartsFreshWhenNothingIsInProgress()
+    {
+        var fixture = new Fixture();
+
+        var result = await fixture.StartSale.HandleAsync(new StartSaleRequest());
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value!.Items);
+    }
+
+    [Fact]
+    public async Task ResumeSale_ParksTheActiveCartRatherThanDestroyingIt()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 10);
+
+        // Hold a first sale.
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+        var parked = (await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1))).Value!;
+        await fixture.SuspendSale.HandleAsync(new SuspendSaleRequest());
+
+        // Build a second, larger cart, then resume the held one.
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+        var onScreen = (await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 4))).Value!;
+
+        var result = await fixture.ResumeSale.HandleAsync(new ResumeSaleRequest(parked.SaleId));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(parked.SaleId, result.Value!.SaleId);
+
+        // The cart that was on screen is now held, not lost.
+        var held = await fixture.Store.GetHeldAsync();
+        Assert.Contains(held, sale => sale.SaleId == onScreen.SaleId && sale.Items.Sum(item => item.Quantity) == 4);
     }
 
     [Fact]

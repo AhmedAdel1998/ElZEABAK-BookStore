@@ -21,10 +21,13 @@ public sealed class BookStoreReportQueryService : IReportQueryService
 
     public async Task<ReportsDashboardDto> GetDashboardAsync(GetReportsDashboardQuery query, CancellationToken cancellationToken = default)
     {
-        var today = ReportDateRange.Today();
-        var salesSummary = await GetSalesSummaryAsync(new GetSalesSummaryQuery(today), cancellationToken);
-        var profit = await GetProfitReportAsync(new GetProfitReportQuery(today), cancellationToken);
+        // Every tile uses the range the user picked. Pinning these two to "today" while the
+        // best-seller and top-customer tiles honoured query.DateRange put two different periods on
+        // one screen.
+        var salesSummary = await GetSalesSummaryAsync(new GetSalesSummaryQuery(query.DateRange), cancellationToken);
+        var profit = await GetProfitReportAsync(new GetProfitReportQuery(query.DateRange), cancellationToken);
         var inventory = await _dbContext.Products.AsNoTracking()
+            .Where(product => product.IsActive)
             .GroupBy(_ => 1)
             .Select(group => new
             {
@@ -423,7 +426,7 @@ public sealed class BookStoreReportQueryService : IReportQueryService
             .Select(sale => new { sale.SaleDate, sale.Total, sale.Discount, sale.Tax })
             .ToArrayAsync(cancellationToken);
         var saleTotals = filteredSales
-            .GroupBy(sale => DateOnly.FromDateTime(sale.SaleDate.UtcDateTime.Date))
+            .GroupBy(sale => DateOnly.FromDateTime(sale.SaleDate.ToLocalTime().Date))
             .Select(group => new DailySalesRowDto
             {
                 Date = group.Key,
@@ -437,7 +440,7 @@ public sealed class BookStoreReportQueryService : IReportQueryService
             .Select(row => new { row.Sale.SaleDate, Profit = row.Item.Total - (row.Product.PurchasePrice * row.Item.Quantity) })
             .ToArrayAsync(cancellationToken);
         var profitRows = profitSource
-            .GroupBy(row => DateOnly.FromDateTime(row.SaleDate.UtcDateTime.Date))
+            .GroupBy(row => DateOnly.FromDateTime(row.SaleDate.ToLocalTime().Date))
             .ToDictionary(group => group.Key, group => group.Sum(row => row.Profit));
 
         foreach (var row in saleTotals)
@@ -459,7 +462,7 @@ public sealed class BookStoreReportQueryService : IReportQueryService
             .Select(sale => new { sale.SaleDate, sale.Total })
             .ToArrayAsync(cancellationToken);
         var rows = filteredSales
-            .GroupBy(sale => sale.SaleDate.UtcDateTime.Hour)
+            .GroupBy(sale => sale.SaleDate.ToLocalTime().Hour)
             .Select(group => new HourlySalesRowDto
             {
                 Hour = group.Key,
@@ -536,10 +539,12 @@ public sealed class BookStoreReportQueryService : IReportQueryService
 
     private IQueryable<SaleItemReportRow> SaleItemRows(ReportDateRange range)
     {
+        // IgnoreQueryFilters keeps soft-deleted products and categories in historical reporting.
+        // Removing a product from the catalogue must not rewrite last month's sales figures.
         return from item in _dbContext.SaleItems.AsNoTracking()
                join sale in _dbContext.Sales.AsNoTracking() on EF.Property<Guid>(item, "SaleId") equals sale.Id
-               join product in _dbContext.Products.AsNoTracking() on item.ProductId equals product.Id
-               join category in _dbContext.Categories.AsNoTracking() on product.CategoryId equals category.Id
+               join product in _dbContext.Products.AsNoTracking().IgnoreQueryFilters() on item.ProductId equals product.Id
+               join category in _dbContext.Categories.AsNoTracking().IgnoreQueryFilters() on product.CategoryId equals category.Id
                where sale.SaleDate >= range.StartDate && sale.SaleDate < range.EndDate && sale.Status != SaleStatus.Cancelled
                select new SaleItemReportRow { Sale = sale, Item = item, Product = product, Category = category };
     }

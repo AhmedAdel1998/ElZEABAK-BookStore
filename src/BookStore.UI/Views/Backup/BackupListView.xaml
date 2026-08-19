@@ -9,35 +9,49 @@
         </Grid.RowDefinitions>
         <DockPanel Margin="0,0,0,14">
             <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Backup" />
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <controls:PrimaryButton Margin="0,0,8,0" Command="{Binding BackupNowCommand}" Content="Backup Now" Icon="B" />
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ValidateCommand}" Content="Validate" Icon="V" />
-                <controls:DangerButton Margin="0,0,8,0" Command="{Binding RestoreCommand}" Content="Restore" Icon="R" />
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding CleanupCommand}" Content="Cleanup" Icon="C" />
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding OpenFolderCommand}" Content="Open Folder" Icon="F" />
-                <controls:DangerButton Command="{Binding DeleteCommand}" Content="Delete" Icon="X" />
-            </StackPanel>
+            <WrapPanel DockPanel.Dock="Right">
+                <controls:PrimaryButton Margin="0,0,8,8" Command="{Binding BackupNowCommand}" Content="Backup Now" Icon="Backup" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding ValidateCommand}" Content="Validate" Icon="Validate" />
+                <controls:DangerButton Margin="0,0,8,8" Command="{Binding RestoreCommand}" Content="Restore" Icon="Restore" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding CleanupCommand}" Content="Cleanup" Icon="Delete" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenFolderCommand}" Content="Open Folder" Icon="Folder" />
+                <controls:DangerButton Margin="0,0,0,8" Command="{Binding DeleteCommand}" Content="Delete" Icon="Delete" />
+            </WrapPanel>
         </DockPanel>
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
-                <TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="Restore confirmation" />
-                <controls:TextInputBox Width="430" Text="{Binding RestoreConfirmationText, UpdateSourceTrigger=PropertyChanged}" />
+            <StackPanel Margin="0,0,0,10">
+                <TextBlock Text="Restore confirmation" />
+                <!-- Restore only proceeds on an exact match, so the required sentence must be visible. -->
+                <TextBlock Margin="0,4,0,6"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource WarningBrush}"
+                           TextWrapping="Wrap"
+                           Text="{Binding RequiredConfirmationText}" />
+                <controls:TextInputBox MaxWidth="560"
+                                       HorizontalAlignment="Left"
+                                       Placeholder="Restore confirmation"
+                                       AutomationProperties.Name="Restore confirmation"
+                                       Text="{Binding RestoreConfirmationText, UpdateSourceTrigger=PropertyChanged}" />
             </StackPanel>
-            <DataGrid Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" ItemsSource="{Binding Backups}" SelectedItem="{Binding SelectedBackup}">
+            <DataGrid Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" HorizontalScrollBarVisibility="Auto" ItemsSource="{Binding Backups}" SelectedItem="{Binding SelectedBackup}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Binding="{Binding CreatedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Header="Date" Width="145" />
-                    <DataGridTextColumn Binding="{Binding FileName}" Header="File" Width="2*" />
+                    <DataGridTextColumn Binding="{Binding FileName}" Header="File" Width="2*" MinWidth="110" />
                     <DataGridTextColumn Binding="{Binding FileSizeBytes}" Header="Size" Width="100" />
                     <DataGridTextColumn Binding="{Binding BackupType}" Header="Type" Width="100" />
                     <DataGridTextColumn Binding="{Binding ValidationStatus}" Header="Status" Width="110" />
-                    <DataGridTextColumn Binding="{Binding ChecksumSha256}" Header="SHA-256" Width="2*" />
+                    <DataGridTextColumn Binding="{Binding ChecksumSha256}" Header="SHA-256" Width="2*" MinWidth="110" />
                     <DataGridTextColumn Binding="{Binding CreatedBy}" Header="Created By" Width="120" />
                 </DataGrid.Columns>
             </DataGrid>
+            <controls:NoDataView Grid.Row="1"
+                                Title="Backup"
+                                Message="No records found."
+                                Visibility="{Binding Backups.Count, Converter={StaticResource EmptyCollectionToVisibilityConverter}}" />
             <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Working on backup operation..." />
         </Grid>
     </Grid>

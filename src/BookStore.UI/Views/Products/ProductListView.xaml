@@ -16,10 +16,10 @@
                 <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Manage bookstore products and stock-ready metadata." />
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ImportCommand}" Content="Import" Icon="I" />
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ExportCommand}" Content="Export" Icon="E" />
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
-                <controls:PrimaryButton Command="{Binding AddCommand}" Content="Add" Icon="+" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ImportCommand}" Content="Import" Icon="Import" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ExportCommand}" Content="Export" Icon="Export" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="Refresh" />
+                <controls:PrimaryButton Command="{Binding AddCommand}" Content="Add" Icon="Add" />
             </StackPanel>
         </DockPanel>
 
@@ -42,6 +42,7 @@
 
         <Grid Grid.Row="2">
             <controls:AppDataGrid x:Name="ProductGrid"
+                                  HorizontalScrollBarVisibility="Auto"
                                   ItemsSource="{Binding Products}"
                                   SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
                                   IsLoading="{Binding IsBusy}">
@@ -61,22 +62,22 @@
                     </ContextMenu>
                 </controls:AppDataGrid.ContextMenu>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding ImagePath}" Header="Cover Image" Width="1.4*" />
-                    <DataGridTextColumn Binding="{Binding Barcode}" Header="Barcode" Width="*" />
-                    <DataGridTextColumn Binding="{Binding ISBN}" Header="ISBN" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Title}" Header="Title" Width="2*" />
-                    <DataGridTextColumn Binding="{Binding Author}" Header="Author" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Publisher}" Header="Publisher" Width="*" />
-                    <DataGridTextColumn Binding="{Binding CategoryName}" Header="Category" Width="*" />
-                    <DataGridTextColumn Binding="{Binding SellingPrice, Converter={StaticResource CurrencyConverter}}" Header="Selling Price" Width="*" />
-                    <DataGridTextColumn Binding="{Binding PurchasePrice, Converter={StaticResource CurrencyConverter}}" Header="Purchase Price" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Quantity}" Header="Current Quantity" Width="*" />
-                    <DataGridTextColumn Binding="{Binding MinimumStock}" Header="Minimum Stock" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Status}" Header="Status" Width="*" />
+                    <DataGridTextColumn Binding="{Binding ImagePath}" Header="Cover Image" Width="1.4*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Barcode}" Header="Barcode" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding ISBN}" Header="ISBN" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Title}" Header="Title" Width="2*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Author}" Header="Author" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Publisher}" Header="Publisher" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding CategoryName}" Header="Category" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding SellingPrice, Converter={StaticResource CurrencyConverter}}" Header="Selling Price" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding PurchasePrice, Converter={StaticResource CurrencyConverter}}" Header="Purchase Price" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Quantity}" Header="Current Quantity" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding MinimumStock}" Header="Minimum Stock" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Status}" Header="Status" Width="*" MinWidth="110" />
                 </DataGrid.Columns>
             </controls:AppDataGrid>
 
-            <controls:NoDataView Title="No Products" Message="{Binding EmptyMessage}">
+            <controls:NoDataView Title="No Products" Message="{Binding EmptyMessage, Converter={StaticResource LocalizeConverter}}">
                 <controls:NoDataView.Style>
                     <Style TargetType="{x:Type controls:NoDataView}" BasedOn="{StaticResource {x:Type controls:NoDataView}}">
                         <Setter Property="Visibility" Value="Collapsed" />
@@ -92,12 +93,7 @@
         </Grid>
 
         <Border Grid.Row="3" Margin="0,12,0,0" Style="{StaticResource PanelBorderStyle}">
-            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
-                <Run Text="Page " /><Run Text="{Binding PageNumber}" />
-                <Run Text=" | Page size " /><Run Text="{Binding PageSize}" />
-                <Run Text=" | Total " /><Run Text="{Binding TotalCount}" />
-                <Run Text=" | Pagination prepared" />
-            </TextBlock>
+            <controls:PaginationBar />
         </Border>
     </Grid>
 </UserControl>

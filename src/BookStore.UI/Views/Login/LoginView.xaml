@@ -191,9 +191,9 @@
 
     <Grid Background="{DynamicResource BookstorePageBrush}" FlowDirection="{DynamicResource AppFlowDirection}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="520" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" MinWidth="0" />
+            <ColumnDefinition Width="Auto" MinWidth="420" />
+            <ColumnDefinition Width="*" MinWidth="0" />
         </Grid.ColumnDefinitions>
         <Button Grid.ColumnSpan="3"
                 MinWidth="96"
@@ -206,11 +206,12 @@
         <Border x:Name="BrandPanel"
                 Grid.Column="0"
                 Background="{DynamicResource WarmChromeBrush}"
+                Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource MinWidthToVisibilityConverter}, ConverterParameter=1500}"
                 Opacity="0">
             <Border.RenderTransform>
                 <TranslateTransform x:Name="BrandPanelTransform" />
             </Border.RenderTransform>
-            <Grid Margin="48">
+            <Grid Margin="26,48">
                 <Grid ClipToBounds="True">
                     <Border Width="1"
                             HorizontalAlignment="Left"
@@ -249,7 +250,7 @@
                                         Opacity="0.28" />
                                 <TextBlock HorizontalAlignment="Center"
                                            VerticalAlignment="Center"
-                                           Foreground="#052E16"
+                                           Foreground="{DynamicResource OnAccentTextBrush}"
                                            FontSize="32"
                                            FontWeight="Bold"
                                            Text="POS" />
@@ -264,7 +265,7 @@
                                 HorizontalAlignment="Left"
                                 Background="{DynamicResource BookstoreGreenBrush}"
                                 CornerRadius="2" />
-                        <TextBlock MaxWidth="340" Foreground="#F0FDF4" FontSize="14" Text="{DynamicResource Auth.SignInSubtitle}" TextWrapping="Wrap" />
+                        <TextBlock MaxWidth="320" Foreground="#F0FDF4" FontSize="14" Text="{DynamicResource Auth.SignInSubtitle}" TextWrapping="Wrap" />
                         <StackPanel x:Name="FeatureRail"
                                     Margin="0,28,0,0"
                                     Opacity="0"
@@ -272,7 +273,7 @@
                             <StackPanel.RenderTransform>
                                 <TranslateTransform x:Name="FeatureRailTransform" />
                             </StackPanel.RenderTransform>
-                            <WrapPanel MaxWidth="410">
+                            <WrapPanel MaxWidth="330">
                                 <Border Margin="0,0,8,8" Padding="12,7" Background="#183E2A" BorderBrush="#336EE7A5" BorderThickness="1" CornerRadius="16">
                                     <TextBlock Foreground="#D1FAE5" FontSize="12" Text="Fast barcode scan" />
                                 </Border>
@@ -283,7 +284,7 @@
                                     <TextBlock Foreground="#D1FAE5" FontSize="12" Text="Inventory guarded" />
                                 </Border>
                             </WrapPanel>
-                            <Grid Margin="0,18,0,0" MaxWidth="390">
+                            <Grid Margin="0,18,0,0" MaxWidth="330">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="12" />
@@ -345,21 +346,33 @@
                 <TextBox Grid.Row="2"
                          MinHeight="38"
                          TabIndex="0"
+                         AutomationProperties.Name="{DynamicResource Auth.Username}"
                          Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" />
 
                 <TextBlock Grid.Row="3" Margin="0,14,0,6" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{DynamicResource Auth.Password}" />
                 <Grid Grid.Row="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
                     <PasswordBox x:Name="PasswordInput"
+                                 Grid.Column="0"
                                  MinHeight="38"
                                  Padding="10,6"
                                  TabIndex="1"
+                                 AutomationProperties.Name="{DynamicResource Auth.Password}"
+                                 Visibility="{Binding IsPasswordVisible, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
                                  PasswordChanged="OnPasswordChanged" />
-                    <TextBox MinHeight="38"
+                    <TextBox Grid.Column="0"
+                             MinHeight="38"
                              Padding="10,6"
+                             TabIndex="1"
+                             AutomationProperties.Name="{DynamicResource Auth.Password}"
                              Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}"
                              Visibility="{Binding IsPasswordVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    <ToggleButton Width="64"
-                                  HorizontalAlignment="Right"
+                    <ToggleButton Grid.Column="1"
+                                  MinWidth="72"
+                                  Margin="8,0,0,0"
                                   Content="{DynamicResource Auth.ShowPassword}"
                                   IsChecked="{Binding IsPasswordVisible}"
                                   TabIndex="2" />
@@ -367,7 +380,7 @@
 
                 <Grid Grid.Row="5" Margin="0,16,0,0">
                     <CheckBox VerticalAlignment="Center" Content="{DynamicResource Auth.RememberMe}" IsChecked="{Binding RememberMe}" TabIndex="3" />
-                    <TextBlock HorizontalAlignment="Right" Foreground="{DynamicResource DangerBrush}" Text="{Binding ValidationMessage}" TextWrapping="Wrap" />
+                    <TextBlock HorizontalAlignment="Right" Foreground="{DynamicResource DangerBrush}" Text="{Binding ValidationMessage, Converter={StaticResource LocalizeConverter}}" TextWrapping="Wrap" />
                 </Grid>
 
                 <Grid Grid.Row="6" Margin="0,24,0,0">
@@ -376,28 +389,29 @@
                         <ColumnDefinition Width="12" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Button Grid.Column="0" Command="{Binding ExitCommand}" Content="{DynamicResource Auth.Exit}" TabIndex="5" />
-                    <Button Grid.Column="2" Command="{Binding LoginCommand}" Content="{DynamicResource Auth.Login}" TabIndex="4" />
+                    <Button Grid.Column="0" Command="{Binding ExitCommand}" Content="{DynamicResource Auth.Exit}" TabIndex="5" IsCancel="True" />
+                    <Button Grid.Column="2" Command="{Binding LoginCommand}" Content="{DynamicResource Auth.Login}" TabIndex="4" IsDefault="True" />
                 </Grid>
 
                 <Border Background="{DynamicResource OverlayBrush}"
                         Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White" FontSize="18" Text="{DynamicResource Auth.SigningIn}" />
+                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource OnDangerTextBrush}" FontSize="18" Text="{DynamicResource Auth.SigningIn}" />
                 </Border>
             </Grid>
         </Border>
         <Grid x:Name="RightPulsePanel"
               Grid.Column="2"
-              Margin="42,0,52,0"
+              Margin="20,0,24,0"
               HorizontalAlignment="Stretch"
               VerticalAlignment="Center"
+              Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource MinWidthToVisibilityConverter}, ConverterParameter=1500}"
               Opacity="0">
             <Grid.RenderTransform>
                 <TranslateTransform x:Name="RightPulseTransform" />
             </Grid.RenderTransform>
-            <StackPanel MaxWidth="390">
+            <StackPanel MaxWidth="330">
                 <Border Padding="18"
-                        Background="#F7FFF9"
+                        Background="{DynamicResource SurfaceBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
@@ -413,9 +427,9 @@
                         </DockPanel>
                         <Grid Height="54" Margin="0,16,0,0" ClipToBounds="True">
                             <StackPanel VerticalAlignment="Center">
-                                <Rectangle Height="8" Margin="0,0,0,7" Fill="#052E16" />
-                                <Rectangle Height="8" Margin="0,0,0,7" Fill="#052E16" />
-                                <Rectangle Height="8" Width="180" HorizontalAlignment="Left" Fill="#052E16" />
+                                <Rectangle Height="8" Margin="0,0,0,7" Fill="{DynamicResource PrimaryTextBrush}" />
+                                <Rectangle Height="8" Margin="0,0,0,7" Fill="{DynamicResource PrimaryTextBrush}" />
+                                <Rectangle Height="8" Width="180" HorizontalAlignment="Left" Fill="{DynamicResource PrimaryTextBrush}" />
                             </StackPanel>
                             <Border Width="42" Background="#664ADE80">
                                 <Border.RenderTransform>
@@ -429,7 +443,7 @@
 
                 <Border Margin="36,16,0,0"
                         Padding="16"
-                        Background="#FFFFFF"
+                        Background="{DynamicResource SurfaceBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
@@ -441,7 +455,7 @@
                     <StackPanel>
                         <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="Inventory protection" />
                         <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource SecondaryTextBrush}" Text="Stock is checked before checkout and reflected after sale." TextWrapping="Wrap" />
-                        <Grid Height="7" Margin="0,14,0,0" Background="#DDFBE6">
+                        <Grid Height="7" Margin="0,14,0,0" Background="{DynamicResource SurfaceAltBrush}">
                             <Border x:Name="StatusBarFill" Width="32" HorizontalAlignment="Left" Background="{DynamicResource AccentBrush}" CornerRadius="4" />
                         </Grid>
                     </StackPanel>
@@ -449,7 +463,7 @@
 
                 <Border Margin="0,16,44,0"
                         Padding="16"
-                        Background="#FFFFFF"
+                        Background="{DynamicResource SurfaceBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
@@ -464,7 +478,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Border Width="46" Height="46" Background="{DynamicResource BookstoreGreenBrush}" CornerRadius="8">
-                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="#052E16" Text="R" />
+                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="{DynamicResource OnAccentTextBrush}" Text="R" />
                         </Border>
                         <StackPanel Grid.Column="1" Margin="12,0,0,0">
                             <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="Receipt and audit ready" />

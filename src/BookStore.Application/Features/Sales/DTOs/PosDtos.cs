@@ -110,6 +110,11 @@ public sealed class SaleSummaryDto
     public decimal AmountPaid { get; set; }
     /// <summary>Gets or sets change.</summary>
     public decimal Change { get; set; }
+    /// <summary>
+    /// Gets or sets a value indicating whether <see cref="Tax"/> is already contained in the line
+    /// prices rather than added on top of them.
+    /// </summary>
+    public bool TaxIncludedInPrice { get; set; }
 }
 
 /// <summary>

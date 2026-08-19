@@ -11,23 +11,19 @@
             <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="{Binding Title}" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <controls:ReportDateRangeControl Margin="0,0,8,0" SelectedPreset="{Binding SelectedPreset}" StartDate="{Binding StartDate}" EndDate="{Binding EndDate}" />
-                <controls:PrimaryButton Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
+                <controls:PrimaryButton Command="{Binding RefreshCommand}" Content="Refresh" Icon="Refresh" />
             </StackPanel>
         </DockPanel>
         <Grid Grid.Row="1">
-            <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="True" IsReadOnly="True" CanUserAddRows="False" />
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Text="{Binding EmptyMessage}">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding Rows.Count}" Value="0">
-                                <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
+            <DataGrid ItemsSource="{Binding Rows}"
+                      AutoGenerateColumns="True"
+                      AutoGeneratingColumn="OnAutoGeneratingColumn"
+                      HorizontalScrollBarVisibility="Auto"
+                      IsReadOnly="True"
+                      CanUserAddRows="False" />
+            <controls:NoDataView Title="{DynamicResource Report.NoRows}"
+                                 Message="{Binding EmptyMessage, Converter={StaticResource LocalizeConverter}}"
+                                 Visibility="{Binding Rows.Count, Converter={StaticResource EmptyCollectionToVisibilityConverter}}" />
             <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading report..." />
         </Grid>
     </Grid>

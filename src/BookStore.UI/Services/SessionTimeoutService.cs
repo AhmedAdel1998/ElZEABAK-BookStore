@@ -15,7 +15,6 @@ namespace BookStore.UI.Services;
 /// </summary>
 public class SessionTimeoutService : ISessionTimeoutService
 {
-    private readonly IAuthenticationService _authenticationService;
     private readonly INavigationService _navigationService;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<SessionTimeoutService> _logger;
@@ -28,13 +27,11 @@ public class SessionTimeoutService : ISessionTimeoutService
     /// Initializes a new instance of the <see cref="SessionTimeoutService"/> class.
     /// </summary>
     public SessionTimeoutService(
-        IAuthenticationService authenticationService,
         INavigationService navigationService,
         IServiceScopeFactory scopeFactory,
         ISettingsChangedNotifier notifier,
         ILogger<SessionTimeoutService> logger)
     {
-        _authenticationService = authenticationService;
         _navigationService = navigationService;
         _scopeFactory = scopeFactory;
         _logger = logger;
@@ -94,7 +91,11 @@ public class SessionTimeoutService : ISessionTimeoutService
         }
 
         Stop();
-        await _authenticationService.LogoutAsync();
+        using (var scope = _scopeFactory.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IAuthenticationService>().LogoutAsync();
+        }
+
         await _navigationService.NavigateToAsync<LoginViewModel>();
         _logger.LogInformation("Session expired because of inactivity");
     }

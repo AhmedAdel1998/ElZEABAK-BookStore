@@ -135,12 +135,22 @@ public class User : BaseEntity, IAggregateRoot
     /// <param name="lockoutDuration">The lockout duration.</param>
     public void RegisterFailedLogin(int maxAttempts, TimeSpan lockoutDuration)
     {
+        var now = DateTimeOffset.UtcNow;
+
+        // A served lockout wipes the slate. Without this the count stayed at the limit forever, so
+        // one mistyped password after the lockout expired immediately triggered another one.
+        if (LockoutUntil.HasValue && LockoutUntil.Value <= now)
+        {
+            FailedLoginCount = 0;
+            LockoutUntil = null;
+        }
+
         FailedLoginCount++;
-        LastFailedLogin = DateTimeOffset.UtcNow;
+        LastFailedLogin = now;
 
         if (FailedLoginCount >= maxAttempts)
         {
-            LockoutUntil = DateTimeOffset.UtcNow.Add(lockoutDuration);
+            LockoutUntil = now.Add(lockoutDuration);
         }
 
         MarkUpdated();

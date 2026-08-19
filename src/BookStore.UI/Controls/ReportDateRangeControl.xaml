@@ -1,7 +1,7 @@
 <UserControl x:Class="BookStore.UI.Controls.ReportDateRangeControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Height="34">
+             MinHeight="{DynamicResource ControlHeight}">
     <StackPanel Orientation="Horizontal">
         <ComboBox Width="150"
                   SelectedValue="{Binding SelectedPreset, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"

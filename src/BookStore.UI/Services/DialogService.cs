@@ -88,15 +88,60 @@ public class DialogService : IDialogService, IMessageDialogService, IConfirmatio
     {
         var text = L(message);
         var caption = L(title);
+        var application = System.Windows.Application.Current;
+
+        // The themed dialog owns its own button labels, so they follow the application language
+        // rather than the Windows locale, and it inherits the app's theme, font and flow direction.
+        if (application is not null && application.Dispatcher.CheckAccess())
+        {
+            return ShowThemedDialog(text, caption, buttons, icon);
+        }
+
         var options = _localizationService.IsRightToLeft
             ? MessageBoxOptions.RtlReading | MessageBoxOptions.RightAlign
             : MessageBoxOptions.None;
         var defaultResult = buttons == MessageBoxButton.YesNo ? MessageBoxResult.No : MessageBoxResult.OK;
-        var owner = ResolveOwner();
+        return MessageBox.Show(text, caption, buttons, icon, defaultResult, options);
+    }
 
-        return owner is null
-            ? MessageBox.Show(text, caption, buttons, icon, defaultResult, options)
-            : MessageBox.Show(owner, text, caption, buttons, icon, defaultResult, options);
+    /// <summary>
+    /// Shows the in-app dialog and maps its outcome onto the framework result the callers expect.
+    /// </summary>
+    private MessageBoxResult ShowThemedDialog(string text, string caption, MessageBoxButton buttons, MessageBoxImage icon)
+    {
+        var isConfirmation = buttons is MessageBoxButton.YesNo or MessageBoxButton.OKCancel;
+        var window = new AppDialogWindow { Owner = ResolveOwner() };
+
+        var (glyph, brushKey) = icon switch
+        {
+            MessageBoxImage.Warning => ("\uE7BA", "WarningBrush"),
+            MessageBoxImage.Error => ("\uE783", "DangerBrush"),
+            MessageBoxImage.Question => ("\uE9CE", "AccentBrush"),
+            _ => ("\uE946", "InfoBrush")
+        };
+
+        var primary = buttons == MessageBoxButton.YesNo ? L("Yes") : L("OK");
+        var secondary = buttons switch
+        {
+            MessageBoxButton.YesNo => L("No"),
+            MessageBoxButton.OKCancel => L("Cancel"),
+            _ => null
+        };
+
+        window.Configure(caption, text, glyph, brushKey, primary, secondary);
+        window.ShowDialog();
+
+        if (!isConfirmation)
+        {
+            return MessageBoxResult.OK;
+        }
+
+        if (buttons == MessageBoxButton.YesNo)
+        {
+            return window.Confirmed ? MessageBoxResult.Yes : MessageBoxResult.No;
+        }
+
+        return window.Confirmed ? MessageBoxResult.OK : MessageBoxResult.Cancel;
     }
 
     private static Window? ResolveOwner()

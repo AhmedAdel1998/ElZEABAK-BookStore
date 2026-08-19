@@ -24,8 +24,12 @@ public class CustomerEditorModel
 /// </summary>
 public class CustomerDto : CustomerEditorModel
 {
-    /// <summary>Gets or sets required customer identifier.</summary>
-    public new Guid Id { get; set; }
+    /// <summary>
+    /// Gets the identifier of this persisted customer. Query results always carry one; a missing
+    /// value means a DTO was built by hand and never saved.
+    /// </summary>
+    public Guid PersistedId => Id ?? throw new InvalidOperationException("Customer identifier is missing from a persisted record.");
+
     /// <summary>Gets or sets sales count.</summary>
     public int SalesCount { get; set; }
     /// <summary>Gets or sets total purchases.</summary>

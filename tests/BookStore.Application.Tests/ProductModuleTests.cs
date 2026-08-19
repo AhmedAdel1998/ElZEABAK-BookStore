@@ -1,4 +1,6 @@
+using BookStore.Domain.Enums;
 using AutoMapper;
+using BookStore.Application.Features.Authentication.Responses;
 using BookStore.Application.Features.Products.Commands.CreateProduct;
 using BookStore.Application.Features.Products.Commands.DeleteProduct;
 using BookStore.Application.Features.Products.Commands.UpdateProduct;
@@ -29,6 +31,43 @@ public class ProductModuleTests
         Assert.True(result.IsSuccess);
         Assert.Single(fixture.Repository.Products);
         Assert.Equal("Clean Code", result.Value?.Title);
+    }
+
+    [Fact]
+    public async Task CreateProduct_RecordsOpeningStockInTheLedger()
+    {
+        var fixture = new ProductFixture();
+        var model = fixture.CreateModel("BC-200", "Opening Stock Book");
+        model.Quantity = 7;
+
+        var result = await fixture.CreateCreateHandler().HandleAsync(new CreateProductRequest(model));
+
+        Assert.True(result.IsSuccess);
+        var entry = Assert.Single(fixture.InventoryRepository.Transactions);
+        Assert.Equal(InventoryTransactionType.InitialStock, entry.TransactionType);
+        Assert.Equal(7, entry.Quantity);
+        Assert.Equal(0, entry.QuantityBefore);
+        Assert.Equal(7, entry.QuantityAfter);
+    }
+
+    [Fact]
+    public async Task UpdateProduct_DoesNotMoveStock()
+    {
+        var fixture = new ProductFixture();
+        var product = fixture.Repository.AddExisting("BC-300", "Sold Since Opened");
+        product.SetQuantity(7);
+
+        // The editor still carries whatever quantity it loaded, but saving must not write it back:
+        // a cashier may have sold units while the form was open.
+        var model = fixture.CreateModel("BC-300", "Renamed");
+        model.Id = product.Id;
+        model.Quantity = 10;
+
+        var result = await fixture.CreateUpdateHandler().HandleAsync(new UpdateProductRequest(model));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(7, product.Quantity);
+        Assert.Empty(fixture.InventoryRepository.Transactions);
     }
 
     [Fact]
@@ -139,11 +178,13 @@ public class ProductModuleTests
         public ProductFixture()
         {
             Repository = new FakeProductRepository();
-            UnitOfWork = new FakeUnitOfWork(Repository);
+            InventoryRepository = new FakeInventoryRepository();
+            UnitOfWork = new FakeUnitOfWork(Repository, InventoryRepository);
             Mapper = new MapperConfiguration(configuration => configuration.AddProfile<ProductMappingProfile>(), NullLoggerFactory.Instance).CreateMapper();
         }
 
         public FakeProductRepository Repository { get; }
+        public FakeInventoryRepository InventoryRepository { get; }
         public FakeUnitOfWork UnitOfWork { get; }
         public IMapper Mapper { get; }
 
@@ -165,7 +206,7 @@ public class ProductModuleTests
         public CreateProductHandler CreateCreateHandler()
         {
             var productValidator = new ProductEditorModelValidator(Repository);
-            return new CreateProductHandler(UnitOfWork, new CreateProductRequestValidator(productValidator), Mapper, NullLogger<CreateProductHandler>.Instance);
+            return new CreateProductHandler(UnitOfWork, new CreateProductRequestValidator(productValidator), Mapper, new FakeCurrentUserService(), NullLogger<CreateProductHandler>.Instance);
         }
 
         public UpdateProductHandler CreateUpdateHandler()
@@ -272,16 +313,29 @@ public class ProductModuleTests
         }
     }
 
-    private sealed class FakeUnitOfWork(FakeProductRepository products) : IUnitOfWork
+    private sealed class FakeInventoryRepository : IInventoryRepository
+    {
+        public List<InventoryTransaction> Transactions { get; } = [];
+
+        public Task<InventoryTransaction?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) => Task.FromResult(Transactions.FirstOrDefault(transaction => transaction.Id == id));
+        public Task<IReadOnlyCollection<InventoryTransaction>> ListAsync(ISpecification<InventoryTransaction>? specification = null, CancellationToken cancellationToken = default) => Task.FromResult((IReadOnlyCollection<InventoryTransaction>)Transactions.ToArray());
+        public Task AddAsync(InventoryTransaction transaction, CancellationToken cancellationToken = default) { Transactions.Add(transaction); return Task.CompletedTask; }
+        public Task<IReadOnlyCollection<InventoryTransaction>> SearchHistoryAsync(Guid? productId, DateTimeOffset? dateFrom, DateTimeOffset? dateTo, InventoryTransactionType? transactionType, Guid? userId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+            => Task.FromResult((IReadOnlyCollection<InventoryTransaction>)Transactions.Where(transaction => productId is null || transaction.ProductId == productId.Value).ToArray());
+        public Task<int> CountHistoryAsync(Guid? productId = null, DateTimeOffset? dateFrom = null, DateTimeOffset? dateTo = null, InventoryTransactionType? transactionType = null, Guid? userId = null, CancellationToken cancellationToken = default)
+            => Task.FromResult(Transactions.Count(transaction => productId is null || transaction.ProductId == productId.Value));
+    }
+
+    private sealed class FakeUnitOfWork(FakeProductRepository products, FakeInventoryRepository inventory) : IUnitOfWork
     {
         public IProductRepository Products { get; } = products;
+        public IInventoryRepository Inventory { get; } = inventory;
         public ICategoryRepository Categories => throw new NotSupportedException();
         public ICustomerRepository Customers => throw new NotSupportedException();
         public ISupplierRepository Suppliers => throw new NotSupportedException();
         public IUserRepository Users => throw new NotSupportedException();
         public IRoleRepository Roles => throw new NotSupportedException();
         public ISaleRepository Sales => throw new NotSupportedException();
-        public IInventoryRepository Inventory => throw new NotSupportedException();
         public Task BeginTransactionAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task CommitAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task RollbackAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
@@ -295,4 +349,18 @@ public class ProductModuleTests
         public bool HasRole(string role) => false;
         public bool CanAccess(string requiredPermission) => HasPermission(requiredPermission);
     }
+    private sealed class FakeCurrentUserService : ICurrentUserService
+    {
+        public bool IsAuthenticated => true;
+        public Guid? UserId { get; } = Guid.NewGuid();
+        public string? Username => "tester";
+        public string? FullName => "Test User";
+        public string? Role => "Admin";
+        public IReadOnlyCollection<string> Permissions => [];
+        public Guid? SessionId => Guid.NewGuid();
+        public DateTimeOffset? LoginTime => DateTimeOffset.UtcNow;
+        public void SignIn(UserSessionSnapshot session) { }
+        public void SignOut() { }
+    }
+
 }

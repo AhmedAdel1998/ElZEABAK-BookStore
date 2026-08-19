@@ -52,10 +52,50 @@ public partial class InventoryHistoryViewModel : BaseViewModel
         await LoadAsync();
     }
 
+/// <summary>Gets the number of pages available for the current filters.</summary>
+    public int TotalPages => PageSize <= 0 ? 1 : Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
+
+    /// <summary>Gets whether an earlier page exists.</summary>
+    public bool CanGoToPreviousPage => PageNumber > 1;
+
+    /// <summary>Gets whether a later page exists.</summary>
+    public bool CanGoToNextPage => PageNumber < TotalPages;
+
+    partial void OnPageNumberChanged(int value) => NotifyPagingChanged();
+
+    partial void OnTotalCountChanged(int value) => NotifyPagingChanged();
+
+    partial void OnPageSizeChanged(int value) => NotifyPagingChanged();
+
+    private void NotifyPagingChanged()
+    {
+        OnPropertyChanged(nameof(TotalPages));
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+        NextPageCommand.NotifyCanExecuteChanged();
+        PreviousPageCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>Moves to the next page of results.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoToNextPage))]
+    private async Task NextPageAsync()
+    {
+        PageNumber++;
+        await LoadAsync();
+    }
+
+    /// <summary>Moves to the previous page of results.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoToPreviousPage))]
+    private async Task PreviousPageAsync()
+    {
+        PageNumber--;
+        await LoadAsync();
+    }
+
     private async Task LoadAsync()
     {
         IsBusy = true;
-        var result = await _historyHandler.HandleAsync(new GetInventoryHistoryRequest(null, ToOffset(DateFrom), ToOffset(DateTo), TransactionType, null, PageNumber, PageSize));
+        var result = await _historyHandler.HandleAsync(new GetInventoryHistoryRequest(null, ToOffset(DateFrom), ToExclusiveEnd(DateTo), TransactionType, null, PageNumber, PageSize));
         Transactions.Clear();
         if (result.IsSuccess && result.Value is not null)
         {
@@ -76,6 +116,15 @@ public partial class InventoryHistoryViewModel : BaseViewModel
 
     private static DateTimeOffset? ToOffset(DateTime? value)
     {
-        return value.HasValue ? new DateTimeOffset(value.Value) : null;
+        return value.HasValue ? new DateTimeOffset(value.Value.Date, TimeZoneInfo.Local.GetUtcOffset(value.Value.Date)) : null;
+    }
+
+    /// <summary>
+    /// Turns the day chosen in the "to" picker into an exclusive upper bound, so the whole of that
+    /// day is included rather than only its first instant.
+    /// </summary>
+    private static DateTimeOffset? ToExclusiveEnd(DateTime? value)
+    {
+        return value.HasValue ? ToOffset(value.Value.Date.AddDays(1)) : null;
     }
 }

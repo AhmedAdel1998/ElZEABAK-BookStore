@@ -170,7 +170,8 @@ namespace BookStore.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = 0");
 
                     b.ToTable("Categories", (string)null);
                 });
@@ -183,10 +184,6 @@ namespace BookStore.Persistence.Migrations
 
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(254)
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -202,24 +199,16 @@ namespace BookStore.Persistence.Migrations
                     b.Property<int>("LoyaltyPoints")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Phone")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
                     b.Property<long?>("UpdatedAt")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Email");
 
                     b.HasIndex("FullName");
 
                     b.HasIndex("IsActive");
 
                     b.HasIndex("IsDeleted");
-
-                    b.HasIndex("Phone");
 
                     b.ToTable("Customers", (string)null);
                 });
@@ -538,6 +527,9 @@ namespace BookStore.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("TaxInclusive")
+                        .HasColumnType("INTEGER");
+
                     b.Property<decimal>("Total")
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
@@ -629,10 +621,6 @@ namespace BookStore.Persistence.Migrations
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Email")
-                        .HasMaxLength(254)
-                        .HasColumnType("TEXT");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
@@ -641,10 +629,6 @@ namespace BookStore.Persistence.Migrations
 
                     b.Property<string>("Notes")
                         .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.Property<long?>("UpdatedAt")
@@ -656,13 +640,9 @@ namespace BookStore.Persistence.Migrations
 
                     b.HasIndex("ContactName");
 
-                    b.HasIndex("Email");
-
                     b.HasIndex("IsActive");
 
                     b.HasIndex("IsDeleted");
-
-                    b.HasIndex("Phone");
 
                     b.ToTable("Suppliers", (string)null);
                 });
@@ -675,10 +655,6 @@ namespace BookStore.Persistence.Migrations
 
                     b.Property<long>("CreatedAt")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(254)
-                        .HasColumnType("TEXT");
 
                     b.Property<int>("FailedLoginCount")
                         .HasColumnType("INTEGER");
@@ -773,13 +749,61 @@ namespace BookStore.Persistence.Migrations
 
                             b1.HasKey("CustomerId");
 
-                            b1.ToTable("Customers", (string)null);
+                            b1.ToTable("Customers");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CustomerId");
+                        });
+
+                    b.OwnsOne("BookStore.Domain.ValueObjects.Email", "Email", b1 =>
+                        {
+                            b1.Property<Guid>("CustomerId")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(254)
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Email");
+
+                            b1.HasKey("CustomerId");
+
+                            b1.HasIndex("Value")
+                                .HasDatabaseName("IX_Customers_Email");
+
+                            b1.ToTable("Customers");
+
+                            b1.WithOwner()
+                                .HasForeignKey("CustomerId");
+                        });
+
+                    b.OwnsOne("BookStore.Domain.ValueObjects.PhoneNumber", "Phone", b1 =>
+                        {
+                            b1.Property<Guid>("CustomerId")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Phone");
+
+                            b1.HasKey("CustomerId");
+
+                            b1.HasIndex("Value")
+                                .HasDatabaseName("IX_Customers_Phone");
+
+                            b1.ToTable("Customers");
 
                             b1.WithOwner()
                                 .HasForeignKey("CustomerId");
                         });
 
                     b.Navigation("Address");
+
+                    b.Navigation("Email");
+
+                    b.Navigation("Phone");
                 });
 
             modelBuilder.Entity("BookStore.Domain.Entities.InventoryTransaction", b =>
@@ -814,9 +838,10 @@ namespace BookStore.Persistence.Migrations
 
                             b1.HasIndex("Value")
                                 .IsUnique()
-                                .HasDatabaseName("IX_Products_Barcode");
+                                .HasDatabaseName("IX_Products_Barcode")
+                                .HasFilter("\"IsDeleted\" = 0");
 
-                            b1.ToTable("Products", (string)null);
+                            b1.ToTable("Products");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductId");
@@ -838,7 +863,7 @@ namespace BookStore.Persistence.Migrations
                             b1.HasIndex("Value")
                                 .HasDatabaseName("IX_Products_ISBN");
 
-                            b1.ToTable("Products", (string)null);
+                            b1.ToTable("Products");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductId");
@@ -938,13 +963,61 @@ namespace BookStore.Persistence.Migrations
 
                             b1.HasKey("SupplierId");
 
-                            b1.ToTable("Suppliers", (string)null);
+                            b1.ToTable("Suppliers");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SupplierId");
+                        });
+
+                    b.OwnsOne("BookStore.Domain.ValueObjects.Email", "Email", b1 =>
+                        {
+                            b1.Property<Guid>("SupplierId")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(254)
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Email");
+
+                            b1.HasKey("SupplierId");
+
+                            b1.HasIndex("Value")
+                                .HasDatabaseName("IX_Suppliers_Email");
+
+                            b1.ToTable("Suppliers");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SupplierId");
+                        });
+
+                    b.OwnsOne("BookStore.Domain.ValueObjects.PhoneNumber", "Phone", b1 =>
+                        {
+                            b1.Property<Guid>("SupplierId")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Phone");
+
+                            b1.HasKey("SupplierId");
+
+                            b1.HasIndex("Value")
+                                .HasDatabaseName("IX_Suppliers_Phone");
+
+                            b1.ToTable("Suppliers");
 
                             b1.WithOwner()
                                 .HasForeignKey("SupplierId");
                         });
 
                     b.Navigation("Address");
+
+                    b.Navigation("Email");
+
+                    b.Navigation("Phone");
                 });
 
             modelBuilder.Entity("BookStore.Domain.Entities.User", b =>
@@ -954,6 +1027,27 @@ namespace BookStore.Persistence.Migrations
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.OwnsOne("BookStore.Domain.ValueObjects.Email", "Email", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(254)
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Email");
+
+                            b1.HasKey("UserId");
+
+                            b1.ToTable("Users");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.Navigation("Email");
 
                     b.Navigation("Role");
                 });

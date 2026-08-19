@@ -18,29 +18,7 @@ public interface IIconRegistry
 /// </summary>
 public sealed class IconRegistry : IIconRegistry
 {
-    private readonly IReadOnlyDictionary<string, string> _icons = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-    {
-        ["Dashboard"] = "D",
-        ["Categories"] = "C",
-        ["Products"] = "P",
-        ["Inventory"] = "I",
-        ["Sales"] = "S",
-        ["Customers"] = "U",
-        ["Suppliers"] = "V",
-        ["Reports"] = "R",
-        ["Settings"] = "G",
-        ["Users"] = "U",
-        ["Roles"] = "R",
-        ["Backup"] = "B",
-        ["Logout"] = "L",
-        ["Search"] = "Q",
-        ["Information"] = "i",
-        ["Warning"] = "!",
-        ["Error"] = "x",
-        ["Success"] = "+",
-        ["Question"] = "?"
-    };
-
     /// <inheritdoc />
-    public string Get(string key) => _icons.TryGetValue(key, out var icon) ? icon : "?";
+    public string Get(string key) => IconGlyphs.Resolve(key);
+
 }

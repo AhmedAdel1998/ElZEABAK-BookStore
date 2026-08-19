@@ -124,7 +124,7 @@ public partial class CustomerListViewModel : BaseViewModel
             return;
         }
 
-        var result = await _deleteHandler.HandleAsync(new DeleteCustomerRequest(SelectedCustomer.Id));
+        var result = await _deleteHandler.HandleAsync(new DeleteCustomerRequest(SelectedCustomer.PersistedId));
         ShowOperation(result.Succeeded, "Customer deleted successfully.", result.Errors.FirstOrDefault()?.Message);
         await LoadAsync();
     }
@@ -134,7 +134,7 @@ public partial class CustomerListViewModel : BaseViewModel
     private async Task ActivateAsync()
     {
         if (SelectedCustomer is null) return;
-        var result = await _activateHandler.HandleAsync(new ActivateCustomerRequest(SelectedCustomer.Id));
+        var result = await _activateHandler.HandleAsync(new ActivateCustomerRequest(SelectedCustomer.PersistedId));
         ShowOperation(result.Succeeded, "Customer activated successfully.", result.Errors.FirstOrDefault()?.Message);
         await LoadAsync();
     }
@@ -144,7 +144,7 @@ public partial class CustomerListViewModel : BaseViewModel
     private async Task DeactivateAsync()
     {
         if (SelectedCustomer is null) return;
-        var result = await _deactivateHandler.HandleAsync(new DeactivateCustomerRequest(SelectedCustomer.Id));
+        var result = await _deactivateHandler.HandleAsync(new DeactivateCustomerRequest(SelectedCustomer.PersistedId));
         ShowOperation(result.Succeeded, "Customer deactivated successfully.", result.Errors.FirstOrDefault()?.Message);
         await LoadAsync();
     }
@@ -152,6 +152,46 @@ public partial class CustomerListViewModel : BaseViewModel
     private bool CanEditSelected() => CanEdit && SelectedCustomer is not null;
     private bool CanDeleteSelected() => CanDelete && SelectedCustomer is not null;
     private bool CanSelectCustomer() => SelectedCustomer is not null && _authorizationService.HasPermission(PermissionConstants.CustomerView);
+
+/// <summary>Gets the number of pages available for the current filters.</summary>
+    public int TotalPages => PageSize <= 0 ? 1 : Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
+
+    /// <summary>Gets whether an earlier page exists.</summary>
+    public bool CanGoToPreviousPage => PageNumber > 1;
+
+    /// <summary>Gets whether a later page exists.</summary>
+    public bool CanGoToNextPage => PageNumber < TotalPages;
+
+    partial void OnPageNumberChanged(int value) => NotifyPagingChanged();
+
+    partial void OnTotalCountChanged(int value) => NotifyPagingChanged();
+
+    partial void OnPageSizeChanged(int value) => NotifyPagingChanged();
+
+    private void NotifyPagingChanged()
+    {
+        OnPropertyChanged(nameof(TotalPages));
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+        NextPageCommand.NotifyCanExecuteChanged();
+        PreviousPageCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>Moves to the next page of results.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoToNextPage))]
+    private async Task NextPageAsync()
+    {
+        PageNumber++;
+        await LoadAsync();
+    }
+
+    /// <summary>Moves to the previous page of results.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoToPreviousPage))]
+    private async Task PreviousPageAsync()
+    {
+        PageNumber--;
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {

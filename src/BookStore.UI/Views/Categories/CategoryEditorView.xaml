@@ -6,41 +6,43 @@
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
         <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
     </UserControl.InputBindings>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
 
-    <Grid>
-        <controls:AppCard Width="620"
-                          HorizontalAlignment="Left"
-                          Title="{Binding Title}"
-                          Subtitle="Create or update reusable category metadata."
-                          Icon="C">
-            <StackPanel>
-                <TextBlock Margin="0,0,0,6" Style="{StaticResource SectionTitleTextStyle}" Text="Name" />
-                <controls:TextInputBox Placeholder="Category name"
-                                       Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
+        <Grid>
+            <controls:AppCard MaxWidth="620"
+                              HorizontalAlignment="Left"
+                              Title="{Binding Title}"
+                              Subtitle="Create or update reusable category metadata."
+                             >
+                <StackPanel>
+                    <TextBlock Margin="0,0,0,6" Style="{StaticResource SectionTitleTextStyle}" Text="Name" />
+                    <controls:TextInputBox Placeholder="Category name"
+                                           Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" />
 
-                <TextBlock Margin="0,16,0,6" Style="{StaticResource SectionTitleTextStyle}" Text="Description" />
-                <controls:TextInputBox AcceptsReturn="True"
-                                       Height="110"
-                                       Placeholder="Optional description"
-                                       Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Margin="0,16,0,6" Style="{StaticResource SectionTitleTextStyle}" Text="Description" />
+                    <controls:TextInputBox AcceptsReturn="True"
+                                           Height="110"
+                                           Placeholder="Optional description"
+                                           Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" />
 
-                <CheckBox Margin="0,16,0,0"
-                          Content="Active"
-                          IsChecked="{Binding IsActive}" />
+                    <CheckBox Margin="0,16,0,0"
+                              Content="Active"
+                              IsChecked="{Binding IsActive}" />
 
-                <TextBlock Margin="0,12,0,0"
-                           Foreground="{DynamicResource DangerBrush}"
-                           Text="{Binding ValidationMessage}"
-                           TextWrapping="Wrap" />
+                    <TextBlock Margin="0,12,0,0"
+                               Foreground="{DynamicResource DangerBrush}"
+                               Text="{Binding ValidationMessage, Converter={StaticResource LocalizeConverter}}"
+                               TextWrapping="Wrap" />
 
-                <StackPanel Margin="0,18,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ResetCommand}" Content="Reset" Icon="R" />
-                    <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="Cancel" Icon="X" />
-                    <controls:PrimaryButton Command="{Binding SaveCommand}" Content="Save" Icon="S" IsLoading="{Binding IsBusy}" />
+                    <StackPanel Margin="0,18,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ResetCommand}" Content="Reset" Icon="Reset" />
+                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="Cancel" Icon="Cancel" IsCancel="True" />
+                        <controls:PrimaryButton Command="{Binding SaveCommand}" Content="Save" Icon="Save" IsLoading="{Binding IsBusy}" IsDefault="True" />
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
-        </controls:AppCard>
+            </controls:AppCard>
 
-        <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Saving category..." />
-    </Grid>
+            <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Saving category..." />
+        </Grid>
+    </ScrollViewer>
 </UserControl>

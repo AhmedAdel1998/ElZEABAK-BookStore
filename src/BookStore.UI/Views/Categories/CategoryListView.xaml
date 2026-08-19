@@ -16,17 +16,18 @@
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                 <controls:SearchBox Width="260" Margin="0,0,8,0" Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}" />
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
-                <controls:PrimaryButton Command="{Binding AddCommand}" Content="Add" Icon="+" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="Refresh" />
+                <controls:PrimaryButton Command="{Binding AddCommand}" Content="Add" Icon="Add" />
             </StackPanel>
         </DockPanel>
 
         <Grid Grid.Row="1">
             <controls:AppDataGrid x:Name="CategoryGrid"
+                                  HorizontalScrollBarVisibility="Auto"
                                   ItemsSource="{Binding Categories}"
                                   SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
                                   IsLoading="{Binding IsBusy}"
-                                  EmptyMessage="{Binding EmptyMessage}">
+                                  EmptyMessage="{Binding EmptyMessage, Converter={StaticResource LocalizeConverter}}">
                 <controls:AppDataGrid.InputBindings>
                     <MouseBinding Gesture="LeftDoubleClick" Command="{Binding EditCommand}" />
                 </controls:AppDataGrid.InputBindings>
@@ -42,16 +43,16 @@
                     </ContextMenu>
                 </controls:AppDataGrid.ContextMenu>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding Name}" Header="Name" Width="2*" />
-                    <DataGridTextColumn Binding="{Binding Description}" Header="Description" Width="3*" />
-                    <DataGridTextColumn Binding="{Binding Status}" Header="Status" Width="*" />
-                    <DataGridTextColumn Binding="{Binding ProductCount}" Header="Product Count" Width="*" />
-                    <DataGridTextColumn Binding="{Binding CreatedAt, StringFormat={}{0:yyyy-MM-dd}}" Header="Created Date" Width="*" />
+                    <DataGridTextColumn Binding="{Binding Name}" Header="Name" Width="2*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Description, Converter={StaticResource LocalizeConverter}}" Header="Description" Width="3*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Status}" Header="Status" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding ProductCount}" Header="Product Count" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding CreatedAt, StringFormat={}{0:yyyy-MM-dd}}" Header="Created Date" Width="*" MinWidth="110" />
                 </DataGrid.Columns>
             </controls:AppDataGrid>
 
             <controls:NoDataView Title="No Categories"
-                                 Message="{Binding EmptyMessage}">
+                                 Message="{Binding EmptyMessage, Converter={StaticResource LocalizeConverter}}">
                 <controls:NoDataView.Style>
                     <Style TargetType="{x:Type controls:NoDataView}" BasedOn="{StaticResource {x:Type controls:NoDataView}}">
                         <Setter Property="Visibility" Value="Collapsed" />
@@ -68,17 +69,7 @@
         </Grid>
 
         <Border Grid.Row="2" Margin="0,12,0,0" Style="{StaticResource PanelBorderStyle}">
-            <DockPanel>
-                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
-                    <Run Text="Page " />
-                    <Run Text="{Binding PageNumber}" />
-                    <Run Text=" | Page size " />
-                    <Run Text="{Binding PageSize}" />
-                    <Run Text=" | Total " />
-                    <Run Text="{Binding TotalCount}" />
-                </TextBlock>
-                <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource MutedTextBrush}" Text="Pagination controls prepared for future enhancement." />
-            </DockPanel>
+            <controls:PaginationBar />
         </Border>
     </Grid>
 </UserControl>

@@ -1,0 +1,16 @@
+2026-08-19 12:12:25.412 +03:00 [INF] Applying database migrations
+2026-08-19 12:12:25.616 +03:00 [INF] Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+2026-08-19 12:12:25.687 +03:00 [INF] No migrations were applied. The database is already up to date.
+2026-08-19 12:12:26.195 +03:00 [INF] Database seed completed
+2026-08-19 12:12:26.199 +03:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-08-19 12:12:26.199 +03:00 [INF] Hosting environment: Production
+2026-08-19 12:12:26.199 +03:00 [INF] Content root path: E:\EL ZEABAK BookStore\EL ZEABAK BookStore
+2026-08-19 12:12:26.200 +03:00 [INF] Application start
+2026-08-19 12:12:26.211 +03:00 [INF] Runtime folder verified: Database
+2026-08-19 12:12:26.211 +03:00 [INF] Runtime folder verified: Logs
+2026-08-19 12:12:26.211 +03:00 [INF] Runtime folder verified: Backups
+2026-08-19 12:12:26.212 +03:00 [INF] Runtime folder verified: Exports
+2026-08-19 12:12:26.212 +03:00 [INF] Runtime folder verified: Temp
+2026-08-19 12:12:26.313 +03:00 [INF] UI culture applied: ar-EG
+2026-08-19 12:12:26.371 +03:00 [INF] Theme applied: Dark
+2026-08-19 12:12:26.400 +03:00 [INF] Currency formatting applied: EGP (Before, 2 dp)

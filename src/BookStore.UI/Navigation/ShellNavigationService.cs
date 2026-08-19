@@ -17,6 +17,7 @@ public partial class ShellNavigationService : ObservableObject, IShellNavigation
     private readonly Stack<(Type Type, string Breadcrumb)> _forwardStack = [];
     private Type? _currentType;
     private string _breadcrumbSource = "Dashboard";
+    private IViewModelLease? _currentLease;
 
     [ObservableProperty]
     private BaseViewModel? currentViewModel;
@@ -106,15 +107,17 @@ public partial class ShellNavigationService : ObservableObject, IShellNavigation
             _forwardStack.Clear();
         }
 
-        if (CurrentViewModel is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
+        var lease = _viewModelFactory.Create(type);
 
-        CurrentViewModel = _viewModelFactory.Create(type);
+        // Release the page being replaced only once its successor exists, so a construction
+        // failure leaves the current screen intact rather than blanking the content region.
+        var previous = _currentLease;
+        _currentLease = lease;
+        CurrentViewModel = lease.ViewModel;
         _breadcrumbSource = breadcrumb;
         Breadcrumb = Localize(breadcrumb);
         _currentType = type;
+        previous?.Dispose();
     }
 
     /// <summary>

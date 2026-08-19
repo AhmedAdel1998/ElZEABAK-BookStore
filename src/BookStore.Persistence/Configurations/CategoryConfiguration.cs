@@ -16,7 +16,8 @@ public class CategoryConfiguration : EntityConfigurationBase<Category>
         builder.Property(category => category.Name).IsRequired().HasMaxLength(100);
         builder.Property(category => category.Description).HasMaxLength(500);
         builder.Property(category => category.IsActive).IsRequired();
-        builder.HasIndex(category => category.Name).IsUnique();
+        // Filtered so a soft-deleted category releases its name for reuse.
+        builder.HasIndex(category => category.Name).IsUnique().HasFilter("\"IsDeleted\" = 0");
         builder.Navigation(category => category.Products).UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.HasMany(category => category.Products)
             .WithOne(product => product.Category)

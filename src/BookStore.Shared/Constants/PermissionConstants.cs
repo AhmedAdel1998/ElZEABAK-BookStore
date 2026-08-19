@@ -5,20 +5,8 @@ namespace BookStore.Shared.Constants;
 /// </summary>
 public static class PermissionConstants
 {
-    /// <summary>
-    /// Permission prefix for product features.
-    /// </summary>
-    public const string Products = "Permissions.Products";
 
-    /// <summary>
-    /// Permission prefix for sales features.
-    /// </summary>
-    public const string Sales = "Permissions.Sales";
 
-    /// <summary>
-    /// Permission prefix for reports features.
-    /// </summary>
-    public const string Reports = "Permissions.Reports";
 
     /// <summary>
     /// Product view permission.
@@ -370,13 +358,5 @@ public static class PermissionConstants
     /// </summary>
     public const string DataQualityView = "DataQuality.View";
 
-    /// <summary>
-    /// Legacy database backup permission alias.
-    /// </summary>
-    public const string BackupDatabase = BackupCreate;
 
-    /// <summary>
-    /// Legacy database restore permission alias.
-    /// </summary>
-    public const string RestoreDatabase = BackupRestore;
 }

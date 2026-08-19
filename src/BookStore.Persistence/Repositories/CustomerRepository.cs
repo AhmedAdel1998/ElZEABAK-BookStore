@@ -27,9 +27,8 @@ public class CustomerRepository : Repository<Customer>, ICustomerRepository
     public Task<bool> ExistsByPhoneAsync(string phone, Guid? excludedCustomerId = null, CancellationToken cancellationToken = default)
     {
         var normalized = NormalizePhone(phone);
-        var pattern = $"%{normalized}%";
         var query = _dbContext.Customers
-            .FromSqlInterpolated($"SELECT * FROM Customers WHERE REPLACE(REPLACE(Phone, ' ', ''), '-', '') LIKE {pattern}")
+            .FromSqlInterpolated($"SELECT * FROM Customers WHERE REPLACE(REPLACE(Phone, ' ', ''), '-', '') = {normalized}")
             .AsNoTracking();
         if (excludedCustomerId.HasValue)
         {
@@ -131,7 +130,8 @@ public class CustomerRepository : Repository<Customer>, ICustomerRepository
 
         if (dateTo.HasValue)
         {
-            query = query.Where(sale => sale.SaleDate <= dateTo.Value);
+            // Exclusive upper bound: callers pass the start of the day after the one they mean.
+            query = query.Where(sale => sale.SaleDate < dateTo.Value);
         }
 
         return query;
@@ -146,9 +146,9 @@ public class CustomerRepository : Repository<Customer>, ICustomerRepository
             Phone = customer.Phone == null ? string.Empty : customer.Phone.Value,
             Email = customer.Email == null ? null : customer.Email.Value,
             Address = customer.Address == null ? null : customer.Address.Line1,
-            SalesCount = _dbContext.Sales.Count(sale => sale.CustomerId == customer.Id),
-            TotalPurchases = _dbContext.Sales.Where(sale => sale.CustomerId == customer.Id).Sum(sale => (decimal?)sale.Total) ?? 0m,
-            LastPurchaseDate = _dbContext.Sales.Where(sale => sale.CustomerId == customer.Id).Select(sale => (DateTimeOffset?)sale.SaleDate).FirstOrDefault(),
+            SalesCount = _dbContext.Sales.Count(sale => sale.CustomerId == customer.Id && sale.Status != Domain.Enums.SaleStatus.Cancelled),
+            TotalPurchases = _dbContext.Sales.Where(sale => sale.CustomerId == customer.Id && sale.Status != Domain.Enums.SaleStatus.Cancelled).Sum(sale => (decimal?)sale.Total) ?? 0m,
+            LastPurchaseDate = _dbContext.Sales.Where(sale => sale.CustomerId == customer.Id && sale.Status != Domain.Enums.SaleStatus.Cancelled).Max(sale => (DateTimeOffset?)sale.SaleDate),
             IsActive = customer.IsActive,
             IsDeleted = customer.IsDeleted,
             CreatedAt = customer.CreatedAt,

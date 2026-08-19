@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Windows.Documents;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -50,6 +51,15 @@ public sealed class UiTreeLocalizer : IUiTreeLocalizer
 
     private static readonly DependencyProperty OriginalSubtitleProperty =
         DependencyProperty.RegisterAttached("OriginalSubtitle", typeof(string), typeof(UiTreeLocalizer), new PropertyMetadata(null));
+
+    private static readonly DependencyProperty OriginalToolTipProperty =
+        DependencyProperty.RegisterAttached("OriginalToolTip", typeof(string), typeof(UiTreeLocalizer), new PropertyMetadata(null));
+
+    private static readonly DependencyProperty OriginalEmptyMessageProperty =
+        DependencyProperty.RegisterAttached("OriginalEmptyMessage", typeof(string), typeof(UiTreeLocalizer), new PropertyMetadata(null));
+
+    private static readonly DependencyProperty OriginalErrorMessageProperty =
+        DependencyProperty.RegisterAttached("OriginalErrorMessage", typeof(string), typeof(UiTreeLocalizer), new PropertyMetadata(null));
 
     private readonly ILocalizationService _localizationService;
     private readonly List<WeakReference<FrameworkElement>> _attachedRoots = [];
@@ -193,10 +203,69 @@ public sealed class UiTreeLocalizer : IUiTreeLocalizer
     {
         LocalizeSelf(element);
 
+        // A context menu and a tooltip live in their own popup trees, so the visual walk below never
+        // reaches them. Every context menu in the app stayed English because of this.
+        if (element is FrameworkElement framework)
+        {
+            if (framework.ContextMenu is { } contextMenu)
+            {
+                LocalizeMenuItems(contextMenu.Items);
+            }
+
+            LocalizeToolTip(framework);
+        }
+
         var count = VisualTreeHelper.GetChildrenCount(element);
         for (var i = 0; i < count; i++)
         {
             LocalizeSubtree(VisualTreeHelper.GetChild(element, i));
+        }
+    }
+
+    /// <summary>
+    /// Translates menu headers, recursing into submenus. <see cref="MenuItem"/> derives from
+    /// <see cref="HeaderedItemsControl"/>, not <see cref="HeaderedContentControl"/>, so it matched no
+    /// case in <see cref="LocalizeSelf"/>.
+    /// </summary>
+    private void LocalizeMenuItems(System.Collections.IEnumerable items)
+    {
+        foreach (var item in items)
+        {
+            if (item is not MenuItem menuItem)
+            {
+                continue;
+            }
+
+            if (menuItem.Header is string)
+            {
+                Apply(menuItem, HeaderedItemsControl.HeaderProperty, OriginalHeaderProperty, (string)menuItem.Header, value => menuItem.Header = value);
+            }
+
+            LocalizeMenuItems(menuItem.Items);
+        }
+    }
+
+    /// <summary>Translates a plain string tooltip, leaving richer tooltip content alone.</summary>
+    private void LocalizeToolTip(FrameworkElement element)
+    {
+        if (element.ToolTip is string tip)
+        {
+            Apply(element, FrameworkElement.ToolTipProperty, OriginalToolTipProperty, tip, value => element.ToolTip = value);
+        }
+    }
+
+    /// <summary>
+    /// Translates the inline runs of a text block. Text assembled from &lt;Run&gt; elements is not
+    /// reachable through the visual tree, so pagination footers and detail summaries stayed English.
+    /// </summary>
+    private void LocalizeInlines(TextBlock textBlock)
+    {
+        foreach (var inline in textBlock.Inlines.ToArray())
+        {
+            if (inline is Run run)
+            {
+                Apply(run, Run.TextProperty, OriginalTextProperty, run.Text, value => run.Text = value);
+            }
         }
     }
 
@@ -205,10 +274,38 @@ public sealed class UiTreeLocalizer : IUiTreeLocalizer
         switch (element)
         {
             case TextBlock textBlock:
-                Apply(textBlock, TextBlock.TextProperty, OriginalTextProperty, textBlock.Text, value => textBlock.Text = value);
+                // Writing Text over a block built from inline runs destroys those runs (including any
+                // bound ones), so pick whichever the author actually used.
+                if (DependencyPropertyHelper.GetValueSource(textBlock, TextBlock.TextProperty).BaseValueSource == BaseValueSource.Default
+                    && textBlock.Inlines.Count > 0)
+                {
+                    LocalizeInlines(textBlock);
+                }
+                else
+                {
+                    Apply(textBlock, TextBlock.TextProperty, OriginalTextProperty, textBlock.Text, value => textBlock.Text = value);
+                }
+
                 break;
             case TextInputBox input:
                 Apply(input, TextInputBox.PlaceholderProperty, OriginalPlaceholderProperty, input.Placeholder, value => input.Placeholder = value);
+                Apply(input, TextInputBox.ErrorMessageProperty, OriginalErrorMessageProperty, input.ErrorMessage, value => input.ErrorMessage = value);
+                break;
+            case MenuItem menuItem:
+                if (menuItem.Header is string menuHeader)
+                {
+                    Apply(menuItem, HeaderedItemsControl.HeaderProperty, OriginalHeaderProperty, menuHeader, value => menuItem.Header = value);
+                }
+
+                LocalizeMenuItems(menuItem.Items);
+                break;
+            case LoadingOverlay overlay:
+                Apply(overlay, LoadingOverlay.MessageProperty, OriginalMessageProperty, overlay.Message, value => overlay.Message = value);
+                LocalizeContent(overlay);
+                break;
+            case AppDataGrid appDataGrid:
+                Apply(appDataGrid, AppDataGrid.EmptyMessageProperty, OriginalEmptyMessageProperty, appDataGrid.EmptyMessage, value => appDataGrid.EmptyMessage = value);
+                LocalizeDataGrid(appDataGrid);
                 break;
             case EmptyStateView emptyState:
                 Apply(emptyState, EmptyStateView.TitleProperty, OriginalTitleProperty, emptyState.Title, value => emptyState.Title = value);

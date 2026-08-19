@@ -2,27 +2,29 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:BookStore.UI.Controls">
-    <controls:AppCard Width="760" HorizontalAlignment="Left" Title="Backup Details" Icon="B">
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="180" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-            <TextBlock Text="File" /><TextBlock Grid.Column="1" Text="{Binding Backup.FileName}" />
-            <TextBlock Grid.Row="1" Text="Path" /><TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Backup.FilePath}" TextWrapping="Wrap" />
-            <TextBlock Grid.Row="2" Text="Date" /><TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Backup.CreatedAt}" />
-            <TextBlock Grid.Row="3" Text="Size" /><TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Backup.FileSizeBytes}" />
-            <TextBlock Grid.Row="4" Text="SHA-256" /><TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Backup.ChecksumSha256}" TextWrapping="Wrap" />
-            <TextBlock Grid.Row="5" Text="Application Version" /><TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Backup.ApplicationVersion}" />
-            <TextBlock Grid.Row="6" Text="Database Version" /><TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding Backup.DatabaseVersion}" />
-            <TextBlock Grid.Row="7" Text="Type" /><TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding Backup.BackupType}" />
-            <TextBlock Grid.Row="8" Text="Status" /><TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding Backup.ValidationStatus}" />
-            <TextBlock Grid.Row="9" Text="Validation" /><TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding Backup.ValidationMessage}" TextWrapping="Wrap" />
-        </Grid>
-    </controls:AppCard>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <controls:AppCard Width="760" HorizontalAlignment="Left" Title="Backup Details" Icon="Backup">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="180" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="File" /><TextBlock Grid.Column="1" Text="{Binding Backup.FileName}" />
+                <TextBlock Grid.Row="1" Text="Path" /><TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Backup.FilePath}" TextWrapping="Wrap" />
+                <TextBlock Grid.Row="2" Text="Date" /><TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Backup.CreatedAt}" />
+                <TextBlock Grid.Row="3" Text="Size" /><TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Backup.FileSizeBytes}" />
+                <TextBlock Grid.Row="4" Text="SHA-256" /><TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Backup.ChecksumSha256}" TextWrapping="Wrap" />
+                <TextBlock Grid.Row="5" Text="Application Version" /><TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding Backup.ApplicationVersion}" />
+                <TextBlock Grid.Row="6" Text="Database Version" /><TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding Backup.DatabaseVersion}" />
+                <TextBlock Grid.Row="7" Text="Type" /><TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding Backup.BackupType}" />
+                <TextBlock Grid.Row="8" Text="Status" /><TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding Backup.ValidationStatus}" />
+                <TextBlock Grid.Row="9" Text="Validation" /><TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding Backup.ValidationMessage}" TextWrapping="Wrap" />
+            </Grid>
+        </controls:AppCard>
+    </ScrollViewer>
 </UserControl>

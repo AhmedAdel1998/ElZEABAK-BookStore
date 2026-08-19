@@ -233,7 +233,7 @@ public partial class ProductListViewModel : BaseViewModel
 
     private async Task InitializeAsync()
     {
-        var categories = await _categorySearchHandler.HandleAsync(new SearchCategoriesRequest(null, 1, 200));
+        var categories = await _categorySearchHandler.HandleAsync(new SearchCategoriesRequest(null, 1, 500, IsActive: true));
         if (categories.IsSuccess && categories.Value is not null)
         {
             foreach (var category in categories.Value.Items)
@@ -242,6 +242,46 @@ public partial class ProductListViewModel : BaseViewModel
             }
         }
 
+        await LoadAsync();
+    }
+
+/// <summary>Gets the number of pages available for the current filters.</summary>
+    public int TotalPages => PageSize <= 0 ? 1 : Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
+
+    /// <summary>Gets whether an earlier page exists.</summary>
+    public bool CanGoToPreviousPage => PageNumber > 1;
+
+    /// <summary>Gets whether a later page exists.</summary>
+    public bool CanGoToNextPage => PageNumber < TotalPages;
+
+    partial void OnPageNumberChanged(int value) => NotifyPagingChanged();
+
+    partial void OnTotalCountChanged(int value) => NotifyPagingChanged();
+
+    partial void OnPageSizeChanged(int value) => NotifyPagingChanged();
+
+    private void NotifyPagingChanged()
+    {
+        OnPropertyChanged(nameof(TotalPages));
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+        NextPageCommand.NotifyCanExecuteChanged();
+        PreviousPageCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>Moves to the next page of results.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoToNextPage))]
+    private async Task NextPageAsync()
+    {
+        PageNumber++;
+        await LoadAsync();
+    }
+
+    /// <summary>Moves to the previous page of results.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoToPreviousPage))]
+    private async Task PreviousPageAsync()
+    {
+        PageNumber--;
         await LoadAsync();
     }
 

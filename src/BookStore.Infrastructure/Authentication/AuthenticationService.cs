@@ -1,4 +1,6 @@
 using BookStore.Application.Features.Authentication.DTOs;
+using BookStore.Application.Features.Settings.Services;
+using BookStore.Application.Features.Settings.DTOs;
 using BookStore.Application.Features.Authentication.Responses;
 using BookStore.Application.Features.Audit.DTOs;
 using BookStore.Application.Features.Audit.Services;
@@ -26,6 +28,7 @@ public class AuthenticationService : IAuthenticationService
     private readonly IValidator<LoginRequest> _loginValidator;
     private readonly IValidator<ChangePasswordRequest> _changePasswordValidator;
     private readonly AuthenticationSettings _settings;
+    private readonly ISettingsService _settingsService;
     private readonly ILogger<AuthenticationService> _logger;
     private readonly IAuditTrailService? _auditTrailService;
 
@@ -40,6 +43,7 @@ public class AuthenticationService : IAuthenticationService
         IValidator<LoginRequest> loginValidator,
         IValidator<ChangePasswordRequest> changePasswordValidator,
         IOptions<ApplicationSettings> options,
+        ISettingsService settingsService,
         ILogger<AuthenticationService> logger,
         IAuditTrailService? auditTrailService = null)
     {
@@ -50,8 +54,27 @@ public class AuthenticationService : IAuthenticationService
         _loginValidator = loginValidator;
         _changePasswordValidator = changePasswordValidator;
         _settings = options.Value.Authentication;
+        _settingsService = settingsService;
         _logger = logger;
         _auditTrailService = auditTrailService;
+    }
+
+    /// <summary>
+    /// Reads the lockout policy an administrator configured in Settings, falling back to the
+    /// appsettings values if the stored settings cannot be read.
+    /// </summary>
+    private async Task<(int MaxAttempts, int LockoutMinutes)> ReadSecuritySettingsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var security = await _settingsService.GetAsync<SecuritySettingsDto>(cancellationToken);
+            return (Math.Max(security.MaxLoginAttempts, 1), Math.Max(security.LockoutDuration, 1));
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Stored security settings could not be read; using configured defaults for lockout.");
+            return (Math.Max(_settings.MaxFailedLoginAttempts, 1), Math.Max(_settings.LockoutMinutes, 1));
+        }
     }
 
     /// <inheritdoc />
@@ -87,7 +110,8 @@ public class AuthenticationService : IAuthenticationService
 
         if (!_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
         {
-            user.RegisterFailedLogin(_settings.MaxFailedLoginAttempts, TimeSpan.FromMinutes(_settings.LockoutMinutes));
+            var security = await ReadSecuritySettingsAsync(cancellationToken);
+            user.RegisterFailedLogin(security.MaxAttempts, TimeSpan.FromMinutes(security.LockoutMinutes));
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             if (user.IsLockedOut)

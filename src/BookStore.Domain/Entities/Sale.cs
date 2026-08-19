@@ -88,6 +88,12 @@ public class Sale : BaseEntity, IAggregateRoot
     public decimal Total { get; private set; }
 
     /// <summary>
+    /// Gets a value indicating whether <see cref="Tax"/> is already contained in the line prices.
+    /// When it is, tax must not be added again when totalling the sale.
+    /// </summary>
+    public bool TaxInclusive { get; private set; }
+
+    /// <summary>
     /// Gets the paid amount.
     /// </summary>
     public decimal PaidAmount { get; private set; }
@@ -144,7 +150,10 @@ public class Sale : BaseEntity, IAggregateRoot
     public decimal CalculateTotal()
     {
         var subtotal = _saleItems.Sum(item => item.CalculateTotal());
-        var total = subtotal + Tax - Discount;
+
+        // With tax-inclusive pricing the line prices already contain the tax, so adding Tax here
+        // would charge it twice. Tax is still recorded for the receipt and the tax reports.
+        var total = subtotal - Discount + (TaxInclusive ? 0m : Tax);
         if (total < 0)
         {
             throw new BusinessRuleException("Sale total cannot be negative.");
@@ -232,7 +241,7 @@ public class Sale : BaseEntity, IAggregateRoot
     /// </summary>
     /// <param name="discount">The sale discount.</param>
     /// <param name="tax">The sale tax.</param>
-    public void UpdateCharges(decimal discount, decimal tax)
+    public void UpdateCharges(decimal discount, decimal tax, bool taxInclusive = false)
     {
         EnsurePending();
         if (discount < 0 || tax < 0)
@@ -242,6 +251,7 @@ public class Sale : BaseEntity, IAggregateRoot
 
         Discount = discount;
         Tax = tax;
+        TaxInclusive = taxInclusive;
         CalculateTotal();
         MarkUpdated();
     }

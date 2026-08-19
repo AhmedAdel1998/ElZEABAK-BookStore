@@ -161,47 +161,6 @@ public class EmailTextBox : TextInputBox
 public class PhoneTextBox : TextInputBox
 {
 }
-
-/// <summary>
-/// Password input shell with bindable password and common placeholder metadata.
-/// </summary>
-public class PasswordInputBox : Control
-{
-    /// <summary>
-    /// Identifies the <see cref="Placeholder"/> dependency property.
-    /// </summary>
-    public static readonly DependencyProperty PlaceholderProperty =
-        DependencyProperty.Register(nameof(Placeholder), typeof(string), typeof(PasswordInputBox), new PropertyMetadata(string.Empty));
-
-    /// <summary>
-    /// Identifies the <see cref="BoundPassword"/> dependency property.
-    /// </summary>
-    public static readonly DependencyProperty BoundPasswordProperty =
-        DependencyProperty.Register(nameof(BoundPassword), typeof(string), typeof(PasswordInputBox), new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnBoundPasswordChanged));
-
-    /// <summary>
-    /// Gets or sets placeholder text shown by the input template.
-    /// </summary>
-    public string Placeholder
-    {
-        get => (string)GetValue(PlaceholderProperty);
-        set => SetValue(PlaceholderProperty, value);
-    }
-
-    /// <summary>
-    /// Gets or sets a bindable password value.
-    /// </summary>
-    public string BoundPassword
-    {
-        get => (string)GetValue(BoundPasswordProperty);
-        set => SetValue(BoundPasswordProperty, value);
-    }
-
-    private static void OnBoundPasswordChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-    }
-}
-
 /// <summary>
 /// Theme-aware date picker placeholder for module forms.
 /// </summary>
@@ -214,25 +173,4 @@ public class AppDatePicker : DatePicker
 /// </summary>
 public class AppComboBox : ComboBox
 {
-}
-
-/// <summary>
-/// Placeholder auto-complete control. Suggestion querying will be supplied by future modules.
-/// </summary>
-public class AutoCompleteBox : ComboBox
-{
-    /// <summary>
-    /// Identifies the <see cref="SearchText"/> dependency property.
-    /// </summary>
-    public static readonly DependencyProperty SearchTextProperty =
-        DependencyProperty.Register(nameof(SearchText), typeof(string), typeof(AutoCompleteBox), new PropertyMetadata(string.Empty));
-
-    /// <summary>
-    /// Gets or sets the current auto-complete search text.
-    /// </summary>
-    public string SearchText
-    {
-        get => (string)GetValue(SearchTextProperty);
-        set => SetValue(SearchTextProperty, value);
-    }
 }

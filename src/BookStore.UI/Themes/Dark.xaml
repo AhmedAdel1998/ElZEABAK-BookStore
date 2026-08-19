@@ -1,13 +1,54 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#111827" />
-    <SolidColorBrush x:Key="SurfaceBrush" Color="#1F2937" />
-    <SolidColorBrush x:Key="SurfaceAltBrush" Color="#1F3A2B" />
-    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#F3F4F6" />
-    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#CBD5E1" />
-    <SolidColorBrush x:Key="MutedTextBrush" Color="#94A3B8" />
-    <SolidColorBrush x:Key="BorderBrush" Color="#374151" />
-    <SolidColorBrush x:Key="AccentBrush" Color="#34D399" />
+    <!--
+        The dark counterpart of Light.xaml. Every key declared there is declared here, so swapping
+        the dictionary changes the whole surface rather than a handful of brushes. Contrast is set
+        deliberately rather than by inverting the light values.
+    -->
+
+    <!-- Surfaces and text -->
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#0B1310" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#141F19" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="#1B2A22" />
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#E9F1EB" />
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#B7C9BD" />
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#899C90" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#2A3A31" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#4ADE80" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#86EFAC" />
     <SolidColorBrush x:Key="OverlayBrush" Color="#B3000000" />
+
+    <!-- Status: lightened so they stay legible on a dark ground. -->
+    <SolidColorBrush x:Key="SuccessBrush" Color="#4ADE80" />
+    <SolidColorBrush x:Key="WarningBrush" Color="#E0A458" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#F87171" />
+    <SolidColorBrush x:Key="InfoBrush" Color="#5EEAD4" />
+    <SolidColorBrush x:Key="FocusBrush" Color="#4ADE80" />
+
+    <!-- Input and grid chrome: darker than the surface so text reads against it. -->
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#0F1A14" />
+    <SolidColorBrush x:Key="InputFocusBackgroundBrush" Color="#16241C" />
+    <SolidColorBrush x:Key="GridAlternateRowBrush" Color="#18241E" />
+    <SolidColorBrush x:Key="GridSelectedRowBrush" Color="#24463A" />
+    <SolidColorBrush x:Key="GridHeaderBrush" Color="#1E3128" />
+    <SolidColorBrush x:Key="GridHeaderTextBrush" Color="#E9F1EB" />
+
+    <!-- On a light accent fill the text stays dark in both themes. -->
+    <SolidColorBrush x:Key="OnAccentTextBrush" Color="#052E16" />
+    <SolidColorBrush x:Key="OnDangerTextBrush" Color="#FFFFFF" />
+
+    <!-- Brand chrome -->
+    <SolidColorBrush x:Key="WarmChromeBrush" Color="#0B1310" />
+    <SolidColorBrush x:Key="WarmChromeAltBrush" Color="#16241C" />
+    <SolidColorBrush x:Key="BrandOnChromeTextBrush" Color="#BBF7D0" />
+    <SolidColorBrush x:Key="BrandDeepTextBrush" Color="#DCFCE7" />
+    <LinearGradientBrush x:Key="BookstoreGreenBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#86EFAC" Offset="0" />
+        <GradientStop Color="#22C55E" Offset="0.46" />
+        <GradientStop Color="#166534" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="BookstorePageBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#16241C" Offset="0" />
+        <GradientStop Color="#0F1A14" Offset="1" />
+    </LinearGradientBrush>
 </ResourceDictionary>

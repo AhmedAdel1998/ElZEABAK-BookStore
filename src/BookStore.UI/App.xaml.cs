@@ -51,7 +51,15 @@ public partial class App : System.Windows.Application
             _logger.LogInformation("Application start");
 
             await _host.Services.GetRequiredService<IApplicationFolderService>().EnsureRequiredFoldersAsync();
-            await _host.Services.GetRequiredService<ILocalizationService>().ApplyConfiguredCultureAsync();
+            var localizationService = _host.Services.GetRequiredService<ILocalizationService>();
+            await localizationService.ApplyConfiguredCultureAsync();
+
+            // View models translate their own titles on read; they are presentational, so the service
+            // is handed to the base class rather than injected into forty-odd constructors.
+            BookStore.UI.ViewModels.BaseViewModel.UseLocalization(localizationService);
+            BookStore.UI.Converters.LocalizeConverter.UseLocalization(localizationService);
+            ValidationLocalization.Apply(localizationService);
+            LocalizationHelper.UseLocalization(localizationService);
             await _host.Services.GetRequiredService<IThemeService>().ApplyConfiguredThemeAsync();
 
             // CurrencyValueConverter is instantiated by XAML with no constructor, so it cannot
@@ -61,8 +69,17 @@ public partial class App : System.Windows.Application
             await currencyFormatter.ApplyConfiguredCurrencyAsync();
             BookStore.UI.Converters.CurrencyValueConverter.FormatterService = currencyFormatter;
             var navigationService = _host.Services.GetRequiredService<INavigationService>();
-            var firstRunSetupService = _host.Services.GetRequiredService<IFirstRunSetupService>();
-            if (await firstRunSetupService.IsSetupRequiredAsync())
+
+            // First-run detection and session restore both reach the database, so they run inside a
+            // short-lived startup scope. The signed-in session itself lives on a singleton, so it
+            // outlives the scope that established it.
+            bool setupRequired;
+            using (var startupScope = _host.Services.CreateScope())
+            {
+                setupRequired = await startupScope.ServiceProvider.GetRequiredService<IFirstRunSetupService>().IsSetupRequiredAsync();
+            }
+
+            if (setupRequired)
             {
                 await navigationService.NavigateToAsync<FirstRunSetupViewModel>();
                 var setupWindow = _host.Services.GetRequiredService<MainWindow>();
@@ -71,11 +88,16 @@ public partial class App : System.Windows.Application
                 return;
             }
 
-            var authenticationService = _host.Services.GetRequiredService<IAuthenticationService>();
             var sessionTimeoutService = _host.Services.GetRequiredService<ISessionTimeoutService>();
-            var rememberedSession = await authenticationService.TryRestoreRememberedSessionAsync();
 
-            if (rememberedSession.Succeeded)
+            bool sessionRestored;
+            using (var sessionScope = _host.Services.CreateScope())
+            {
+                var authenticationService = sessionScope.ServiceProvider.GetRequiredService<IAuthenticationService>();
+                sessionRestored = (await authenticationService.TryRestoreRememberedSessionAsync()).Succeeded;
+            }
+
+            if (sessionRestored)
             {
                 sessionTimeoutService.Start();
                 await navigationService.NavigateToAsync<AuthenticatedHomeViewModel>();
@@ -120,6 +142,14 @@ public partial class App : System.Windows.Application
     public static IHostBuilder CreateHostBuilder(string[] args)
     {
         return Host.CreateDefaultBuilder(args)
+            // Validated in every configuration, not just Development. Navigation resolving scoped
+            // services from the root provider is exactly the defect these two checks catch, and it
+            // shipped precisely because the release build stayed silent about it.
+            .UseDefaultServiceProvider(options =>
+            {
+                options.ValidateScopes = true;
+                options.ValidateOnBuild = true;
+            })
             .ConfigureAppConfiguration((context, builder) =>
             {
                 builder.SetBasePath(AppContext.BaseDirectory);

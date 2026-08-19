@@ -57,13 +57,36 @@ public sealed class StartSaleHandler
             return Result<SaleSessionDto>.Failure(validation.Errors[0].ErrorMessage);
         }
 
+        var existing = await _sessionStore.GetCurrentAsync(cancellationToken);
+        if (existing is { IsSuspended: false, Items.Count: > 0 })
+        {
+            if (!request.ForceNew)
+            {
+                // Resume rather than replace. Returning to the POS screen -- or restarting after a
+                // crash -- must not discard a cart that already has items in it.
+                await _pricingService.RecalculateAsync(existing, cancellationToken);
+                _logger.LogInformation("POS sale resumed in progress. Invoice={InvoiceNumber} Lines={Lines}", existing.InvoiceNumber, existing.Items.Count);
+                return Result<SaleSessionDto>.Success(existing);
+            }
+
+            // An explicit new sale parks the current cart in Held Sales, so nothing is lost.
+            existing.IsSuspended = true;
+            await _sessionStore.SuspendAsync(existing, cancellationToken);
+            _logger.LogInformation("Active POS cart suspended to start a new sale. Invoice={InvoiceNumber}", existing.InvoiceNumber);
+        }
+
         var sale = new SaleSessionDto
         {
-            InvoiceNumber = $"POS-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}",
             CashierId = _currentUserService.UserId ?? Guid.Empty,
             CashierName = _currentUserService.FullName ?? _currentUserService.Username ?? "Cashier",
             CustomerName = request.CustomerName.Trim()
         };
+
+        // The timestamp alone collided when two sales were created in the same millisecond, which
+        // the unique index on InvoiceNumber would later reject. The session id suffix makes it unique
+        // by construction.
+        var suffix = sale.SaleId.ToString("N")[..4].ToUpperInvariant();
+        sale.InvoiceNumber = $"POS-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}-{suffix}";
         await _pricingService.RecalculateAsync(sale, cancellationToken);
         await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
         _logger.LogInformation("POS sale started. Invoice={InvoiceNumber} Cashier={Cashier}", sale.InvoiceNumber, sale.CashierName);
@@ -414,6 +437,15 @@ public sealed class ResumeSaleHandler
             return Result<SaleSessionDto>.Failure(validation.Errors[0].ErrorMessage);
         }
 
+        // Whatever is on screen is parked, not binned. Resuming used to overwrite the active cart
+        // outright, so a cashier halfway through an order lost it with no warning and no way back.
+        var active = await _sessionStore.GetCurrentAsync(cancellationToken);
+        if (active is { Items.Count: > 0 } && active.SaleId != request.SaleId)
+        {
+            active.IsSuspended = true;
+            await _sessionStore.SuspendAsync(active, cancellationToken);
+        }
+
         var sale = await _sessionStore.ResumeAsync(request.SaleId, cancellationToken);
         if (sale is null)
         {
@@ -544,7 +576,7 @@ public sealed class CompleteSaleHandler
                     cancellationToken);
             }
 
-            sale.UpdateCharges(session.InvoiceDiscount, session.Summary.Tax);
+            sale.UpdateCharges(session.InvoiceDiscount, session.Summary.Tax, session.Summary.TaxIncludedInPrice);
             sale.UpdatePaymentMethod(request.PaymentMethod);
             sale.Complete(session.AmountPaid);
             await _unitOfWork.Sales.AddAsync(sale, cancellationToken);
