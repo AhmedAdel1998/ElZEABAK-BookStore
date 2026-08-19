@@ -9,7 +9,7 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <Grid>
-            <controls:AppCard Title="{Binding Title}" Subtitle="General, book, pricing, stock, category, media, and status metadata." Icon="P">
+            <controls:AppCard Title="{Binding Title}" Subtitle="General, book, pricing, stock, category, media, and status metadata.">
                 <StackPanel>
                     <UniformGrid Columns="2">
                         <StackPanel Margin="0,0,12,12">
@@ -87,20 +87,20 @@
                             <TextBlock Width="520" Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding ImagePath}" TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding SelectImageCommand}" Content="Select" Icon="I" />
-                            <controls:SecondaryButton Command="{Binding RemoveImageCommand}" Content="Remove" Icon="X" />
+                            <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding SelectImageCommand}" Content="Select" Icon="Folder" />
+                            <controls:SecondaryButton Command="{Binding RemoveImageCommand}" Content="Remove" Icon="Remove" />
                         </StackPanel>
                     </DockPanel>
 
                     <CheckBox Margin="0,16,0,0" Content="Active" IsChecked="{Binding IsActive}" />
-                    <TextBlock Margin="0,12,0,0" Foreground="{DynamicResource DangerBrush}" Text="{Binding ValidationMessage}" TextWrapping="Wrap" />
+                    <TextBlock Margin="0,12,0,0" Foreground="{DynamicResource DangerBrush}" Text="{Binding ValidationMessage, Converter={StaticResource LocalizeConverter}}" TextWrapping="Wrap" />
 
                     <StackPanel Margin="0,18,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
-                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding GenerateBarcodeCommand}" Content="Generate Barcode" Icon="B" />
-                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding DuplicateCommand}" Content="Duplicate" Icon="D" />
-                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ResetCommand}" Content="Reset" Icon="R" />
-                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="Cancel" Icon="X" />
-                        <controls:PrimaryButton Command="{Binding SaveCommand}" Content="Save" Icon="S" IsLoading="{Binding IsBusy}" />
+                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding GenerateBarcodeCommand}" Content="Generate Barcode" Icon="Barcode" />
+                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding DuplicateCommand}" Content="Duplicate" Icon="Duplicate" />
+                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding ResetCommand}" Content="Reset" Icon="Reset" />
+                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="Cancel" Icon="Cancel" />
+                        <controls:PrimaryButton Command="{Binding SaveCommand}" Content="Save" Icon="Save" IsLoading="{Binding IsBusy}" />
                     </StackPanel>
                 </StackPanel>
             </controls:AppCard>

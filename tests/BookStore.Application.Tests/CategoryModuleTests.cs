@@ -177,9 +177,14 @@ public class CategoryModuleTests
             return Task.CompletedTask;
         }
 
-        public Task<IReadOnlyCollection<Category>> SearchAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyCollection<Category>> SearchAsync(string? searchTerm, int pageNumber, int pageSize, bool? isActive = null, CancellationToken cancellationToken = default)
         {
             var query = Categories.Where(category => !category.IsDeleted);
+            if (isActive.HasValue)
+            {
+                query = query.Where(category => category.IsActive == isActive.Value);
+            }
+
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 query = query.Where(category =>
@@ -197,7 +202,7 @@ public class CategoryModuleTests
 
         public async Task<int> CountAsync(string? searchTerm = null, CancellationToken cancellationToken = default)
         {
-            return (await SearchAsync(searchTerm, 1, int.MaxValue, cancellationToken)).Count;
+            return (await SearchAsync(searchTerm, 1, int.MaxValue, null, cancellationToken)).Count;
         }
 
         public Task<bool> ExistsByNameAsync(string name, Guid? excludedCategoryId = null, CancellationToken cancellationToken = default)

@@ -26,6 +26,7 @@ using BookStore.UI.Dialogs;
 using BookStore.UI.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Globalization;
 using System.Media;
 
 namespace BookStore.UI.ViewModels;
@@ -168,7 +169,7 @@ public partial class POSViewModel : BaseViewModel
         Title = _localizationService.T("POS.Cashier");
         LastScanMessage = _localizationService.T("POS.ReadyToScan");
         _localizationService.CultureChanged += (_, _) => ApplyLocalizedText();
-        _ = StartSaleAsync();
+        _ = ResumeOrStartSaleAsync();
     }
 
     /// <summary>Gets search results for manual product lookup.</summary>
@@ -203,7 +204,7 @@ public partial class POSViewModel : BaseViewModel
                 return;
             }
 
-            foreach (var customer in result.Value.Items.Select(item => new CustomerSelectionItem { Id = item.Id, FullName = item.FullName, Phone = item.Phone }))
+            foreach (var customer in result.Value.Items.Select(item => new CustomerSelectionItem { Id = item.PersistedId, FullName = item.FullName, Phone = item.Phone }))
             {
                 CustomerResults.Add(customer);
             }
@@ -277,13 +278,23 @@ public partial class POSViewModel : BaseViewModel
         });
     }
 
-    /// <summary>Starts a new cashier sale.</summary>
+    /// <summary>
+    /// Starts a fresh cashier sale, suspending any cart currently in progress.
+    /// </summary>
     [RelayCommand]
-    private async Task StartSaleAsync()
+    private async Task StartSaleAsync() => await BeginSaleAsync(forceNew: true);
+
+    /// <summary>
+    /// Loads the cart already in progress, or opens a new one when there is none. Used when the POS
+    /// screen is opened so that navigating away and back does not lose a cart.
+    /// </summary>
+    private async Task ResumeOrStartSaleAsync() => await BeginSaleAsync(forceNew: false);
+
+    private async Task BeginSaleAsync(bool forceNew)
     {
         await ExecuteAsync(async () =>
         {
-            var result = await _startSaleHandler.HandleAsync(new StartSaleRequest());
+            var result = await _startSaleHandler.HandleAsync(new StartSaleRequest(ForceNew: forceNew));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
@@ -627,7 +638,9 @@ public partial class POSViewModel : BaseViewModel
     [RelayCommand]
     private void AddQuickCash(string? amountText)
     {
-        if (decimal.TryParse(amountText, out var amount) && amount > 0)
+        // The denomination arrives as a XAML literal, so it must be read with the invariant
+        // convention rather than the UI culture.
+        if (decimal.TryParse(amountText, NumberStyles.Number, CultureInfo.InvariantCulture, out var amount) && amount > 0)
         {
             AmountPaid += amount;
         }
@@ -659,6 +672,7 @@ public partial class POSViewModel : BaseViewModel
             await ShowErrorAsync(result.Error);
             return false;
         }
+
 
         SetSale(result.Value);
         await RefreshHeldSalesAsync();

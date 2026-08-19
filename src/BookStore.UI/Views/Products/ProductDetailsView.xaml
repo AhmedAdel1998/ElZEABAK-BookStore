@@ -2,32 +2,34 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:BookStore.UI.Controls">
-    <Grid>
-        <controls:AppCard Title="Product Details" Subtitle="{Binding Message}" Icon="P">
-            <StackPanel DataContext="{Binding Product}">
-                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="{Binding Title}" />
-                <TextBlock Margin="0,4,0,12" Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding Subtitle}" />
-                <UniformGrid Columns="3">
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Barcode" /><TextBlock FontWeight="SemiBold" Text="{Binding Barcode}" /></StackPanel>
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="ISBN" /><TextBlock FontWeight="SemiBold" Text="{Binding ISBN}" /></StackPanel>
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Category" /><TextBlock FontWeight="SemiBold" Text="{Binding CategoryName}" /></StackPanel>
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Author" /><TextBlock FontWeight="SemiBold" Text="{Binding Author}" /></StackPanel>
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Publisher" /><TextBlock FontWeight="SemiBold" Text="{Binding Publisher}" /></StackPanel>
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Language" /><TextBlock FontWeight="SemiBold" Text="{Binding Language}" /></StackPanel>
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Selling Price" /><TextBlock FontWeight="SemiBold" Text="{Binding SellingPrice, StringFormat={}{0:C}}" /></StackPanel>
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Purchase Price" /><TextBlock FontWeight="SemiBold" Text="{Binding PurchasePrice, StringFormat={}{0:C}}" /></StackPanel>
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Quantity" /><TextBlock FontWeight="SemiBold" Text="{Binding Quantity}" /></StackPanel>
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Minimum Stock" /><TextBlock FontWeight="SemiBold" Text="{Binding MinimumStock}" /></StackPanel>
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Shelf" /><TextBlock FontWeight="SemiBold" Text="{Binding ShelfLocation}" /></StackPanel>
-                    <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Status" /><TextBlock FontWeight="SemiBold" Text="{Binding Status}" /></StackPanel>
-                </UniformGrid>
-                <TextBlock Margin="0,12,0,0" Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding Description}" TextWrapping="Wrap" />
-                <StackPanel Margin="0,18,0,0" Orientation="Horizontal">
-                    <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding DataContext.BackCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" Content="Back" Icon="B" />
-                    <controls:PrimaryButton Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" Content="Edit" Icon="E" />
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid>
+            <controls:AppCard Title="Product Details" Subtitle="{Binding Message, Converter={StaticResource LocalizeConverter}}" Icon="Products">
+                <StackPanel DataContext="{Binding Product}">
+                    <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="{Binding Title}" />
+                    <TextBlock Margin="0,4,0,12" Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding Subtitle}" />
+                    <UniformGrid Columns="3">
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Barcode" /><TextBlock FontWeight="SemiBold" Text="{Binding Barcode}" /></StackPanel>
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="ISBN" /><TextBlock FontWeight="SemiBold" Text="{Binding ISBN}" /></StackPanel>
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Category" /><TextBlock FontWeight="SemiBold" Text="{Binding CategoryName}" /></StackPanel>
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Author" /><TextBlock FontWeight="SemiBold" Text="{Binding Author}" /></StackPanel>
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Publisher" /><TextBlock FontWeight="SemiBold" Text="{Binding Publisher}" /></StackPanel>
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Language" /><TextBlock FontWeight="SemiBold" Text="{Binding Language}" /></StackPanel>
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Selling Price" /><TextBlock FontWeight="SemiBold" Text="{Binding SellingPrice, Converter={StaticResource CurrencyConverter}}" /></StackPanel>
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Purchase Price" /><TextBlock FontWeight="SemiBold" Text="{Binding PurchasePrice, Converter={StaticResource CurrencyConverter}}" /></StackPanel>
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Quantity" /><TextBlock FontWeight="SemiBold" Text="{Binding Quantity}" /></StackPanel>
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Minimum Stock" /><TextBlock FontWeight="SemiBold" Text="{Binding MinimumStock}" /></StackPanel>
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Shelf" /><TextBlock FontWeight="SemiBold" Text="{Binding ShelfLocation}" /></StackPanel>
+                        <StackPanel Margin="0,0,12,12"><TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Status" /><TextBlock FontWeight="SemiBold" Text="{Binding Status}" /></StackPanel>
+                    </UniformGrid>
+                    <TextBlock Margin="0,12,0,0" Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding Description, Converter={StaticResource LocalizeConverter}}" TextWrapping="Wrap" />
+                    <StackPanel Margin="0,18,0,0" Orientation="Horizontal">
+                        <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding DataContext.BackCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" Content="Back" Icon="Back" />
+                        <controls:PrimaryButton Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" Content="Edit" Icon="Edit" />
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
-        </controls:AppCard>
-        <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading product..." />
-    </Grid>
+            </controls:AppCard>
+            <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading product..." />
+        </Grid>
+    </ScrollViewer>
 </UserControl>

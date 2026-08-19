@@ -17,10 +17,15 @@ public class CategoryRepository(BookStoreDbContext dbContext) : Repository<Categ
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyCollection<Category>> SearchAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<Category>> SearchAsync(string? searchTerm, int pageNumber, int pageSize, bool? isActive = null, CancellationToken cancellationToken = default)
     {
-        var query = ApplySearch(DbContext.Categories.AsNoTracking(), searchTerm)
-            .OrderBy(category => category.Name);
+        var query = ApplySearch(DbContext.Categories.AsNoTracking(), searchTerm);
+        if (isActive.HasValue)
+        {
+            query = query.Where(category => category.IsActive == isActive.Value);
+        }
+
+        query = query.OrderBy(category => category.Name);
 
         return await query
             .Skip((Math.Max(pageNumber, 1) - 1) * Math.Max(pageSize, 1))

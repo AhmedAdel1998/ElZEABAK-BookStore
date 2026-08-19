@@ -12,6 +12,7 @@ public partial class NavigationService : ObservableObject, INavigationService
     private readonly Stack<Type> _backStack = [];
     private readonly Stack<Type> _forwardStack = [];
     private Type? _currentViewModelType;
+    private IViewModelLease? _currentLease;
 
     [ObservableProperty]
     private BaseViewModel? currentViewModel;
@@ -85,12 +86,14 @@ public partial class NavigationService : ObservableObject, INavigationService
             _forwardStack.Clear();
         }
 
-        if (CurrentViewModel is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
+        var lease = _viewModelFactory.Create(viewModelType);
 
-        CurrentViewModel = _viewModelFactory.Create(viewModelType);
+        // Release the page being replaced only once its successor exists, so a construction
+        // failure leaves the current screen intact rather than blanking the window.
+        var previous = _currentLease;
+        _currentLease = lease;
+        CurrentViewModel = lease.ViewModel;
         _currentViewModelType = viewModelType;
+        previous?.Dispose();
     }
 }

@@ -41,12 +41,12 @@ public sealed class GetCategoriesHandler
             return Result<PagedResult<CategoryDto>>.Failure(validation.Errors[0].ErrorMessage);
         }
 
-        return await LoadAsync(null, request.PageNumber, request.PageSize, cancellationToken);
+        return await LoadAsync(null, request.PageNumber, request.PageSize, isActive: null, cancellationToken);
     }
 
-    internal async Task<Result<PagedResult<CategoryDto>>> LoadAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken)
+    internal async Task<Result<PagedResult<CategoryDto>>> LoadAsync(string? searchTerm, int pageNumber, int pageSize, bool? isActive, CancellationToken cancellationToken)
     {
-        var categories = await _unitOfWork.Categories.SearchAsync(searchTerm, pageNumber, pageSize, cancellationToken);
+        var categories = await _unitOfWork.Categories.SearchAsync(searchTerm, pageNumber, pageSize, isActive, cancellationToken);
         var totalCount = await _unitOfWork.Categories.CountAsync(searchTerm, cancellationToken);
         var counts = await _unitOfWork.Categories.GetProductCountsAsync(categories.Select(category => category.Id), cancellationToken);
         var items = categories.Select(category =>

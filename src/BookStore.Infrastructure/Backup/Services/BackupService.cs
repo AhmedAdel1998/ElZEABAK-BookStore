@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using BookStore.Application.Features.Settings.Services;
+using BookStore.Application.Features.Settings.DTOs;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -21,24 +23,32 @@ public sealed class BackupService : IBackupService
     private readonly IDiskSpaceService _diskSpaceService;
     private readonly ICurrentUserService _currentUserService;
     private readonly BackupSettings _settings;
+    private readonly ISettingsService _settingsService;
     private readonly ILogger<BackupService> _logger;
+
+    // The administrator-configured settings, refreshed at the start of each operation. appsettings
+    // remains the fallback for a first run or an unreadable settings table.
+    private BackupSettingsDto? _stored;
 
     public BackupService(
         DatabasePathResolver databasePathResolver,
         IDiskSpaceService diskSpaceService,
         ICurrentUserService currentUserService,
         IOptions<ApplicationSettings> settings,
+        ISettingsService settingsService,
         ILogger<BackupService> logger)
     {
         _databasePathResolver = databasePathResolver;
         _diskSpaceService = diskSpaceService;
         _currentUserService = currentUserService;
         _settings = settings.Value.Backup;
+        _settingsService = settingsService;
         _logger = logger;
     }
 
     public async Task<BackupOperationResult> CreateBackupAsync(BackupType backupType, CancellationToken cancellationToken = default)
     {
+        await RefreshStoredSettingsAsync(cancellationToken);
         await OperationLock.WaitAsync(cancellationToken);
         var stopwatch = Stopwatch.StartNew();
         try
@@ -100,6 +110,7 @@ public sealed class BackupService : IBackupService
 
     public async Task<IReadOnlyCollection<BackupMetadataDto>> ListBackupsAsync(CancellationToken cancellationToken = default)
     {
+        await RefreshStoredSettingsAsync(cancellationToken);
         var folder = GetBackupFolder();
         if (!Directory.Exists(folder))
         {
@@ -127,6 +138,7 @@ public sealed class BackupService : IBackupService
 
     public async Task<BackupOperationResult> ValidateBackupAsync(Guid backupId, CancellationToken cancellationToken = default)
     {
+        await RefreshStoredSettingsAsync(cancellationToken);
         var metadata = await GetBackupAsync(backupId, cancellationToken);
         if (metadata is null)
         {
@@ -151,6 +163,7 @@ public sealed class BackupService : IBackupService
 
     public async Task<BackupOperationResult> RestoreBackupAsync(Guid backupId, string confirmationText, CancellationToken cancellationToken = default)
     {
+        await RefreshStoredSettingsAsync(cancellationToken);
         if (!string.Equals(confirmationText, ConfirmationText, StringComparison.Ordinal))
         {
             return BackupOperationResult.Failure("Restore confirmation text is required.");
@@ -182,10 +195,10 @@ public sealed class BackupService : IBackupService
                 return BackupOperationResult.Failure("Insufficient disk space to restore the selected backup.", selected);
             }
 
-            var preRestore = _settings.CreatePreRestoreBackup
+            var preRestore = CreatePreRestoreBackup
                 ? await CreateBackupInternalWithoutLockAsync(BackupType.PreRestore, cancellationToken)
                 : null;
-            if (_settings.CreatePreRestoreBackup && preRestore?.ValidationStatus != BackupValidationStatus.Valid)
+            if (CreatePreRestoreBackup && preRestore?.ValidationStatus != BackupValidationStatus.Valid)
             {
                 return BackupOperationResult.Failure("Pre-restore safety backup could not be created.");
             }
@@ -257,6 +270,7 @@ public sealed class BackupService : IBackupService
 
     public async Task<BackupOperationResult> DeleteBackupAsync(Guid backupId, CancellationToken cancellationToken = default)
     {
+        await RefreshStoredSettingsAsync(cancellationToken);
         var backups = await ListBackupsAsync(cancellationToken);
         var backup = backups.FirstOrDefault(item => item.BackupId == backupId);
         if (backup is null)
@@ -278,7 +292,8 @@ public sealed class BackupService : IBackupService
 
     public async Task<BackupOperationResult> CleanupBackupsAsync(CancellationToken cancellationToken = default)
     {
-        var retention = Math.Max(1, _settings.RetentionCount);
+        await RefreshStoredSettingsAsync(cancellationToken);
+        var retention = Math.Max(1, RetentionCount);
         var backups = (await ListBackupsAsync(cancellationToken))
             .Where(backup => backup.BackupType != BackupType.PreRestore)
             .OrderByDescending(backup => backup.CreatedAt)
@@ -369,7 +384,31 @@ public sealed class BackupService : IBackupService
         }
     }
 
-    private string GetBackupFolder() => ExpandConfiguredPath(_settings.Folder, "Backups");
+    /// <summary>Gets the configured pre-restore backup behaviour.</summary>
+    private bool CreatePreRestoreBackup => _stored?.CreatePreRestoreBackup ?? _settings.CreatePreRestoreBackup;
+
+    /// <summary>Gets the configured number of backups to retain.</summary>
+    private int RetentionCount => _stored is { RetentionCount: > 0 } stored ? stored.RetentionCount : _settings.RetentionCount;
+
+    /// <summary>
+    /// Reloads the administrator-configured backup settings, keeping the appsettings values if they
+    /// cannot be read.
+    /// </summary>
+    private async Task RefreshStoredSettingsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            _stored = await _settingsService.GetAsync<BackupSettingsDto>(cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Stored backup settings could not be read; using configured defaults.");
+        }
+    }
+
+    private string GetBackupFolder() => ExpandConfiguredPath(
+        string.IsNullOrWhiteSpace(_stored?.BackupLocation) ? _settings.Folder : _stored!.BackupLocation,
+        "Backups");
 
     private string GetTempFolder() => ExpandConfiguredPath(_settings.TempFolder, "Temp");
 

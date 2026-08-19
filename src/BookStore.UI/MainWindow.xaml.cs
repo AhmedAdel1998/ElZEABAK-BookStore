@@ -1,4 +1,5 @@
 using System.Windows;
+using BookStore.UI.Services;
 using BookStore.UI.ViewModels;
 
 namespace BookStore.UI;
@@ -12,9 +13,10 @@ public partial class MainWindow : Window
     /// Initializes a new instance of the <see cref="MainWindow"/> class.
     /// </summary>
     /// <param name="viewModel">The shell view model.</param>
-    public MainWindow(MainViewModel viewModel)
+    public MainWindow(MainViewModel viewModel, IUiTreeLocalizer uiTreeLocalizer)
     {
         InitializeComponent();
         DataContext = viewModel;
+        uiTreeLocalizer.Attach(this);
     }
 }

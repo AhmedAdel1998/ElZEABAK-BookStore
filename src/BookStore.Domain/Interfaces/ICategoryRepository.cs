@@ -49,7 +49,7 @@ public interface ICategoryRepository
     /// <param name="pageSize">The page size.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The matching categories.</returns>
-    Task<IReadOnlyCollection<Category>> SearchAsync(string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<Category>> SearchAsync(string? searchTerm, int pageNumber, int pageSize, bool? isActive = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Counts categories matching an optional search term.

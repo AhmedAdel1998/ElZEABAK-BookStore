@@ -2,93 +2,95 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:BookStore.UI.Controls">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <DockPanel Grid.Row="0" Margin="0,0,0,12">
-            <StackPanel DockPanel.Dock="Left">
-                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="{Binding Supplier.CompanyName}" />
-                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding Supplier.Phone}" />
-            </StackPanel>
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding BackCommand}" Content="Back" Icon="B" />
-                <controls:PrimaryButton Command="{Binding EditCommand}" Content="Edit" Icon="E" />
-            </StackPanel>
-        </DockPanel>
-        <Border Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Status" />
-                    <TextBlock FontWeight="SemiBold" Text="{Binding Supplier.Status}" />
-                </StackPanel>
-                <StackPanel Grid.Column="1">
-                    <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Products" />
-                    <TextBlock FontWeight="SemiBold" Text="{Binding Supplier.ProductCount}" />
-                </StackPanel>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Contact" />
-                    <TextBlock FontWeight="SemiBold" Text="{Binding Supplier.ContactName}" />
-                </StackPanel>
-                <StackPanel Grid.Column="3">
-                    <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Email" />
-                    <TextBlock FontWeight="SemiBold" Text="{Binding Supplier.Email}" />
-                </StackPanel>
-            </Grid>
-        </Border>
-        <Grid Grid.Row="2">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <Border Grid.Row="0" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
+            <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                <StackPanel DockPanel.Dock="Left">
+                    <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="{Binding Supplier.CompanyName}" />
+                    <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding Supplier.Phone}" />
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding BackCommand}" Content="Back" Icon="Back" />
+                    <controls:PrimaryButton Command="{Binding EditCommand}" Content="Edit" Icon="Edit" />
+                </StackPanel>
+            </DockPanel>
+            <Border Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Address" />
-                        <TextBlock Text="{Binding Supplier.Address}" TextWrapping="Wrap" />
+                        <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Status" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Supplier.Status}" />
                     </StackPanel>
                     <StackPanel Grid.Column="1">
-                        <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Notes" />
-                        <TextBlock Text="{Binding Supplier.Notes}" TextWrapping="Wrap" />
+                        <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Products" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Supplier.ProductCount}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Contact" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Supplier.ContactName}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="3">
+                        <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Email" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Supplier.Email}" />
                     </StackPanel>
                 </Grid>
             </Border>
-            <DockPanel Grid.Row="1" Margin="0,0,0,8">
-                <TextBlock DockPanel.Dock="Left" FontWeight="SemiBold" Text="Associated Products" />
-                <Button DockPanel.Dock="Right" Command="{Binding RefreshProductsCommand}" Content="Refresh" />
-            </DockPanel>
-            <controls:AppDataGrid Grid.Row="2" ItemsSource="{Binding Products}" IsLoading="{Binding IsBusy}">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding Barcode}" Header="Barcode" Width="*" />
-                    <DataGridTextColumn Binding="{Binding ISBN}" Header="ISBN" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Title}" Header="Title" Width="1.4*" />
-                    <DataGridTextColumn Binding="{Binding Author}" Header="Author" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Category}" Header="Category" Width="*" />
-                    <DataGridTextColumn Binding="{Binding PurchasePrice, StringFormat=N2}" Header="Purchase" Width="*" />
-                    <DataGridTextColumn Binding="{Binding SellingPrice, StringFormat=N2}" Header="Selling" Width="*" />
-                    <DataGridTextColumn Binding="{Binding CurrentStock}" Header="Stock" Width="80" />
-                    <DataGridTextColumn Binding="{Binding Status}" Header="Status" Width="90" />
-                </DataGrid.Columns>
-            </controls:AppDataGrid>
-            <TextBlock Grid.Row="3" Margin="0,10,0,0" Foreground="{DynamicResource SecondaryTextBrush}">
-                <Run Text="Product rows " /><Run Text="{Binding TotalCount}" />
-                <Run Text=" | Supplier created " /><Run Text="{Binding Supplier.CreatedAt}" />
-                <Run Text=" | Updated " /><Run Text="{Binding Supplier.UpdatedAt}" />
-            </TextBlock>
+            <Grid Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Border Grid.Row="0" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Address" />
+                            <TextBlock Text="{Binding Supplier.Address}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Notes" />
+                            <TextBlock Text="{Binding Supplier.Notes}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <DockPanel Grid.Row="1" Margin="0,0,0,8">
+                    <TextBlock DockPanel.Dock="Left" FontWeight="SemiBold" Text="Associated Products" />
+                    <Button DockPanel.Dock="Right" Command="{Binding RefreshProductsCommand}" Content="Refresh" />
+                </DockPanel>
+                <controls:AppDataGrid Grid.Row="2" HorizontalScrollBarVisibility="Auto" ItemsSource="{Binding Products}" IsLoading="{Binding IsBusy}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Binding="{Binding Barcode}" Header="Barcode" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding ISBN}" Header="ISBN" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding Title}" Header="Title" Width="1.4*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding Author}" Header="Author" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding Category}" Header="Category" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding PurchasePrice, StringFormat=N2}" Header="Purchase" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding SellingPrice, StringFormat=N2}" Header="Selling" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding CurrentStock}" Header="Stock" Width="80" />
+                        <DataGridTextColumn Binding="{Binding Status}" Header="Status" Width="90" />
+                    </DataGrid.Columns>
+                </controls:AppDataGrid>
+                <TextBlock Grid.Row="3" Margin="0,10,0,0" Foreground="{DynamicResource SecondaryTextBrush}">
+                    <Run Text="Product rows " /><Run Text="{Binding TotalCount}" />
+                    <Run Text=" | Supplier created " /><Run Text="{Binding Supplier.CreatedAt}" />
+                    <Run Text=" | Updated " /><Run Text="{Binding Supplier.UpdatedAt}" />
+                </TextBlock>
+            </Grid>
         </Grid>
-    </Grid>
+    </ScrollViewer>
 </UserControl>

@@ -95,9 +95,42 @@ public class CurrencyTextBox : TextInputBox
     /// <inheritdoc />
     protected override void OnPreviewTextInput(TextCompositionEventArgs e)
     {
-        var candidate = Text.Insert(CaretIndex, e.Text);
-        e.Handled = !decimal.TryParse(candidate, NumberStyles.Number, CultureInfo.CurrentCulture, out _);
+        var candidate = Text.Remove(SelectionStart, SelectionLength).Insert(SelectionStart, e.Text);
+        e.Handled = !IsAcceptable(candidate);
         base.OnPreviewTextInput(e);
+    }
+
+    /// <summary>
+    /// Accepts a partially typed amount under either the current culture or the invariant
+    /// convention. Numeric keypads emit "." regardless of the UI language, and Arabic cultures
+    /// declare U+066B as their decimal separator, so a culture-only check rejects the decimal
+    /// point outright and makes fractional prices impossible to enter.
+    /// </summary>
+    private static bool IsAcceptable(string candidate)
+    {
+        if (string.IsNullOrEmpty(candidate))
+        {
+            return true;
+        }
+
+        // A lone or trailing separator is a valid intermediate state while typing.
+        var separator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+        foreach (var terminator in new[] { ".", separator })
+        {
+            if (candidate == terminator || candidate == "-" || candidate == "-" + terminator)
+            {
+                return true;
+            }
+
+            if (candidate.EndsWith(terminator, StringComparison.Ordinal))
+            {
+                candidate = candidate[..^terminator.Length];
+                break;
+            }
+        }
+
+        return decimal.TryParse(candidate, NumberStyles.Number, CultureInfo.CurrentCulture, out _)
+            || decimal.TryParse(candidate, NumberStyles.Number, CultureInfo.InvariantCulture, out _);
     }
 }
 
@@ -128,47 +161,6 @@ public class EmailTextBox : TextInputBox
 public class PhoneTextBox : TextInputBox
 {
 }
-
-/// <summary>
-/// Password input shell with bindable password and common placeholder metadata.
-/// </summary>
-public class PasswordInputBox : Control
-{
-    /// <summary>
-    /// Identifies the <see cref="Placeholder"/> dependency property.
-    /// </summary>
-    public static readonly DependencyProperty PlaceholderProperty =
-        DependencyProperty.Register(nameof(Placeholder), typeof(string), typeof(PasswordInputBox), new PropertyMetadata(string.Empty));
-
-    /// <summary>
-    /// Identifies the <see cref="BoundPassword"/> dependency property.
-    /// </summary>
-    public static readonly DependencyProperty BoundPasswordProperty =
-        DependencyProperty.Register(nameof(BoundPassword), typeof(string), typeof(PasswordInputBox), new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnBoundPasswordChanged));
-
-    /// <summary>
-    /// Gets or sets placeholder text shown by the input template.
-    /// </summary>
-    public string Placeholder
-    {
-        get => (string)GetValue(PlaceholderProperty);
-        set => SetValue(PlaceholderProperty, value);
-    }
-
-    /// <summary>
-    /// Gets or sets a bindable password value.
-    /// </summary>
-    public string BoundPassword
-    {
-        get => (string)GetValue(BoundPasswordProperty);
-        set => SetValue(BoundPasswordProperty, value);
-    }
-
-    private static void OnBoundPasswordChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-    }
-}
-
 /// <summary>
 /// Theme-aware date picker placeholder for module forms.
 /// </summary>
@@ -181,25 +173,4 @@ public class AppDatePicker : DatePicker
 /// </summary>
 public class AppComboBox : ComboBox
 {
-}
-
-/// <summary>
-/// Placeholder auto-complete control. Suggestion querying will be supplied by future modules.
-/// </summary>
-public class AutoCompleteBox : ComboBox
-{
-    /// <summary>
-    /// Identifies the <see cref="SearchText"/> dependency property.
-    /// </summary>
-    public static readonly DependencyProperty SearchTextProperty =
-        DependencyProperty.Register(nameof(SearchText), typeof(string), typeof(AutoCompleteBox), new PropertyMetadata(string.Empty));
-
-    /// <summary>
-    /// Gets or sets the current auto-complete search text.
-    /// </summary>
-    public string SearchText
-    {
-        get => (string)GetValue(SearchTextProperty);
-        set => SetValue(SearchTextProperty, value);
-    }
 }

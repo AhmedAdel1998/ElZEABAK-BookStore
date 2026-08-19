@@ -1,0 +1,61 @@
+name: CI
+
+# Runs on every push and pull request so a build failure, a test regression, or a newly
+# disclosed vulnerable package is caught before it reaches main - the production-readiness
+# audit found the SQLitePCLRaw CVE by a manual pass; this makes that check automatic.
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+  # Package advisories are published continuously, not only when this repo's code changes, so
+  # the vulnerability check also runs on a schedule to catch a newly disclosed CVE in an
+  # unchanged dependency.
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    # BookStore.UI targets net9.0-windows and references WPF, so the build must run on Windows.
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore "EL ZEABAK BookStore.sln"
+
+      - name: Build
+        run: dotnet build "EL ZEABAK BookStore.sln" --no-restore --configuration Release --warnaserror
+
+      - name: Test
+        run: dotnet test "EL ZEABAK BookStore.sln" --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Results
+          path: '**/test-results.trx'
+          reporter: dotnet-trx
+
+      - name: Check for vulnerable packages
+        # Fails the build the same way a human running this manually would notice a problem:
+        # any hit for "has 1 vulnerable package" (or more) in the output.
+        shell: pwsh
+        run: |
+          $output = dotnet list "EL ZEABAK BookStore.sln" package --vulnerable --include-transitive 2>&1 | Out-String
+          Write-Host $output
+          if ($output -match 'has \d+ vulnerable package') {
+            Write-Error "Vulnerable package(s) detected - see output above."
+            exit 1
+          }

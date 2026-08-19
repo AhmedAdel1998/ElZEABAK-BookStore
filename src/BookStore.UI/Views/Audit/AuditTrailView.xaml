@@ -1,0 +1,39 @@
+<UserControl x:Class="BookStore.UI.Views.Audit.AuditTrailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <Grid Margin="{StaticResource Space24}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Audit Trail" />
+
+        <WrapPanel Grid.Row="1" Margin="0,16,0,16">
+            <TextBox Width="220" Margin="0,0,8,8" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox Width="160" Margin="0,0,8,8" Text="{Binding Area, UpdateSourceTrigger=PropertyChanged}" ToolTip="Area" />
+            <DatePicker Width="140" Margin="0,0,8,8" SelectedDate="{Binding From}" />
+            <DatePicker Width="140" Margin="0,0,8,8" SelectedDate="{Binding To}" />
+            <controls:PrimaryButton Command="{Binding RefreshCommand}" Content="Refresh" Icon="Refresh" />
+            <TextBlock Margin="16,8,0,0" Text="{Binding TotalCount, StringFormat=Total: {0}}" />
+        </WrapPanel>
+
+        <DataGrid Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" HorizontalScrollBarVisibility="Auto" ItemsSource="{Binding Entries}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding OccurredAt}" Header="Time" Width="160" />
+                <DataGridTextColumn Binding="{Binding Area}" Header="Area" Width="120" />
+                <DataGridTextColumn Binding="{Binding Action}" Header="Action" Width="180" />
+                <DataGridTextColumn Binding="{Binding Outcome}" Header="Outcome" Width="100" />
+                <DataGridTextColumn Binding="{Binding Username}" Header="User" Width="140" />
+                <DataGridTextColumn Binding="{Binding EntityType}" Header="Entity" Width="120" />
+                <DataGridTextColumn Binding="{Binding Detail}" Header="Detail" Width="*" MinWidth="110" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <controls:NoDataView Grid.Row="2"
+                            Title="Audit Trail"
+                            Message="No records found."
+                            Visibility="{Binding Entries.Count, Converter={StaticResource EmptyCollectionToVisibilityConverter}}" />
+    </Grid>
+</UserControl>

@@ -2,76 +2,78 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:BookStore.UI.Controls">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <DockPanel Grid.Row="0" Margin="0,0,0,12">
-            <StackPanel DockPanel.Dock="Left">
-                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="{Binding Customer.FullName}" />
-                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding Customer.Phone}" />
-            </StackPanel>
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding BackCommand}" Content="Back" Icon="B" />
-                <controls:PrimaryButton Command="{Binding EditCommand}" Content="Edit" Icon="E" />
-            </StackPanel>
-        </DockPanel>
-        <Border Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Status" />
-                    <TextBlock FontWeight="SemiBold" Text="{Binding Customer.Status}" />
-                </StackPanel>
-                <StackPanel Grid.Column="1">
-                    <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Sales Count" />
-                    <TextBlock FontWeight="SemiBold" Text="{Binding Customer.SalesCount}" />
-                </StackPanel>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Total Purchases" />
-                    <TextBlock FontWeight="SemiBold" Text="{Binding Customer.TotalPurchases, StringFormat=N2}" />
-                </StackPanel>
-                <StackPanel Grid.Column="3">
-                    <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Last Purchase" />
-                    <TextBlock FontWeight="SemiBold" Text="{Binding Customer.LastPurchaseDate}" />
-                </StackPanel>
-            </Grid>
-        </Border>
-        <Grid Grid.Row="2">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <DockPanel Grid.Row="0" Margin="0,0,0,8">
-                <TextBlock DockPanel.Dock="Left" FontWeight="SemiBold" Text="Sales History" />
-                <Button DockPanel.Dock="Right" Command="{Binding RefreshHistoryCommand}" Content="Refresh" />
-                <DatePicker Width="140" Margin="8,0,0,0" SelectedDate="{Binding DateTo}" />
-                <DatePicker Width="140" Margin="8,0,0,0" SelectedDate="{Binding DateFrom}" />
+            <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                <StackPanel DockPanel.Dock="Left">
+                    <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="{Binding Customer.FullName}" />
+                    <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding Customer.Phone}" />
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding BackCommand}" Content="Back" Icon="Back" />
+                    <controls:PrimaryButton Command="{Binding EditCommand}" Content="Edit" Icon="Edit" />
+                </StackPanel>
             </DockPanel>
-            <controls:AppDataGrid Grid.Row="1" ItemsSource="{Binding SalesHistory}" IsLoading="{Binding IsBusy}">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding InvoiceNumber}" Header="Invoice" Width="*" />
-                    <DataGridTextColumn Binding="{Binding SaleDate}" Header="Sale Date" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Total, StringFormat=N2}" Header="Total" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Discount, StringFormat=N2}" Header="Discount" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Tax, StringFormat=N2}" Header="Tax" Width="*" />
-                    <DataGridTextColumn Binding="{Binding PaymentMethod}" Header="Payment" Width="*" />
-                    <DataGridTextColumn Binding="{Binding SaleStatus}" Header="Status" Width="*" />
-                </DataGrid.Columns>
-            </controls:AppDataGrid>
-            <TextBlock Grid.Row="2" Margin="0,10,0,0" Foreground="{DynamicResource SecondaryTextBrush}">
-                <Run Text="Sales rows " /><Run Text="{Binding TotalCount}" />
-                <Run Text=" | Customer created " /><Run Text="{Binding Customer.CreatedAt}" />
-                <Run Text=" | Updated " /><Run Text="{Binding Customer.UpdatedAt}" />
-            </TextBlock>
+            <Border Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Status" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Customer.Status}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Sales Count" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Customer.SalesCount}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Total Purchases" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Customer.TotalPurchases, StringFormat=N2}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="3">
+                        <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Last Purchase" />
+                        <TextBlock FontWeight="SemiBold" Text="{Binding Customer.LastPurchaseDate}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <Grid Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock DockPanel.Dock="Left" FontWeight="SemiBold" Text="Sales History" />
+                    <Button DockPanel.Dock="Right" Command="{Binding RefreshHistoryCommand}" Content="Refresh" />
+                    <DatePicker Width="140" Margin="8,0,0,0" SelectedDate="{Binding DateTo}" />
+                    <DatePicker Width="140" Margin="8,0,0,0" SelectedDate="{Binding DateFrom}" />
+                </DockPanel>
+                <controls:AppDataGrid Grid.Row="1" HorizontalScrollBarVisibility="Auto" ItemsSource="{Binding SalesHistory}" IsLoading="{Binding IsBusy}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Binding="{Binding InvoiceNumber}" Header="Invoice" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding SaleDate}" Header="Sale Date" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding Total, StringFormat=N2}" Header="Total" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding Discount, StringFormat=N2}" Header="Discount" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding Tax, StringFormat=N2}" Header="Tax" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding PaymentMethod}" Header="Payment" Width="*" MinWidth="110" />
+                        <DataGridTextColumn Binding="{Binding SaleStatus}" Header="Status" Width="*" MinWidth="110" />
+                    </DataGrid.Columns>
+                </controls:AppDataGrid>
+                <TextBlock Grid.Row="2" Margin="0,10,0,0" Foreground="{DynamicResource SecondaryTextBrush}">
+                    <Run Text="Sales rows " /><Run Text="{Binding TotalCount}" />
+                    <Run Text=" | Customer created " /><Run Text="{Binding Customer.CreatedAt}" />
+                    <Run Text=" | Updated " /><Run Text="{Binding Customer.UpdatedAt}" />
+                </TextBlock>
+            </Grid>
         </Grid>
-    </Grid>
+    </ScrollViewer>
 </UserControl>

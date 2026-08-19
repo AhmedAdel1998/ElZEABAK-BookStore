@@ -45,59 +45,9 @@ public class DatabaseSeeder
 
     private async Task SeedRolesAndPermissionsAsync(CancellationToken cancellationToken)
     {
-        var permissions = new[]
-        {
-            new Permission(PermissionConstants.ProductView, "View products"),
-            new Permission(PermissionConstants.ProductCreate, "Create products"),
-            new Permission(PermissionConstants.ProductEdit, "Edit products"),
-            new Permission(PermissionConstants.ProductDelete, "Delete products"),
-            new Permission(PermissionConstants.CategoryView, "View categories"),
-            new Permission(PermissionConstants.CategoryCreate, "Create categories"),
-            new Permission(PermissionConstants.CategoryEdit, "Edit categories"),
-            new Permission(PermissionConstants.CategoryDelete, "Delete categories"),
-            new Permission(PermissionConstants.SalesCreate, "Create sales"),
-            new Permission(PermissionConstants.SalesCancel, "Cancel sales"),
-            new Permission(PermissionConstants.InventoryView, "View inventory"),
-            new Permission(PermissionConstants.InventoryEdit, "Edit inventory"),
-            new Permission(PermissionConstants.CustomerView, "View customers"),
-            new Permission(PermissionConstants.SupplierView, "View suppliers"),
-            new Permission(PermissionConstants.SupplierCreate, "Create suppliers"),
-            new Permission(PermissionConstants.SupplierEdit, "Edit suppliers"),
-            new Permission(PermissionConstants.SupplierDelete, "Delete suppliers"),
-            new Permission(PermissionConstants.SupplierViewProducts, "View supplier products"),
-            new Permission(PermissionConstants.ReportsView, "View reports"),
-            new Permission(PermissionConstants.ReportView, "Open reports dashboard"),
-            new Permission(PermissionConstants.ReportSales, "View sales reports"),
-            new Permission(PermissionConstants.ReportProfit, "View profit reports"),
-            new Permission(PermissionConstants.ReportInventory, "View inventory reports"),
-            new Permission(PermissionConstants.ReportCustomers, "View customer reports"),
-            new Permission(PermissionConstants.ReportCashiers, "View cashier performance reports"),
-            new Permission(PermissionConstants.ReportExport, "Export reports"),
-            new Permission(PermissionConstants.ReceiptPrint, "Print receipts"),
-            new Permission(PermissionConstants.ReceiptReprint, "Reprint receipts"),
-            new Permission(PermissionConstants.ReceiptTestPrint, "Run printer test print"),
-            new Permission(PermissionConstants.ReceiptSettings, "Manage receipt printer settings"),
-            new Permission(PermissionConstants.SettingsView, "View settings"),
-            new Permission(PermissionConstants.SettingsStore, "Manage store settings"),
-            new Permission(PermissionConstants.SettingsPOS, "Manage POS settings"),
-            new Permission(PermissionConstants.SettingsReceipt, "Manage receipt settings"),
-            new Permission(PermissionConstants.SettingsPrinter, "Manage printer settings"),
-            new Permission(PermissionConstants.SettingsTax, "Manage tax settings"),
-            new Permission(PermissionConstants.SettingsCurrency, "Manage currency settings"),
-            new Permission(PermissionConstants.SettingsBarcode, "Manage barcode settings"),
-            new Permission(PermissionConstants.SettingsInventory, "Manage inventory settings"),
-            new Permission(PermissionConstants.SettingsBackup, "Manage backup settings"),
-            new Permission(PermissionConstants.SettingsSecurity, "Manage security settings"),
-            new Permission(PermissionConstants.SettingsAppearance, "Manage appearance settings"),
-            new Permission(PermissionConstants.UsersManage, "Manage users"),
-            new Permission(PermissionConstants.RolesManage, "Manage roles"),
-            new Permission(PermissionConstants.BackupView, "View database backups"),
-            new Permission(PermissionConstants.BackupCreate, "Create database backups"),
-            new Permission(PermissionConstants.BackupRestore, "Restore database backups"),
-            new Permission(PermissionConstants.BackupDelete, "Delete database backups"),
-            new Permission(PermissionConstants.BackupValidate, "Validate database backups"),
-            new Permission(PermissionConstants.BackupSettings, "Manage backup settings")
-        };
+        var permissions = PermissionCatalog.All
+            .Select(definition => new Permission(definition.Name, definition.Description))
+            .ToArray();
 
         var existingPermissionNames = await _dbContext.Permissions.Select(permission => permission.Name).ToListAsync(cancellationToken);
         var missingPermissions = permissions
@@ -126,15 +76,15 @@ public class DatabaseSeeder
             administrator.AddPermission(permission);
         }
 
-        foreach (var permission in storedPermissions.Where(permission => permission.Name is not PermissionConstants.UsersManage and not PermissionConstants.RolesManage and not PermissionConstants.BackupRestore))
+        foreach (var permission in storedPermissions.Where(permission => PermissionCatalog.ManagerPermissions.Contains(permission.Name, StringComparer.OrdinalIgnoreCase)))
         {
             manager.AddPermission(permission);
         }
 
-        cashier.AddPermission(storedPermissions.Single(permission => permission.Name == PermissionConstants.SalesCreate));
-        cashier.AddPermission(storedPermissions.Single(permission => permission.Name == PermissionConstants.ProductView));
-        cashier.AddPermission(storedPermissions.Single(permission => permission.Name == PermissionConstants.CustomerView));
-        cashier.AddPermission(storedPermissions.Single(permission => permission.Name == PermissionConstants.ReceiptPrint));
+        foreach (var permission in storedPermissions.Where(permission => PermissionCatalog.CashierPermissions.Contains(permission.Name, StringComparer.OrdinalIgnoreCase)))
+        {
+            cashier.AddPermission(permission);
+        }
 
         await _dbContext.Roles.AddRangeAsync([administrator, manager, cashier], cancellationToken);
     }
@@ -154,10 +104,28 @@ public class DatabaseSeeder
         var manager = roles.FirstOrDefault(role => role.Name == "Manager");
         if (manager is not null)
         {
-            foreach (var permission in permissions.Where(permission => permission.Name is not PermissionConstants.UsersManage and not PermissionConstants.RolesManage and not PermissionConstants.BackupRestore && manager.Permissions.All(existing => existing.Name != permission.Name)))
+            foreach (var permission in permissions.Where(permission => PermissionCatalog.ManagerPermissions.Contains(permission.Name, StringComparer.OrdinalIgnoreCase) && manager.Permissions.All(existing => existing.Name != permission.Name)))
             {
                 manager.AddPermission(permission);
             }
+        }
+
+        EnsureCashierPermissions(roles, permissions);
+    }
+
+    private static void EnsureCashierPermissions(IReadOnlyCollection<Role> roles, IReadOnlyCollection<Permission> permissions)
+    {
+        var cashier = roles.FirstOrDefault(role => role.Name == "Cashier");
+        if (cashier is null)
+        {
+            return;
+        }
+
+        foreach (var permission in permissions.Where(permission =>
+            PermissionCatalog.CashierPermissions.Contains(permission.Name, StringComparer.OrdinalIgnoreCase)
+            && cashier.Permissions.All(existing => existing.Name != permission.Name)))
+        {
+            cashier.AddPermission(permission);
         }
     }
 

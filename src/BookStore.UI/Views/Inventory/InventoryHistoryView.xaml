@@ -11,38 +11,34 @@
         </Grid.RowDefinitions>
         <DockPanel Margin="0,0,0,12">
             <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Stock Ledger" />
-            <controls:SecondaryButton DockPanel.Dock="Right" Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
+            <controls:SecondaryButton DockPanel.Dock="Right" Command="{Binding RefreshCommand}" Content="Refresh" Icon="Refresh" />
         </DockPanel>
         <Border Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
             <WrapPanel>
                 <DatePicker Width="150" Margin="0,0,8,0" SelectedDate="{Binding DateFrom}" />
                 <DatePicker Width="150" Margin="0,0,8,0" SelectedDate="{Binding DateTo}" />
                 <ComboBox Width="180" Margin="0,0,8,0" ItemsSource="{Binding TransactionTypes}" SelectedItem="{Binding TransactionType}" />
-                <controls:PrimaryButton Command="{Binding SearchCommand}" Content="Search" Icon="S" />
+                <controls:PrimaryButton Command="{Binding SearchCommand}" Content="Search" Icon="Search" />
             </WrapPanel>
         </Border>
         <Grid Grid.Row="2">
-            <controls:AppDataGrid ItemsSource="{Binding Transactions}">
+            <controls:AppDataGrid HorizontalScrollBarVisibility="Auto" ItemsSource="{Binding Transactions}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding Date, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Header="Date" Width="*" />
-                    <DataGridTextColumn Binding="{Binding ProductTitle}" Header="Product" Width="2*" />
-                    <DataGridTextColumn Binding="{Binding TransactionType}" Header="Transaction Type" Width="*" />
-                    <DataGridTextColumn Binding="{Binding QuantityChange}" Header="Quantity Change" Width="*" />
-                    <DataGridTextColumn Binding="{Binding QuantityBefore}" Header="Quantity Before" Width="*" />
-                    <DataGridTextColumn Binding="{Binding QuantityAfter}" Header="Quantity After" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Reference}" Header="Reference" Width="*" />
-                    <DataGridTextColumn Binding="{Binding User}" Header="User" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Notes}" Header="Notes" Width="2*" />
+                    <DataGridTextColumn Binding="{Binding Date, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Header="Date" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding ProductTitle}" Header="Product" Width="2*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding TransactionType}" Header="Transaction Type" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding QuantityChange}" Header="Quantity Change" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding QuantityBefore}" Header="Quantity Before" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding QuantityAfter}" Header="Quantity After" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Reference}" Header="Reference" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding User}" Header="User" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Notes}" Header="Notes" Width="2*" MinWidth="110" />
                 </DataGrid.Columns>
             </controls:AppDataGrid>
             <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading stock ledger..." />
         </Grid>
         <Border Grid.Row="3" Margin="0,12,0,0" Style="{StaticResource PanelBorderStyle}">
-            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
-                <Run Text="Page " /><Run Text="{Binding PageNumber}" />
-                <Run Text=" | Page size " /><Run Text="{Binding PageSize}" />
-                <Run Text=" | Total " /><Run Text="{Binding TotalCount}" />
-            </TextBlock>
+            <controls:PaginationBar />
         </Border>
     </Grid>
 </UserControl>

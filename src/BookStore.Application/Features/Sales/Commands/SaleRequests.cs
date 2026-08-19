@@ -3,7 +3,7 @@ using BookStore.Domain.Enums;
 namespace BookStore.Application.Features.Sales.Commands.StartSale
 {
     /// <summary>Requests starting a new POS sale.</summary>
-    public sealed record StartSaleRequest(string CustomerName = "Walk-in Customer");
+    public sealed record StartSaleRequest(string CustomerName = "Walk-in Customer", bool ForceNew = false);
 }
 
 namespace BookStore.Application.Features.Sales.Commands.AddItem

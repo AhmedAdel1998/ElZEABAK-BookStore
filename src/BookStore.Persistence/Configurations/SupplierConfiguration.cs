@@ -15,14 +15,24 @@ public class SupplierConfiguration : EntityConfigurationBase<Supplier>
         builder.ToTable("Suppliers");
         builder.Property(supplier => supplier.CompanyName).IsRequired().HasMaxLength(200);
         builder.Property(supplier => supplier.ContactName).HasMaxLength(150);
-        builder.Property(supplier => supplier.Phone).HasConversion(ValueObjectConverters.PhoneConverter).HasMaxLength(20);
-        builder.Property(supplier => supplier.Email).HasConversion(ValueObjectConverters.EmailConverter).HasMaxLength(254);
+
+        // Owned types rather than ValueConverter - see the identical note in
+        // CustomerConfiguration for why a value-converted Phone/Email is a dormant query trap.
+        builder.OwnsOne(supplier => supplier.Phone, phone =>
+        {
+            phone.Property(value => value.Value).HasColumnName("Phone").HasMaxLength(20);
+            phone.HasIndex(value => value.Value).HasDatabaseName("IX_Suppliers_Phone");
+        });
+        builder.OwnsOne(supplier => supplier.Email, email =>
+        {
+            email.Property(value => value.Value).HasColumnName("Email").HasMaxLength(254);
+            email.HasIndex(value => value.Value).HasDatabaseName("IX_Suppliers_Email");
+        });
+
         builder.Property(supplier => supplier.Notes).HasMaxLength(2000);
         builder.Property(supplier => supplier.IsActive).IsRequired();
         builder.HasIndex(supplier => supplier.CompanyName);
         builder.HasIndex(supplier => supplier.ContactName);
-        builder.HasIndex(supplier => supplier.Phone);
-        builder.HasIndex(supplier => supplier.Email);
         builder.HasIndex(supplier => supplier.IsActive);
         builder.HasIndex(supplier => supplier.IsDeleted);
         builder.OwnsOne(supplier => supplier.Address, address =>

@@ -11,6 +11,8 @@ using ReportHandlers = BookStore.Application.Features.Reports.Handlers;
 using ReceiptHandlers = BookStore.Application.Features.Receipts.Handlers;
 using BackupHandlers = BookStore.Application.Features.Backup.Handlers;
 using SettingsHandlers = BookStore.Application.Features.Settings.Handlers;
+using AuditHandlers = BookStore.Application.Features.Audit.Handlers;
+using DataQualityHandlers = BookStore.Application.Features.DataQuality.Handlers;
 using BookStore.Application.Features.Settings.Services;
 using BookStore.Application.Features.Sales.Services;
 using BookStore.Application.Features.Receipts.Services;
@@ -133,6 +135,9 @@ public static class DependencyInjection
         services.AddTransient<BackupHandlers.RunIntegrityCheckHandler>();
         services.AddTransient<BackupHandlers.GetDatabaseHealthHandler>();
         services.AddTransient<BackupHandlers.RunAutomaticBackupHandler>();
+        services.AddTransient<AuditHandlers.RecordAuditEntryHandler>();
+        services.AddTransient<AuditHandlers.SearchAuditLogHandler>();
+        services.AddTransient<DataQualityHandlers.GetDataQualitySummaryHandler>();
         services.AddSingleton<ISettingsCache, SettingsCache>();
         services.AddSingleton<ISettingsChangedNotifier, SettingsChangedNotifier>();
         services.AddScoped<ISettingsService, SettingsService>();

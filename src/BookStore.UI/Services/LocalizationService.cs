@@ -63,6 +63,8 @@ public sealed class LocalizationService : ILocalizationService
         ["Nav.Users"] = "Users",
         ["Nav.Roles"] = "Roles",
         ["Nav.Backup"] = "Backup",
+        ["Nav.Audit"] = "Audit Trail",
+        ["Nav.DataQuality"] = "Data Quality",
         ["Nav.Logout"] = "Logout",
         ["POS.Cashier"] = "POS Cashier",
         ["POS.Title"] = "POS",
@@ -192,7 +194,25 @@ public sealed class LocalizationService : ILocalizationService
         ["Dashboard.NoData"] = "No data",
         ["Dashboard.VsYesterday"] = "vs yesterday",
         ["Dashboard.NewSalesToday"] = "New sales today",
-        ["Dashboard.NoSalesCompared"] = "No sales today or yesterday"
+        ["Dashboard.NoSalesCompared"] = "No sales today or yesterday",
+        ["DataQuality.Issues"] = "Issues: ",
+        ["DataQuality.MissingSupplier"] = "Missing supplier: ",
+        ["DataQuality.InvalidPrice"] = "Invalid price: ",
+        ["DataQuality.NegativeStock"] = "Negative stock: ",
+        ["Crash.UnexpectedError"] = "An unexpected error occurred. Please try again or contact support.",
+        ["Crash.Reference"] = "Reference: ",
+        ["Crash.TechnicalDetails"] = "Technical details",
+        ["Crash.CopyDetails"] = "Copy details",
+        ["Crash.Ok"] = "OK",
+        ["Paging.Page"] = "Page",
+        ["Paging.Of"] = "of",
+        ["Paging.Total"] = "Total",
+        ["Paging.Previous"] = "Previous",
+        ["Paging.Next"] = "Next",
+        ["Shell.ToggleSidebar"] = "Toggle menu",
+        ["Nav.Back"] = "Back",
+        ["Nav.Forward"] = "Forward",
+        ["Report.NoRows"] = "No rows"
     };
 
     private static readonly IReadOnlyDictionary<string, string> Arabic = new Dictionary<string, string>
@@ -245,6 +265,8 @@ public sealed class LocalizationService : ILocalizationService
         ["Nav.Users"] = "المستخدمون",
         ["Nav.Roles"] = "الأدوار",
         ["Nav.Backup"] = "النسخ الاحتياطي",
+        ["Nav.Audit"] = "سجل التدقيق",
+        ["Nav.DataQuality"] = "جودة البيانات",
         ["Nav.Logout"] = "تسجيل الخروج",
         ["POS.Cashier"] = "كاشير المبيعات",
         ["POS.Title"] = "نقطة البيع",
@@ -374,8 +396,687 @@ public sealed class LocalizationService : ILocalizationService
         ["Dashboard.NoData"] = "لا توجد بيانات",
         ["Dashboard.VsYesterday"] = "مقارنة بأمس",
         ["Dashboard.NewSalesToday"] = "مبيعات جديدة اليوم",
-        ["Dashboard.NoSalesCompared"] = "لا توجد مبيعات اليوم أو أمس"
+        ["Dashboard.NoSalesCompared"] = "لا توجد مبيعات اليوم أو أمس",
+        ["DataQuality.Issues"] = "المشكلات: ",
+        ["DataQuality.MissingSupplier"] = "مورد غير محدد: ",
+        ["DataQuality.InvalidPrice"] = "سعر غير صالح: ",
+        ["DataQuality.NegativeStock"] = "مخزون سالب: ",
+        ["Crash.UnexpectedError"] = "حدث خطأ غير متوقع. حاول مرة أخرى أو تواصل مع الدعم الفني.",
+        ["Crash.Reference"] = "الرقم المرجعي: ",
+        ["Crash.TechnicalDetails"] = "التفاصيل الفنية",
+        ["Crash.CopyDetails"] = "نسخ التفاصيل",
+        ["Crash.Ok"] = "موافق",
+        ["Paging.Page"] = "صفحة",
+        ["Paging.Of"] = "من",
+        ["Paging.Total"] = "الإجمالي",
+        ["Paging.Previous"] = "السابق",
+        ["Paging.Next"] = "التالي",
+        ["Shell.ToggleSidebar"] = "إظهار أو إخفاء القائمة",
+        ["Nav.Back"] = "رجوع",
+        ["Nav.Forward"] = "تقدم",
+        ["Report.NoRows"] = "لا توجد صفوف"
     };
+
+    private static readonly IReadOnlyDictionary<string, string> ExtraArabic = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["BookStore POS"] = "نظام نقاط البيع",
+        ["EL ZEABAK BookStore"] = "مكتبة الزعبك",
+        ["Administrator"] = "مدير النظام",
+        ["Search"] = "بحث",
+        ["Refresh"] = "تحديث",
+        ["Add"] = "إضافة",
+        ["Edit"] = "تعديل",
+        ["Delete"] = "حذف",
+        ["Save"] = "حفظ",
+        ["Cancel"] = "إلغاء",
+        ["Close"] = "إغلاق",
+        ["Back"] = "رجوع",
+        ["Next"] = "التالي",
+        ["Import"] = "استيراد",
+        ["Export"] = "تصدير",
+        ["Print"] = "طباعة",
+        ["Validate"] = "تحقق",
+        ["Restore"] = "استعادة",
+        ["Database"] = "قاعدة البيانات",
+        ["Printer"] = "الطابعة",
+        ["Auto"] = "تلقائي",
+        ["Cleanup"] = "تنظيف",
+        ["Backup Now"] = "نسخ احتياطي الآن",
+        ["Open Folder"] = "فتح المجلد",
+        ["Run Checks"] = "تشغيل الفحص",
+        ["Run Integrity"] = "فحص السلامة",
+        ["New"] = "جديد",
+        ["Details"] = "التفاصيل",
+        ["Create"] = "إنشاء",
+        ["Activate"] = "تفعيل",
+        ["Deactivate"] = "تعطيل",
+        ["Adjust"] = "تسوية",
+        ["Remove"] = "حذف",
+        ["Reset"] = "إعادة ضبط",
+        ["Generate"] = "إنشاء",
+        ["Preview"] = "معاينة",
+        ["Select"] = "اختيار",
+        ["View Details"] = "عرض التفاصيل",
+        ["Test Print"] = "اختبار الطباعة",
+        ["Reprint"] = "إعادة طباعة",
+        ["New Category"] = "تصنيف جديد",
+        ["Edit Category"] = "تعديل التصنيف",
+        ["Category Details"] = "تفاصيل التصنيف",
+        ["New Product"] = "منتج جديد",
+        ["Edit Product"] = "تعديل المنتج",
+        ["Product Details"] = "تفاصيل المنتج",
+        ["New Customer"] = "عميل جديد",
+        ["Edit Customer"] = "تعديل العميل",
+        ["Customer Details"] = "تفاصيل العميل",
+        ["New Supplier"] = "مورد جديد",
+        ["Edit Supplier"] = "تعديل المورد",
+        ["Supplier Details"] = "تفاصيل المورد",
+        ["Change Password"] = "تغيير كلمة المرور",
+        ["Barcode Preview"] = "معاينة الباركود",
+        ["Barcode Settings"] = "إعدادات الباركود",
+        ["Barcode Label Printing"] = "طباعة ملصقات الباركود",
+        ["Print Labels"] = "طباعة الملصقات",
+        ["Sales POS"] = "نقطة البيع",
+        ["Stock Adjustment"] = "تسوية المخزون",
+        ["Inventory Dashboard"] = "لوحة المخزون",
+        ["Inventory History"] = "سجل المخزون",
+        ["Receipt Preview"] = "معاينة الإيصال",
+        ["Reprint Receipt"] = "إعادة طباعة الإيصال",
+        ["Printer Test"] = "اختبار الطابعة",
+        ["Reports Dashboard"] = "لوحة التقارير",
+        ["Sales Summary"] = "ملخص المبيعات",
+        ["Sales Details"] = "تفاصيل المبيعات",
+        ["Profit Report"] = "تقرير الربح",
+        ["Best-Selling Products"] = "المنتجات الأكثر مبيعا",
+        ["Inventory Report"] = "تقرير المخزون",
+        ["Inventory Movements"] = "حركات المخزون",
+        ["Low Stock"] = "مخزون منخفض",
+        ["Customer Report"] = "تقرير العملاء",
+        ["Cashier Performance"] = "أداء الكاشير",
+        ["Payment Methods"] = "طرق الدفع",
+        ["Daily Sales"] = "المبيعات اليومية",
+        ["Hourly Sales"] = "المبيعات بالساعة",
+        ["Backup Details"] = "تفاصيل النسخة الاحتياطية",
+        ["Restore Backup"] = "استعادة نسخة احتياطية",
+        ["Database Health"] = "صحة قاعدة البيانات",
+        ["Audit Trail"] = "سجل التدقيق",
+        ["Data Quality"] = "جودة البيانات",
+        ["Sales"] = "المبيعات",
+        ["Payments"] = "المدفوعات",
+        ["Payment"] = "الدفع",
+        ["Checkout"] = "إتمام البيع",
+        ["Invoice"] = "الفاتورة",
+        ["Receipt"] = "الإيصال",
+        ["Stock"] = "المخزون",
+        ["Ledger"] = "السجل",
+        ["Movements"] = "الحركات",
+        ["Health"] = "الصحة",
+        ["Integrity"] = "السلامة",
+        ["Validation"] = "التحقق",
+        ["Profit"] = "الربح",
+        ["Selling"] = "البيع",
+        ["Purchase"] = "الشراء",
+        ["Online"] = "متصل",
+        ["Ready"] = "جاهز",
+        ["Duplicate"] = "مكرر",
+        ["Visible"] = "ظاهر",
+        ["Collapsed"] = "مطوي",
+        ["True"] = "نعم",
+        ["False"] = "لا",
+        ["Light"] = "فاتح",
+        ["Dark"] = "داكن",
+        ["Products"] = "المنتجات",
+        ["Categories"] = "التصنيفات",
+        ["Customers"] = "العملاء",
+        ["Suppliers"] = "الموردون",
+        ["Inventory"] = "المخزون",
+        ["Reports"] = "التقارير",
+        ["Receipts"] = "الإيصالات",
+        ["Users"] = "المستخدمون",
+        ["Roles"] = "الأدوار",
+        ["Backup"] = "النسخ الاحتياطي",
+        ["Settings"] = "الإعدادات",
+        ["Manage bookstore products and stock-ready metadata."] = "إدارة منتجات المكتبة وبياناتها الجاهزة للمخزون.",
+        ["Manage product category classification."] = "إدارة تصنيفات المنتجات.",
+        ["Manage customer contact information and sales history."] = "إدارة بيانات تواصل العملاء وسجل المبيعات.",
+        ["Manage supplier master data and product associations."] = "إدارة بيانات الموردين وربط المنتجات.",
+        ["Create or update reusable category metadata."] = "إنشاء أو تحديث بيانات التصنيف القابلة لإعادة الاستخدام.",
+        ["Maintain customer identity and contact details."] = "حافظ على بيانات هوية العميل وتفاصيل التواصل.",
+        ["Maintain supplier company, contact, address, and notes."] = "حافظ على بيانات شركة المورد والتواصل والعنوان والملاحظات.",
+        ["Every cashier session starts from a protected workspace."] = "كل جلسة كاشير تبدأ من مساحة عمل محمية.",
+        ["Scan items, find prices, and prepare totals instantly."] = "امسح الأصناف واعرض الأسعار وجهز الإجماليات فورا.",
+        ["Stock is checked before checkout and reflected after sale."] = "يتم فحص المخزون قبل إتمام البيع وتحديثه بعد العملية.",
+        ["No Products"] = "لا توجد منتجات",
+        ["No products found."] = "لم يتم العثور على منتجات.",
+        ["No products found"] = "لم يتم العثور على منتجات",
+        ["No Categories"] = "لا توجد تصنيفات",
+        ["No categories found."] = "لم يتم العثور على تصنيفات.",
+        ["No categories matched your search."] = "لا توجد تصنيفات مطابقة للبحث.",
+        ["No Customers"] = "لا يوجد عملاء",
+        ["No customers found."] = "لم يتم العثور على عملاء.",
+        ["No Suppliers"] = "لا يوجد موردون",
+        ["No suppliers found."] = "لم يتم العثور على موردين.",
+        ["No records found."] = "لم يتم العثور على سجلات.",
+        ["Loading products..."] = "جار تحميل المنتجات...",
+        ["Loading product..."] = "جار تحميل المنتج...",
+        ["Loading categories..."] = "جار تحميل التصنيفات...",
+        ["Loading category..."] = "جار تحميل التصنيف...",
+        ["Loading customers..."] = "جار تحميل العملاء...",
+        ["Loading suppliers..."] = "جار تحميل الموردين...",
+        ["Loading inventory..."] = "جار تحميل المخزون...",
+        ["Loading inventory dashboard..."] = "جار تحميل لوحة المخزون...",
+        ["Loading stock ledger..."] = "جار تحميل سجل المخزون...",
+        ["Loading report..."] = "جار تحميل التقرير...",
+        ["Loading reports..."] = "جار تحميل التقارير...",
+        ["Saving product..."] = "جار حفظ المنتج...",
+        ["Saving category..."] = "جار حفظ التصنيف...",
+        ["Checking database..."] = "جار فحص قاعدة البيانات...",
+        ["Restoring database..."] = "جار استعادة قاعدة البيانات...",
+        ["Working on backup operation..."] = "جار تنفيذ عملية النسخ الاحتياطي...",
+        ["Product not found"] = "لم يتم العثور على المنتج",
+        ["All Status"] = "كل الحالات",
+        ["All Categories"] = "كل التصنيفات",
+        ["Active"] = "نشط",
+        ["Inactive"] = "غير نشط",
+        ["Out of Stock"] = "نفد من المخزون",
+        ["Min price"] = "أقل سعر",
+        ["Max price"] = "أعلى سعر",
+        ["Min qty"] = "أقل كمية",
+        ["Max qty"] = "أعلى كمية",
+        ["Category name"] = "اسم التصنيف",
+        ["Optional description"] = "وصف اختياري",
+        ["Cover Image"] = "صورة الغلاف",
+        ["Barcode"] = "الباركود",
+        ["Barcode Value"] = "قيمة الباركود",
+        ["Barcode Format"] = "تنسيق الباركود",
+        ["Barcode/Inventory"] = "الباركود والمخزون",
+        ["Generate Barcode"] = "إنشاء باركود",
+        ["Save Barcode"] = "حفظ الباركود",
+        ["Show barcode"] = "إظهار الباركود",
+        ["Print QR code"] = "طباعة رمز QR",
+        ["ISBN"] = "الرقم الدولي",
+        ["Title"] = "العنوان",
+        ["Subtitle"] = "العنوان الفرعي",
+        ["Description"] = "الوصف",
+        ["Author"] = "المؤلف",
+        ["Publisher"] = "الناشر",
+        ["Edition"] = "الطبعة",
+        ["Publish Date"] = "تاريخ النشر",
+        ["Category"] = "التصنيف",
+        ["Selling Price"] = "سعر البيع",
+        ["Selling Value"] = "قيمة البيع",
+        ["Purchase Price"] = "سعر الشراء",
+        ["Purchase Value"] = "قيمة الشراء",
+        ["Current Quantity"] = "الكمية الحالية",
+        ["Minimum Stock"] = "حد المخزون الأدنى",
+        ["Low Stock Threshold"] = "حد انخفاض المخزون",
+        ["Shelf"] = "الرف",
+        ["Shelf Location"] = "موقع الرف",
+        ["Location"] = "الموقع",
+        ["Quantity"] = "الكمية",
+        ["Quantity Before"] = "الكمية قبل",
+        ["Quantity After"] = "الكمية بعد",
+        ["Quantity Change"] = "تغير الكمية",
+        ["Inventory Status"] = "حالة المخزون",
+        ["Inventory Value"] = "قيمة المخزون",
+        ["Total Stock"] = "إجمالي المخزون",
+        ["Stock Ledger"] = "سجل المخزون",
+        ["Adjustment Type"] = "نوع التسوية",
+        ["Transaction Type"] = "نوع الحركة",
+        ["Reason"] = "السبب",
+        ["Status"] = "الحالة",
+        ["Name"] = "الاسم",
+        ["Full Name"] = "الاسم الكامل",
+        ["Customer Name"] = "اسم العميل",
+        ["Product Title"] = "عنوان المنتج",
+        ["Product"] = "المنتج",
+        ["Product Count"] = "عدد المنتجات",
+        ["Product Image"] = "صورة المنتج",
+        ["Product Lookup"] = "بحث المنتجات",
+        ["Associated Products"] = "المنتجات المرتبطة",
+        ["Best Product"] = "أفضل منتج",
+        ["Best Products"] = "أفضل المنتجات",
+        ["Total Products"] = "إجمالي المنتجات",
+        ["Email"] = "البريد الإلكتروني",
+        ["Phone"] = "الهاتف",
+        ["Address"] = "العنوان",
+        ["Contact"] = "التواصل",
+        ["Contact Name"] = "اسم جهة التواصل",
+        ["Contact Person"] = "مسؤول التواصل",
+        ["Products Count"] = "عدد المنتجات",
+        ["Loyalty Points"] = "نقاط الولاء",
+        ["Created"] = "تاريخ الإنشاء",
+        ["Created Date"] = "تاريخ الإنشاء",
+        ["Created By"] = "أنشئ بواسطة",
+        ["Updated"] = "تاريخ التحديث",
+        ["Last Updated"] = "آخر تحديث",
+        ["Last Purchase"] = "آخر شراء",
+        ["Date"] = "التاريخ",
+        ["Time"] = "الوقت",
+        ["Area"] = "المنطقة",
+        ["Action"] = "الإجراء",
+        ["Outcome"] = "النتيجة",
+        ["User"] = "المستخدم",
+        ["Entity"] = "الكيان",
+        ["Detail"] = "التفاصيل",
+        ["Severity"] = "الخطورة",
+        ["Issue"] = "المشكلة",
+        ["Item"] = "العنصر",
+        ["Recommendation"] = "التوصية",
+        ["File"] = "الملف",
+        ["Path"] = "المسار",
+        ["Size"] = "الحجم",
+        ["Disk Bytes"] = "حجم القرص بالبايت",
+        ["SHA-256"] = "بصمة SHA-256",
+        ["Application Version"] = "إصدار التطبيق",
+        ["Database Version"] = "إصدار قاعدة البيانات",
+        ["Schema Version"] = "إصدار المخطط",
+        ["Connection Type"] = "نوع الاتصال",
+        ["Local database"] = "قاعدة بيانات محلية",
+        ["Type"] = "النوع",
+        ["Total"] = "الإجمالي",
+        ["Total Purchases"] = "إجمالي المشتريات",
+        ["Transactions"] = "المعاملات",
+        ["Today's Sales"] = "مبيعات اليوم",
+        ["Sales Count"] = "عدد المبيعات",
+        ["Sales History"] = "سجل المبيعات",
+        ["Sale Date"] = "تاريخ البيع",
+        ["Cashier"] = "الكاشير",
+        ["Cashiers"] = "الكاشيرون",
+        ["Top Cashier"] = "أفضل كاشير",
+        ["Top Customer"] = "أفضل عميل",
+        ["Walk-in"] = "عميل مباشر",
+        ["Discount"] = "الخصم",
+        ["Tax"] = "الضريبة",
+        ["Tax/Currency"] = "الضريبة والعملة",
+        ["Tax enabled"] = "الضريبة مفعلة",
+        ["Tax included in price"] = "الضريبة ضمن السعر",
+        ["Tax Number"] = "الرقم الضريبي",
+        ["Tax Category"] = "تصنيف الضريبة",
+        ["Default Rate"] = "النسبة الافتراضية",
+        ["Currency Code"] = "رمز العملة",
+        ["Currency Symbol"] = "رمز العملة",
+        ["Decimal Places"] = "المنازل العشرية",
+        ["Default Type"] = "النوع الافتراضي",
+        ["Page"] = "صفحة",
+        ["Page "] = "صفحة ",
+        ["Page size"] = "حجم الصفحة",
+        ["Page size "] = "حجم الصفحة ",
+        ["Pagination prepared"] = "تم تجهيز الترقيم",
+        ["Pagination controls prepared for future enhancement."] = "تم تجهيز عناصر الترقيم للتحسين لاحقا.",
+        ["Pagination controls prepared for future enhancement"] = "تم تجهيز عناصر الترقيم للتحسين لاحقا",
+        ["Product rows "] = "صفوف المنتجات ",
+        ["Sales rows "] = "صفوف المبيعات ",
+        ["Customer created "] = "تم إنشاء العميل ",
+        ["Supplier created "] = "تم إنشاء المورد ",
+        ["Qty "] = "الكمية ",
+        ["Total "] = "الإجمالي ",
+        ["Updated "] = "آخر تحديث ",
+        ["Product export is prepared for future implementation."] = "تم تجهيز تصدير المنتجات للتنفيذ لاحقا.",
+        ["Product import is prepared for future implementation."] = "تم تجهيز استيراد المنتجات للتنفيذ لاحقا.",
+        ["Operation failed."] = "فشلت العملية.",
+        ["Unable to load products."] = "تعذر تحميل المنتجات.",
+        ["Unable to save product."] = "تعذر حفظ المنتج.",
+        ["Unable to duplicate product."] = "تعذر تكرار المنتج.",
+        ["Product created successfully."] = "تم إنشاء المنتج بنجاح.",
+        ["Product updated successfully."] = "تم تحديث المنتج بنجاح.",
+        ["Product deleted successfully."] = "تم حذف المنتج بنجاح.",
+        ["Product activated successfully."] = "تم تفعيل المنتج بنجاح.",
+        ["Product deactivated successfully."] = "تم تعطيل المنتج بنجاح.",
+        ["Product duplicated successfully."] = "تم تكرار المنتج بنجاح.",
+        ["Product found."] = "تم العثور على المنتج.",
+        ["Product was not found."] = "لم يتم العثور على المنتج.",
+        ["Save the product before duplicating it."] = "احفظ المنتج قبل تكراره.",
+        ["Delete Product"] = "حذف المنتج",
+        ["Unable to load categories."] = "تعذر تحميل التصنيفات.",
+        ["Unable to save category."] = "تعذر حفظ التصنيف.",
+        ["Unable to delete category."] = "تعذر حذف التصنيف.",
+        ["Category created successfully."] = "تم إنشاء التصنيف بنجاح.",
+        ["Category updated successfully."] = "تم تحديث التصنيف بنجاح.",
+        ["Category deleted successfully."] = "تم حذف التصنيف بنجاح.",
+        ["Category activated successfully."] = "تم تفعيل التصنيف بنجاح.",
+        ["Category deactivated successfully."] = "تم تعطيل التصنيف بنجاح.",
+        ["Category was not found."] = "لم يتم العثور على التصنيف.",
+        ["No category selected."] = "لم يتم اختيار تصنيف.",
+        ["Delete Category"] = "حذف التصنيف",
+        ["Unable to load customers."] = "تعذر تحميل العملاء.",
+        ["Unable to save customer."] = "تعذر حفظ العميل.",
+        ["Customer could not be found."] = "تعذر العثور على العميل.",
+        ["Customer created successfully."] = "تم إنشاء العميل بنجاح.",
+        ["Customer updated successfully."] = "تم تحديث العميل بنجاح.",
+        ["Customer deleted successfully."] = "تم حذف العميل بنجاح.",
+        ["Customer activated successfully."] = "تم تفعيل العميل بنجاح.",
+        ["Customer deactivated successfully."] = "تم تعطيل العميل بنجاح.",
+        ["Customer search failed."] = "فشل البحث عن العملاء.",
+        ["No customer selected."] = "لم يتم اختيار عميل.",
+        ["Delete Customer"] = "حذف العميل",
+        ["Unable to load suppliers."] = "تعذر تحميل الموردين.",
+        ["Unable to save supplier."] = "تعذر حفظ المورد.",
+        ["Supplier could not be found."] = "تعذر العثور على المورد.",
+        ["Supplier created successfully."] = "تم إنشاء المورد بنجاح.",
+        ["Supplier updated successfully."] = "تم تحديث المورد بنجاح.",
+        ["Supplier deleted successfully."] = "تم حذف المورد بنجاح.",
+        ["Supplier activated successfully."] = "تم تفعيل المورد بنجاح.",
+        ["Supplier deactivated successfully."] = "تم تعطيل المورد بنجاح.",
+        ["No supplier selected."] = "لم يتم اختيار مورد.",
+        ["Delete Supplier"] = "حذف المورد",
+        ["Products will be preserved."] = "سيتم الاحتفاظ بالمنتجات.",
+        ["Unable to load inventory."] = "تعذر تحميل المخزون.",
+        ["Unable to load stock ledger."] = "تعذر تحميل سجل المخزون.",
+        ["Adjustment saved."] = "تم حفظ التسوية.",
+        ["Unable to load report."] = "تعذر تحميل التقرير.",
+        ["Unable to load reports dashboard."] = "تعذر تحميل لوحة التقارير.",
+        ["No rows found for the selected filters."] = "لا توجد صفوف للفلاتر المحددة.",
+        ["Unable to load audit trail."] = "تعذر تحميل سجل التدقيق.",
+        ["Unable to run data quality checks."] = "تعذر تشغيل فحوصات جودة البيانات.",
+        ["Unable to load backups."] = "تعذر تحميل النسخ الاحتياطية.",
+        ["Unable to create backup."] = "تعذر إنشاء النسخة الاحتياطية.",
+        ["Unable to validate backup."] = "تعذر التحقق من النسخة الاحتياطية.",
+        ["Unable to delete backup."] = "تعذر حذف النسخة الاحتياطية.",
+        ["Unable to clean up backups."] = "تعذر تنظيف النسخ الاحتياطية.",
+        ["Unable to restore backup."] = "تعذر استعادة النسخة الاحتياطية.",
+        ["Backup folder was not found."] = "لم يتم العثور على مجلد النسخ الاحتياطي.",
+        ["Delete Backup"] = "حذف النسخة الاحتياطية",
+        ["Delete the selected backup file and metadata?"] = "هل تريد حذف ملف النسخة الاحتياطية وبياناته؟",
+        ["Restoring will replace the current database. Continue?"] = "ستستبدل الاستعادة قاعدة البيانات الحالية. هل تريد المتابعة؟",
+        ["Unable to load database health."] = "تعذر تحميل حالة قاعدة البيانات.",
+        ["Integrity check failed."] = "فشل فحص السلامة.",
+        ["Unable to generate barcode."] = "تعذر إنشاء الباركود.",
+        ["Unable to print barcode."] = "تعذر طباعة الباركود.",
+        ["Invalid barcode."] = "باركود غير صالح.",
+        ["Barcode generated successfully."] = "تم إنشاء الباركود بنجاح.",
+        ["Barcode printed."] = "تم طباعة الباركود.",
+        ["Barcode settings are loaded from appsettings and database settings."] = "يتم تحميل إعدادات الباركود من إعدادات التطبيق وقاعدة البيانات.",
+        ["Unable to load receipt preview."] = "تعذر تحميل معاينة الإيصال.",
+        ["Unable to print receipt."] = "تعذر طباعة الإيصال.",
+        ["Unable to search receipts."] = "تعذر البحث في الإيصالات.",
+        ["Unable to reprint receipt."] = "تعذر إعادة طباعة الإيصال.",
+        ["Receipt printed successfully."] = "تمت طباعة الإيصال بنجاح.",
+        ["Receipt reprinted successfully."] = "تمت إعادة طباعة الإيصال بنجاح.",
+        ["Printer test completed successfully."] = "اكتمل اختبار الطابعة بنجاح.",
+        ["Printer test failed."] = "فشل اختبار الطابعة.",
+        ["Login failed."] = "فشل تسجيل الدخول.",
+        ["Administrator could not be created."] = "تعذر إنشاء مدير النظام.",
+        ["Allow discounts"] = "السماح بالخصومات",
+        ["Allow negative stock"] = "السماح بالمخزون السالب",
+        ["Allow price override"] = "السماح بتعديل السعر",
+        ["Auto inventory adjustment"] = "تسوية تلقائية للمخزون",
+        ["Auto-focus barcode input"] = "تركيز تلقائي على حقل الباركود",
+        ["Auto-generate barcodes"] = "إنشاء الباركود تلقائيا",
+        ["Automatic Generation"] = "إنشاء تلقائي",
+        ["Manual Generation"] = "إنشاء يدوي",
+        ["Automatic receipt printing"] = "طباعة الإيصال تلقائيا",
+        ["Require customer for credit sales"] = "اشتراط عميل لمبيعات الآجل",
+        ["Start new sale after checkout"] = "بدء عملية جديدة بعد إتمام البيع",
+        ["Create pre-restore backup"] = "إنشاء نسخة احتياطية قبل الاستعادة",
+        ["Validate after backup"] = "التحقق بعد النسخ الاحتياطي",
+        ["Backup enabled"] = "النسخ الاحتياطي مفعل",
+        ["Backup/Security"] = "النسخ الاحتياطي والأمان",
+        ["Save Backup"] = "حفظ النسخ الاحتياطي",
+        ["Save Currency"] = "حفظ العملة",
+        ["Save Inventory"] = "حفظ المخزون",
+        ["Save Security"] = "حفظ الأمان",
+        ["Save Tax"] = "حفظ الضريبة",
+        ["Password Policy"] = "سياسة كلمة المرور",
+        ["Current Password"] = "كلمة المرور الحالية",
+        ["New Password"] = "كلمة المرور الجديدة",
+        ["Confirm Password"] = "تأكيد كلمة المرور",
+        ["Max Login Attempts"] = "الحد الأقصى لمحاولات الدخول",
+        ["Lockout Duration"] = "مدة القفل",
+        ["Session Timeout"] = "مهلة الجلسة",
+        ["Minimum margin %"] = "أقل هامش %",
+        ["Retention Count"] = "عدد النسخ المحتفظ بها",
+        ["Restore confirmation"] = "تأكيد الاستعادة",
+        ["I understand that restoring will replace the current database."] = "أفهم أن الاستعادة ستستبدل قاعدة البيانات الحالية.",
+        ["Company Name"] = "اسم الشركة",
+        ["Store Name"] = "اسم المتجر",
+        ["Logo Path"] = "مسار الشعار",
+        ["Footer Text"] = "نص التذييل",
+        ["Display Mode"] = "وضع العرض",
+        ["Language"] = "اللغة",
+        ["EL ZEABAK"] = "الزعبك",
+        ["POS"] = "نقطة البيع",
+        ["Template"] = "القالب",
+        ["Format"] = "التنسيق",
+        ["Prefix"] = "البادئة",
+        ["Length"] = "الطول",
+        ["Starting Number"] = "رقم البداية",
+        ["Label Print"] = "طباعة الملصقات",
+        ["Labels"] = "الملصقات",
+        ["Label Width mm"] = "عرض الملصق مم",
+        ["Label Height mm"] = "ارتفاع الملصق مم",
+        ["Paper Width"] = "عرض الورق",
+        ["Copies"] = "النسخ",
+        ["Printer Name"] = "اسم الطابعة",
+        ["Printer Type"] = "نوع الطابعة",
+        ["Print Timeout"] = "مهلة الطباعة",
+        ["Print Timeout ms"] = "مهلة الطباعة بالمللي ثانية",
+        ["Scan Timeout"] = "مهلة المسح",
+        ["Scan Timeout ms"] = "مهلة المسح بالمللي ثانية",
+        ["Open cash drawer"] = "فتح درج النقدية",
+        ["Cut paper"] = "قص الورق",
+        ["Show cashier"] = "إظهار الكاشير",
+        ["Show customer"] = "إظهار العميل",
+        ["Show logo"] = "إظهار الشعار",
+        ["Reference"] = "المرجع",
+        ["Receipt ready"] = "الإيصال جاهز",
+        ["Receipt and audit ready"] = "الإيصال وسجل التدقيق جاهزان",
+        ["Fast barcode scan"] = "مسح باركود سريع",
+        ["Inventory guarded"] = "المخزون محمي",
+        ["Inventory protection"] = "حماية المخزون",
+        ["Today"] = "اليوم",
+        ["Yesterday"] = "أمس",
+        ["This Week"] = "هذا الأسبوع",
+        ["This Month"] = "هذا الشهر",
+        ["Previous Month"] = "الشهر السابق",
+        ["This Year"] = "هذا العام",
+        ["Custom Range"] = "نطاق مخصص",
+        ["Before"] = "قبل",
+        ["After"] = "بعد",
+        ["Frequency"] = "التكرار",
+        ["Position"] = "الموضع",
+        ["Notes"] = "الملاحظات",
+        ["Integrity Check"] = "فحص السلامة",
+        ["Product rows"] = "صفوف المنتجات",
+        ["Sales rows"] = "صفوف المبيعات",
+        ["Live POS flow"] = "تشغيل مباشر لنقطة البيع",
+        ["Every change writes a stock ledger entry."] = "كل تغيير يسجل حركة في سجل المخزون.",
+        ["General, book, pricing, stock, category, media, and status metadata."] = "بيانات عامة وبيانات الكتاب والأسعار والمخزون والتصنيف والوسائط والحالة.",
+        ["Generate, validate, and lookup products."] = "إنشاء الباركود والتحقق منه والبحث عن المنتجات.",
+        ["Prepare single, multi-label, or sheet output."] = "تجهيز مخرجات ملصق واحد أو عدة ملصقات أو صفحة كاملة.",
+        ["Loaded from appsettings; persistence prepared for future implementation."] = "يتم التحميل من إعدادات التطبيق؛ الحفظ مجهز للتنفيذ لاحقا.",
+        [" | Customer created "] = " | تم إنشاء العميل ",
+        [" | Supplier created "] = " | تم إنشاء المورد ",
+        [" | Updated "] = " | آخر تحديث ",
+        [" | Qty "] = " | الكمية ",
+        ["Generation format, prefix, length, and label sizes used when printing barcodes."] = "تنسيق الإنشاء والبادئة والطول ومقاسات الملصقات المستخدمة عند طباعة الباركود.",
+        ["This module is ready for future implementation."] = "هذه الشاشة مجهزة للتطوير لاحقا.",
+        ["Walk-in Customer"] = "عميل مباشر",
+        ["Cash"] = "نقدي",
+        ["Card"] = "بطاقة",
+        ["Transfer"] = "تحويل بنكي",
+        ["Credit"] = "آجل",
+        ["Select Customer"] = "اختيار عميل",
+        ["No product selected."] = "لم يتم اختيار منتج.",
+        ["Single"] = "ملصق واحد",
+        ["Sheet"] = "صفحة كاملة",
+        ["Multiple"] = "عدة ملصقات",
+        ["A valid phone number is required."] = "يجب إدخال رقم هاتف صحيح.",
+        ["At least one label is required."] = "يجب إضافة ملصق واحد على الأقل.",
+        ["Author cannot exceed 150 characters."] = "لا يمكن أن يتجاوز اسم المؤلف 150 حرفا.",
+        ["Author is required."] = "المؤلف مطلوب.",
+        ["Barcode is required."] = "الباركود مطلوب.",
+        ["Barcode prefix is invalid."] = "بادئة الباركود غير صالحة.",
+        ["Category already exists."] = "التصنيف موجود بالفعل.",
+        ["Category is required."] = "التصنيف مطلوب.",
+        ["Category name cannot exceed 100 characters."] = "لا يمكن أن يتجاوز اسم التصنيف 100 حرف.",
+        ["Category name is required."] = "اسم التصنيف مطلوب.",
+        ["Currency code must be a valid ISO currency code."] = "يجب أن يكون رمز العملة رمزا صحيحا وفق معيار ISO.",
+        ["Customer already exists with the same phone number."] = "يوجد عميل آخر بنفس رقم الهاتف.",
+        ["Customer is required."] = "العميل مطلوب.",
+        ["Description cannot exceed 500 characters."] = "لا يمكن أن يتجاوز الوصف 500 حرف.",
+        ["Duplicate ISBN."] = "الرقم الدولي مكرر.",
+        ["Duplicate barcode."] = "الباركود مكرر.",
+        ["End date must be after start date."] = "يجب أن يكون تاريخ النهاية بعد تاريخ البداية.",
+        ["Image cannot exceed 5 MB."] = "لا يمكن أن يتجاوز حجم الصورة 5 ميجابايت.",
+        ["Image must be JPG, PNG, or WEBP."] = "يجب أن تكون الصورة بصيغة JPG أو PNG أو WEBP.",
+        ["Invalid ISBN."] = "الرقم الدولي غير صالح.",
+        ["Language must be Arabic or English."] = "يجب أن تكون اللغة العربية أو الإنجليزية.",
+        ["Minimum stock cannot be negative."] = "لا يمكن أن يكون حد المخزون الأدنى سالبا.",
+        ["Password must contain a lowercase letter."] = "يجب أن تحتوي كلمة المرور على حرف صغير.",
+        ["Password must contain a number."] = "يجب أن تحتوي كلمة المرور على رقم.",
+        ["Password must contain a special character."] = "يجب أن تحتوي كلمة المرور على رمز خاص.",
+        ["Password must contain an uppercase letter."] = "يجب أن تحتوي كلمة المرور على حرف كبير.",
+        ["Passwords must match."] = "كلمتا المرور غير متطابقتين.",
+        ["Phone format is invalid."] = "تنسيق رقم الهاتف غير صالح.",
+        ["Product is required."] = "المنتج مطلوب.",
+        ["Publisher cannot exceed 150 characters."] = "لا يمكن أن يتجاوز اسم الناشر 150 حرفا.",
+        ["Purchase price cannot be negative."] = "لا يمكن أن يكون سعر الشراء سالبا.",
+        ["Quantity cannot be negative."] = "لا يمكن أن تكون الكمية سالبة.",
+        ["Quantity must be greater than zero."] = "يجب أن تكون الكمية أكبر من صفر.",
+        ["Reason is required."] = "السبب مطلوب.",
+        ["Receipt paper width must be 58mm or 80mm."] = "يجب أن يكون عرض ورق الإيصال 58 مم أو 80 مم.",
+        ["Restore confirmation text is required."] = "نص تأكيد الاستعادة مطلوب.",
+        ["Selling price cannot be negative."] = "لا يمكن أن يكون سعر البيع سالبا.",
+        ["Start date must not be after end date."] = "يجب ألا يكون تاريخ البداية بعد تاريخ النهاية.",
+        ["Supplier already exists."] = "المورد موجود بالفعل.",
+        ["Supplier is required."] = "المورد مطلوب.",
+        ["Title cannot exceed 250 characters."] = "لا يمكن أن يتجاوز العنوان 250 حرفا.",
+        ["Title is required."] = "العنوان مطلوب.",
+        ["Transaction type is required."] = "نوع الحركة مطلوب.",
+        ["Adjustment does not change stock."] = "التسوية لا تغير المخزون.",
+        ["Backup checksum does not match metadata."] = "بصمة النسخة الاحتياطية لا تطابق بياناتها.",
+        ["Backup file was not found."] = "لم يتم العثور على ملف النسخة الاحتياطية.",
+        ["Backup validation failed."] = "فشل التحقق من النسخة الاحتياطية.",
+        ["Backup was created but validation failed."] = "تم إنشاء النسخة الاحتياطية لكن فشل التحقق منها.",
+        ["Backup was not found."] = "لم يتم العثور على النسخة الاحتياطية.",
+        ["Cannot adjust inactive products."] = "لا يمكن تسوية مخزون منتجات غير نشطة.",
+        ["Cannot delete the only valid backup."] = "لا يمكن حذف النسخة الاحتياطية الصالحة الوحيدة.",
+        ["Cart item was not found."] = "لم يتم العثور على الصنف في السلة.",
+        ["Checkout is already in progress."] = "عملية الدفع جارية بالفعل.",
+        ["Completed invoice was not found."] = "لم يتم العثور على الفاتورة المكتملة.",
+        ["Completed sale was not found."] = "لم يتم العثور على العملية المكتملة.",
+        ["Current user cannot apply discounts."] = "المستخدم الحالي لا يملك صلاحية تطبيق الخصومات.",
+        ["Current user cannot cancel sales."] = "المستخدم الحالي لا يملك صلاحية إلغاء المبيعات.",
+        ["Current user cannot clean up backups."] = "المستخدم الحالي لا يملك صلاحية تنظيف النسخ الاحتياطية.",
+        ["Current user cannot complete sales."] = "المستخدم الحالي لا يملك صلاحية إتمام المبيعات.",
+        ["Current user cannot create backups."] = "المستخدم الحالي لا يملك صلاحية إنشاء نسخ احتياطية.",
+        ["Current user cannot delete backups."] = "المستخدم الحالي لا يملك صلاحية حذف النسخ الاحتياطية.",
+        ["Current user cannot preview receipts."] = "المستخدم الحالي لا يملك صلاحية معاينة الإيصالات.",
+        ["Current user cannot print receipts."] = "المستخدم الحالي لا يملك صلاحية طباعة الإيصالات.",
+        ["Current user cannot reprint receipts."] = "المستخدم الحالي لا يملك صلاحية إعادة طباعة الإيصالات.",
+        ["Current user cannot restore backups."] = "المستخدم الحالي لا يملك صلاحية استعادة النسخ الاحتياطية.",
+        ["Current user cannot retry receipt printing."] = "المستخدم الحالي لا يملك صلاحية إعادة محاولة طباعة الإيصال.",
+        ["Current user cannot run database integrity checks."] = "المستخدم الحالي لا يملك صلاحية فحص سلامة قاعدة البيانات.",
+        ["Current user cannot search receipts for reprint."] = "المستخدم الحالي لا يملك صلاحية البحث في الإيصالات لإعادة الطباعة.",
+        ["Current user cannot suspend sales."] = "المستخدم الحالي لا يملك صلاحية تعليق المبيعات.",
+        ["Current user cannot test printers."] = "المستخدم الحالي لا يملك صلاحية اختبار الطابعات.",
+        ["Current user cannot validate backups."] = "المستخدم الحالي لا يملك صلاحية التحقق من النسخ الاحتياطية.",
+        ["Current user cannot view backup details."] = "المستخدم الحالي لا يملك صلاحية عرض تفاصيل النسخ الاحتياطية.",
+        ["Current user cannot view backups."] = "المستخدم الحالي لا يملك صلاحية عرض النسخ الاحتياطية.",
+        ["Current user cannot view database health."] = "المستخدم الحالي لا يملك صلاحية عرض حالة قاعدة البيانات.",
+        ["Database file was not found."] = "لم يتم العثور على ملف قاعدة البيانات.",
+        ["Discount cannot exceed the line total."] = "لا يمكن أن يتجاوز الخصم إجمالي الصنف.",
+        ["Inactive products cannot be sold."] = "لا يمكن بيع منتجات غير نشطة.",
+        ["Insufficient disk space to create a database backup."] = "لا توجد مساحة كافية على القرص لإنشاء نسخة احتياطية.",
+        ["Insufficient disk space to restore the selected backup."] = "لا توجد مساحة كافية على القرص لاستعادة النسخة المحددة.",
+        ["Only non-empty active sales can be suspended."] = "لا يمكن تعليق سوى العمليات النشطة التي تحتوي على أصناف.",
+        ["Paid amount cannot be less than the total."] = "لا يمكن أن يكون المبلغ المدفوع أقل من الإجمالي.",
+        ["Pre-restore safety backup could not be created."] = "تعذر إنشاء نسخة احتياطية وقائية قبل الاستعادة.",
+        ["Receipt print request is not available for retry."] = "طلب طباعة الإيصال غير متاح لإعادة المحاولة.",
+        ["Report generation was cancelled."] = "تم إلغاء إنشاء التقرير.",
+        ["Requested quantity exceeds available stock."] = "الكمية المطلوبة تتجاوز المخزون المتاح.",
+        ["Restore failed. The previous database was preserved or recovered."] = "فشلت الاستعادة. تم الحفاظ على قاعدة البيانات السابقة أو استرجاعها.",
+        ["Selected backup is invalid and cannot be restored."] = "النسخة الاحتياطية المحددة غير صالحة ولا يمكن استعادتها.",
+        ["Settings could not be reset."] = "تعذر إعادة ضبط الإعدادات.",
+        ["Stock cannot become negative."] = "لا يمكن أن يصبح المخزون سالبا.",
+        ["Suspended sale was not found."] = "لم يتم العثور على العملية المعلقة.",
+        ["Temporary restore validation failed."] = "فشل التحقق من الاستعادة المؤقتة.",
+        ["There is no active sale."] = "لا توجد عملية بيع نشطة.",
+        ["Unable to create category."] = "تعذر إنشاء التصنيف.",
+        ["Unable to create database backup."] = "تعذر إنشاء نسخة احتياطية لقاعدة البيانات.",
+        ["Unable to create product."] = "تعذر إنشاء المنتج.",
+        ["Unable to generate the report. Please try again."] = "تعذر إنشاء التقرير. حاول مرة أخرى.",
+        ["Unable to restore the selected backup."] = "تعذر استعادة النسخة الاحتياطية المحددة.",
+        ["Unable to update category."] = "تعذر تحديث التصنيف.",
+        ["Unable to update product."] = "تعذر تحديث المنتج.",
+        ["You are not authorized to access this report."] = "لا تملك صلاحية الوصول إلى هذا التقرير.",
+        ["You do not have permission to modify this settings category."] = "لا تملك صلاحية تعديل هذه المجموعة من الإعدادات.",
+        ["You do not have permission to reset settings."] = "لا تملك صلاحية إعادة ضبط الإعدادات.",
+        ["You do not have permission to reset this settings category."] = "لا تملك صلاحية إعادة ضبط هذه المجموعة من الإعدادات.",
+        ["You do not have permission to view audit logs."] = "لا تملك صلاحية عرض سجل التدقيق.",
+        ["You do not have permission to view data quality checks."] = "لا تملك صلاحية عرض فحوصات جودة البيانات.",
+        ["You do not have permission to view settings."] = "لا تملك صلاحية عرض الإعدادات.",
+        ["You do not have permission to view this settings category."] = "لا تملك صلاحية عرض هذه المجموعة من الإعدادات.",
+        ["Accuracy Note"] = "ملاحظة الدقة",
+        ["Average Invoice Value"] = "متوسط قيمة الفاتورة",
+        ["Average Purchase"] = "متوسط الشراء",
+        ["Average Selling Price"] = "متوسط سعر البيع",
+        ["Average Transaction"] = "متوسط الفاتورة",
+        ["Best Selling Product"] = "المنتج الأكثر مبيعا",
+        ["Cancelled Sales"] = "المبيعات الملغاة",
+        ["Cashier Id"] = "رقم الكاشير",
+        ["Cost"] = "التكلفة",
+        ["Cost Of Goods Sold"] = "تكلفة المبيعات",
+        ["Current Inventory Value"] = "قيمة المخزون الحالية",
+        ["Customer Id"] = "رقم العميل",
+        ["Difference"] = "الفرق",
+        ["Discounts"] = "الخصومات",
+        ["Gross Margin Percent"] = "نسبة هامش الربح",
+        ["Gross Profit"] = "إجمالي الربح",
+        ["Gross Revenue"] = "إجمالي الإيراد",
+        ["Hour"] = "الساعة",
+        ["Inventory Cost Value"] = "قيمة تكلفة المخزون",
+        ["Invoice Number"] = "رقم الفاتورة",
+        ["Label"] = "الملصق",
+        ["Last Purchase Date"] = "تاريخ آخر شراء",
+        ["Low Stock Products"] = "منتجات منخفضة المخزون",
+        ["Net Revenue"] = "صافي الإيراد",
+        ["Number Of Invoices"] = "عدد الفواتير",
+        ["Number Of Sales"] = "عدد المبيعات",
+        ["Number Of Transactions"] = "عدد المعاملات",
+        ["Out Of Stock Products"] = "منتجات نفدت من المخزون",
+        ["Payment Method"] = "طريقة الدفع",
+        ["Percentage Of Sales"] = "نسبة من المبيعات",
+        ["Percentage Of Total Revenue"] = "نسبة من إجمالي الإيراد",
+        ["Potential Selling Value"] = "قيمة البيع المتوقعة",
+        ["Product Id"] = "رقم المنتج",
+        ["Products Sold"] = "المنتجات المبيعة",
+        ["Profit Accuracy Note"] = "ملاحظة دقة الربح",
+        ["Quantity Changed"] = "الكمية المتغيرة",
+        ["Quantity Sold"] = "الكمية المبيعة",
+        ["Revenue"] = "الإيراد",
+        ["Sale Id"] = "رقم العملية",
+        ["Sale Status"] = "حالة العملية",
+        ["Todays Discounts"] = "خصومات اليوم",
+        ["Todays Profit"] = "ربح اليوم",
+        ["Todays Sales"] = "مبيعات اليوم",
+        ["Todays Tax"] = "ضريبة اليوم",
+        ["Todays Transactions"] = "فواتير اليوم",
+        ["Total Amount"] = "المبلغ الإجمالي",
+        ["Total Discounts"] = "إجمالي الخصومات",
+        ["Total Sales"] = "إجمالي المبيعات",
+        ["Total Tax"] = "إجمالي الضريبة",
+        ["Transaction Count"] = "عدد الحركات",
+        ["Uses Historical Cost"] = "يستخدم التكلفة التاريخية",
+        ["Value"] = "القيمة",
+        ["Supplier"] = "المورد",
+        ["Category Id"] = "رقم التصنيف",
+        ["Yes"] = "نعم",
+        ["No"] = "لا",
+        ["OK"] = "موافق",
+        ["Confirm"] = "تأكيد"
+    };
+
+    /// <summary>
+    /// Reverse index from an authored English resource value to its key, so a literal picked up
+    /// from XAML can be matched back to its Arabic counterpart without scanning the dictionary.
+    /// Several keys share a value (for example "Settings"); the first wins, and the values are
+    /// identical translations anyway.
+    /// </summary>
+    private static readonly IReadOnlyDictionary<string, string> EnglishValueToKey =
+        English.GroupBy(pair => pair.Value, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First().Key, StringComparer.OrdinalIgnoreCase);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<LocalizationService> _logger;
@@ -406,17 +1107,31 @@ public sealed class LocalizationService : ILocalizationService
 
     public void ApplyCulture(string language)
     {
+        var application = System.Windows.Application.Current;
+        if (application is null)
+        {
+            return;
+        }
+
+        // Resource dictionaries, the window collection, and every subscriber of CultureChanged
+        // are dispatcher-affine. Settings changes can arrive on a background thread, so marshal.
+        if (!application.Dispatcher.CheckAccess())
+        {
+            application.Dispatcher.Invoke(() => ApplyCulture(language));
+            return;
+        }
+
         var normalized = NormalizeLanguage(language);
         CurrentLanguage = normalized;
         _strings = normalized.StartsWith("ar", StringComparison.OrdinalIgnoreCase) ? Arabic : English;
 
-        var culture = CultureInfo.GetCultureInfo(normalized);
+        var culture = BuildCulture(normalized);
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
         Thread.CurrentThread.CurrentCulture = culture;
         Thread.CurrentThread.CurrentUICulture = culture;
 
-        var resources = System.Windows.Application.Current.Resources;
+        var resources = application.Resources;
         resources["AppFlowDirection"] = FlowDirection;
         resources["AppTextAlignment"] = IsRightToLeft ? TextAlignment.Right : TextAlignment.Left;
         foreach (var pair in English)
@@ -424,14 +1139,58 @@ public sealed class LocalizationService : ILocalizationService
             resources[pair.Key] = T(pair.Key);
         }
 
-        foreach (Window window in System.Windows.Application.Current.Windows)
+        // FrameworkElement.Language drives the culture that XAML bindings use to convert
+        // numbers and dates in BOTH directions. Stock ar-EG formats decimals with U+066B
+        // and groups with U+066C, so "1234.56" typed on a numeric keypad fails to parse and
+        // two-way bindings silently keep the previous value. WPF resolves Language through
+        // the cached read-only CultureInfo, so a customized clone cannot be injected here.
+        // Money and quantity round-tripping is pinned to the invariant-style layout instead;
+        // Arabic text and RTL layout are unaffected.
+        var bindingLanguage = System.Windows.Markup.XmlLanguage.GetLanguage("en-US");
+        foreach (Window window in application.Windows)
         {
-            window.Language = System.Windows.Markup.XmlLanguage.GetLanguage(culture.IetfLanguageTag);
+            window.Language = bindingLanguage;
         }
 
         _logger.LogInformation("UI culture applied: {Language}", CurrentLanguage);
         CultureChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>
+    /// Builds the working culture for a language, keeping Arabic month and day names while
+    /// forcing Western digit grouping so numeric entry and display round-trip reliably.
+    /// </summary>
+    private static CultureInfo BuildCulture(string language)
+    {
+        var culture = (CultureInfo)CultureInfo.GetCultureInfo(language).Clone();
+        if (!language.StartsWith("ar", StringComparison.OrdinalIgnoreCase))
+        {
+            return culture;
+        }
+
+        var numbers = culture.NumberFormat;
+        numbers.NumberDecimalSeparator = ".";
+        numbers.CurrencyDecimalSeparator = ".";
+        numbers.PercentDecimalSeparator = ".";
+        numbers.NumberGroupSeparator = ",";
+        numbers.CurrencyGroupSeparator = ",";
+        numbers.PercentGroupSeparator = ",";
+        numbers.NativeDigits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+        numbers.DigitSubstitution = DigitShapes.None;
+
+        // ar-EG embeds RIGHT-TO-LEFT MARK inside its date patterns, which renders as stray
+        // gaps inside grid cells and receipts.
+        var dates = culture.DateTimeFormat;
+        dates.ShortDatePattern = StripDirectionalMarks(dates.ShortDatePattern);
+        dates.LongDatePattern = StripDirectionalMarks(dates.LongDatePattern);
+        dates.ShortTimePattern = StripDirectionalMarks(dates.ShortTimePattern);
+        dates.LongTimePattern = StripDirectionalMarks(dates.LongTimePattern);
+
+        return culture;
+    }
+
+    private static string StripDirectionalMarks(string pattern) =>
+        pattern.Replace("‎", string.Empty).Replace("‏", string.Empty);
 
     public async Task ToggleLanguageAsync()
     {
@@ -449,6 +1208,41 @@ public sealed class LocalizationService : ILocalizationService
 
     public string T(string key) => _strings.TryGetValue(key, out var value) ? value : key;
 
+    /// <summary>
+    /// Translates an authored English literal. Only whole-string dictionary matches are
+    /// translated: the caller cannot distinguish interface labels from live business data
+    /// (product titles, customer names, barcodes, file paths), so partial substitution would
+    /// corrupt records. Unknown text is returned untouched, and English mode is a no-op
+    /// because callers always supply the English original.
+    /// </summary>
+    public string TranslateLiteral(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text) || !IsRightToLeft)
+        {
+            return text;
+        }
+
+        var trimmed = text.Trim();
+        if (ExtraArabic.TryGetValue(trimmed, out var translated))
+        {
+            return PreserveOuterWhitespace(text, translated);
+        }
+
+        if (EnglishValueToKey.TryGetValue(trimmed, out var key) && Arabic.TryGetValue(key, out translated))
+        {
+            return PreserveOuterWhitespace(text, translated);
+        }
+
+        return text;
+    }
+
+    private static string PreserveOuterWhitespace(string original, string translated)
+    {
+        var leading = original.Length - original.TrimStart().Length;
+        var trailing = original.Length - original.TrimEnd().Length;
+        return new string(' ', leading) + translated + new string(' ', trailing);
+    }
+
     private static string NormalizeLanguage(string? language)
     {
         return string.IsNullOrWhiteSpace(language) || language.StartsWith("ar", StringComparison.OrdinalIgnoreCase)
@@ -458,9 +1252,20 @@ public sealed class LocalizationService : ILocalizationService
 
     private async void OnSettingsChanged(object? sender, SettingsChangedEvent e)
     {
-        if (e.Category == SettingsCategory.Appearance)
+        if (e.Category != SettingsCategory.Appearance)
+        {
+            return;
+        }
+
+        // async void on an event handler: an escaping exception would reach the unhandled
+        // handler and tear down the app, so a failed re-read must not propagate.
+        try
         {
             await ApplyConfiguredCultureAsync();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Failed to reapply UI culture after an appearance settings change");
         }
     }
 }

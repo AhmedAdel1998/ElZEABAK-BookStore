@@ -141,14 +141,14 @@ public partial class DashboardViewModel : BaseViewModel
     private void RebuildDashboard()
     {
         Metrics.Clear();
-        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.TodaySales"), Reports.TodaysSales.ToString("N2"), _localizationService.T("Dashboard.TodaySalesHint"), "S", "#D99A00", OpenSalesSummaryCommand));
+        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.TodaySales"), Reports.TodaysSales.ToString("N2"), _localizationService.T("Dashboard.TodaySalesHint"), "S", "#16833A", OpenSalesSummaryCommand));
         Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.Transactions"), Reports.TodaysTransactions.ToString("N0"), _localizationService.T("Dashboard.TransactionsHint"), "T", "#0F766E", OpenSalesDetailsCommand));
         Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.InventoryValue"), Inventory.TotalSellingValue.ToString("N2"), _localizationService.T("Dashboard.InventoryValueHint"), "I", "#7C3AED", OpenInventoryValueCommand));
         Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.LowStock"), Inventory.LowStockCount.ToString("N0"), _localizationService.T("Dashboard.LowStockHint"), "L", "#B91C1C", OpenLowStockCommand));
         Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.Profit"), Reports.TodaysProfit.ToString("N2"), _localizationService.T("Dashboard.ProfitTodayHint"), "P", "#15803D", OpenProfitCommand));
         Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.OutOfStock"), Inventory.OutOfStockCount.ToString("N0"), _localizationService.T("Dashboard.OutOfStockHint"), "O", "#991B1B", OpenOutOfStockCommand));
         Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.PurchaseValue"), Inventory.TotalPurchaseValue.ToString("N2"), _localizationService.T("Dashboard.PurchaseValueHint"), "C", "#0369A1", OpenInventoryValueCommand));
-        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.DiscountsToday"), Reports.TodaysDiscounts.ToString("N2"), _localizationService.T("Dashboard.DiscountsTodayHint"), "D", "#A16207", OpenDiscountsCommand));
+        Metrics.Add(new DashboardMetric(_localizationService.T("Dashboard.DiscountsToday"), Reports.TodaysDiscounts.ToString("N2"), _localizationService.T("Dashboard.DiscountsTodayHint"), "D", "#2F855A", OpenDiscountsCommand));
 
         Activity.Clear();
         Activity.Add(new DashboardActivity(_localizationService.T("Dashboard.BestSeller"), EmptyAware(Reports.BestSellingProduct), $"{_localizationService.T("Dashboard.Transactions")}: {Reports.TodaysTransactions:N0}"));

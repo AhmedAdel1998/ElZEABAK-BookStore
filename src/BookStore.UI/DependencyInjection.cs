@@ -9,6 +9,8 @@ using ReportHandlers = BookStore.Application.Features.Reports.Handlers;
 using ReceiptHandlers = BookStore.Application.Features.Receipts.Handlers;
 using BackupHandlers = BookStore.Application.Features.Backup.Handlers;
 using SettingsHandlers = BookStore.Application.Features.Settings.Handlers;
+using AuditHandlers = BookStore.Application.Features.Audit.Handlers;
+using DataQualityHandlers = BookStore.Application.Features.DataQuality.Handlers;
 using BookStore.UI.Dialogs;
 using BookStore.UI.Icons;
 using BookStore.UI.Navigation;
@@ -37,7 +39,9 @@ public static class DependencyInjection
         services.AddSingleton<IShellNavigationService, ShellNavigationService>();
         services.AddSingleton<IViewModelFactory, ViewModelFactory>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<ICurrencyFormatterService, CurrencyFormatterService>();
         services.AddSingleton<ILocalizationService, LocalizationService>();
+        services.AddSingleton<IUiTreeLocalizer, UiTreeLocalizer>();
         services.AddSingleton<IApplicationShutdownService, ApplicationShutdownService>();
         services.AddSingleton<ISessionTimeoutService, SessionTimeoutService>();
         services.AddSingleton<INotificationService, NotificationService>();
@@ -144,6 +148,9 @@ public static class DependencyInjection
         services.AddTransient<BackupHandlers.RunIntegrityCheckHandler>();
         services.AddTransient<BackupHandlers.GetDatabaseHealthHandler>();
         services.AddTransient<BackupHandlers.RunAutomaticBackupHandler>();
+        services.AddTransient<AuditHandlers.RecordAuditEntryHandler>();
+        services.AddTransient<AuditHandlers.SearchAuditLogHandler>();
+        services.AddTransient<DataQualityHandlers.GetDataQualitySummaryHandler>();
         services.AddTransient<SettingsHandlers.SettingsQueryHandler>();
         services.AddTransient<SettingsHandlers.SettingsCommandHandler>();
 
@@ -197,6 +204,8 @@ public static class DependencyInjection
         services.AddTransient<BackupDetailsViewModel>();
         services.AddTransient<BackupRestoreViewModel>();
         services.AddTransient<DatabaseHealthViewModel>();
+        services.AddTransient<AuditTrailViewModel>();
+        services.AddTransient<DataQualityViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<UsersViewModel>();
         services.AddTransient<RolesViewModel>();
@@ -204,67 +213,9 @@ public static class DependencyInjection
         services.AddTransient<ProductListViewModel>();
         services.AddTransient<ProductEditorViewModel>();
         services.AddTransient<ProductDetailsViewModel>();
-        services.AddSingleton<IReadOnlyDictionary<Type, Func<BaseViewModel>>>(provider =>
-            new Dictionary<Type, Func<BaseViewModel>>
-            {
-                [typeof(LoginViewModel)] = () => provider.GetRequiredService<LoginViewModel>(),
-                [typeof(FirstRunSetupViewModel)] = () => provider.GetRequiredService<FirstRunSetupViewModel>(),
-                [typeof(AuthenticatedHomeViewModel)] = () => provider.GetRequiredService<AuthenticatedHomeViewModel>(),
-                [typeof(ChangePasswordViewModel)] = () => provider.GetRequiredService<ChangePasswordViewModel>(),
-                [typeof(CategoryListViewModel)] = () => provider.GetRequiredService<CategoryListViewModel>(),
-                [typeof(CategoryEditorViewModel)] = () => provider.GetRequiredService<CategoryEditorViewModel>(),
-                [typeof(CategoryDetailsViewModel)] = () => provider.GetRequiredService<CategoryDetailsViewModel>(),
-                [typeof(DashboardViewModel)] = () => provider.GetRequiredService<DashboardViewModel>(),
-                [typeof(CategoriesViewModel)] = () => provider.GetRequiredService<CategoriesViewModel>(),
-                [typeof(ProductsViewModel)] = () => provider.GetRequiredService<ProductsViewModel>(),
-                [typeof(InventoryViewModel)] = () => provider.GetRequiredService<InventoryViewModel>(),
-                [typeof(InventoryDashboardViewModel)] = () => provider.GetRequiredService<InventoryDashboardViewModel>(),
-                [typeof(InventoryListViewModel)] = () => provider.GetRequiredService<InventoryListViewModel>(),
-                [typeof(InventoryAdjustmentViewModel)] = () => provider.GetRequiredService<InventoryAdjustmentViewModel>(),
-                [typeof(InventoryHistoryViewModel)] = () => provider.GetRequiredService<InventoryHistoryViewModel>(),
-                [typeof(BarcodePreviewViewModel)] = () => provider.GetRequiredService<BarcodePreviewViewModel>(),
-                [typeof(BarcodeSettingsViewModel)] = () => provider.GetRequiredService<BarcodeSettingsViewModel>(),
-                [typeof(BarcodeLabelPrintViewModel)] = () => provider.GetRequiredService<BarcodeLabelPrintViewModel>(),
-                [typeof(POSViewModel)] = () => provider.GetRequiredService<POSViewModel>(),
-                [typeof(CustomerListViewModel)] = () => provider.GetRequiredService<CustomerListViewModel>(),
-                [typeof(CustomerEditorViewModel)] = () => provider.GetRequiredService<CustomerEditorViewModel>(),
-                [typeof(CustomerDetailsViewModel)] = () => provider.GetRequiredService<CustomerDetailsViewModel>(),
-                [typeof(CustomerSelectionViewModel)] = () => provider.GetRequiredService<CustomerSelectionViewModel>(),
-                [typeof(SupplierListViewModel)] = () => provider.GetRequiredService<SupplierListViewModel>(),
-                [typeof(SupplierEditorViewModel)] = () => provider.GetRequiredService<SupplierEditorViewModel>(),
-                [typeof(SupplierDetailsViewModel)] = () => provider.GetRequiredService<SupplierDetailsViewModel>(),
-                [typeof(SalesViewModel)] = () => provider.GetRequiredService<SalesViewModel>(),
-                [typeof(CustomersViewModel)] = () => provider.GetRequiredService<CustomersViewModel>(),
-                [typeof(SuppliersViewModel)] = () => provider.GetRequiredService<SuppliersViewModel>(),
-                [typeof(ReportsViewModel)] = () => provider.GetRequiredService<ReportsViewModel>(),
-                [typeof(ReportsDashboardViewModel)] = () => provider.GetRequiredService<ReportsDashboardViewModel>(),
-                [typeof(SalesSummaryViewModel)] = () => provider.GetRequiredService<SalesSummaryViewModel>(),
-                [typeof(SalesDetailsViewModel)] = () => provider.GetRequiredService<SalesDetailsViewModel>(),
-                [typeof(ProfitReportViewModel)] = () => provider.GetRequiredService<ProfitReportViewModel>(),
-                [typeof(BestSellingProductsViewModel)] = () => provider.GetRequiredService<BestSellingProductsViewModel>(),
-                [typeof(InventoryReportViewModel)] = () => provider.GetRequiredService<InventoryReportViewModel>(),
-                [typeof(InventoryMovementViewModel)] = () => provider.GetRequiredService<InventoryMovementViewModel>(),
-                [typeof(LowStockReportViewModel)] = () => provider.GetRequiredService<LowStockReportViewModel>(),
-                [typeof(CustomerReportViewModel)] = () => provider.GetRequiredService<CustomerReportViewModel>(),
-                [typeof(CashierPerformanceViewModel)] = () => provider.GetRequiredService<CashierPerformanceViewModel>(),
-                [typeof(PaymentMethodsViewModel)] = () => provider.GetRequiredService<PaymentMethodsViewModel>(),
-                [typeof(DailySalesViewModel)] = () => provider.GetRequiredService<DailySalesViewModel>(),
-                [typeof(HourlySalesViewModel)] = () => provider.GetRequiredService<HourlySalesViewModel>(),
-                [typeof(ReceiptPreviewViewModel)] = () => provider.GetRequiredService<ReceiptPreviewViewModel>(),
-                [typeof(ReprintReceiptViewModel)] = () => provider.GetRequiredService<ReprintReceiptViewModel>(),
-                [typeof(PrinterTestViewModel)] = () => provider.GetRequiredService<PrinterTestViewModel>(),
-                [typeof(BackupListViewModel)] = () => provider.GetRequiredService<BackupListViewModel>(),
-                [typeof(BackupDetailsViewModel)] = () => provider.GetRequiredService<BackupDetailsViewModel>(),
-                [typeof(BackupRestoreViewModel)] = () => provider.GetRequiredService<BackupRestoreViewModel>(),
-                [typeof(DatabaseHealthViewModel)] = () => provider.GetRequiredService<DatabaseHealthViewModel>(),
-                [typeof(SettingsViewModel)] = () => provider.GetRequiredService<SettingsViewModel>(),
-                [typeof(UsersViewModel)] = () => provider.GetRequiredService<UsersViewModel>(),
-                [typeof(RolesViewModel)] = () => provider.GetRequiredService<RolesViewModel>(),
-                [typeof(BackupViewModel)] = () => provider.GetRequiredService<BackupViewModel>(),
-                [typeof(ProductListViewModel)] = () => provider.GetRequiredService<ProductListViewModel>(),
-                [typeof(ProductEditorViewModel)] = () => provider.GetRequiredService<ProductEditorViewModel>(),
-                [typeof(ProductDetailsViewModel)] = () => provider.GetRequiredService<ProductDetailsViewModel>()
-            });
+        // Navigation resolves each view model from its own scope, so the allowlist carries
+        // types only -- it must never capture a service provider.
+        services.AddSingleton(NavigableViewModelRegistry.Discover());
 
         return services;
     }

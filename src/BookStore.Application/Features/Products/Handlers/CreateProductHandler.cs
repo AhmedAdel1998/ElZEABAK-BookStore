@@ -1,4 +1,7 @@
 using AutoMapper;
+using BookStore.Domain.Enums;
+using BookStore.Domain.Entities;
+using BookStore.Application.Interfaces;
 using BookStore.Application.Features.Products.Commands.CreateProduct;
 using BookStore.Application.Features.Products.Responses;
 using BookStore.Domain.Interfaces;
@@ -14,14 +17,16 @@ public sealed class CreateProductHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly IValidator<CreateProductRequest> _validator;
     private readonly IMapper _mapper;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<CreateProductHandler> _logger;
 
     /// <summary>Initializes a new instance of the <see cref="CreateProductHandler"/> class.</summary>
-    public CreateProductHandler(IUnitOfWork unitOfWork, IValidator<CreateProductRequest> validator, IMapper mapper, ILogger<CreateProductHandler> logger)
+    public CreateProductHandler(IUnitOfWork unitOfWork, IValidator<CreateProductRequest> validator, IMapper mapper, ICurrentUserService currentUserService, ILogger<CreateProductHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _validator = validator;
         _mapper = mapper;
+        _currentUserService = currentUserService;
         _logger = logger;
     }
 
@@ -39,6 +44,24 @@ public sealed class CreateProductHandler
         {
             var product = ProductHandlerHelpers.CreateEntity(request.Product);
             await _unitOfWork.Products.AddAsync(product, cancellationToken);
+
+            if (product.Quantity > 0)
+            {
+                await _unitOfWork.Inventory.AddAsync(
+                    new InventoryTransaction(
+                        product.Id,
+                        product.Quantity,
+                        InventoryTransactionType.InitialStock,
+                        0,
+                        product.Quantity,
+                        "Opening balance",
+                        null,
+                        _currentUserService.UserId,
+                        _currentUserService.FullName ?? _currentUserService.Username,
+                        $"Opening stock recorded when {product.Title} was created"),
+                    cancellationToken);
+            }
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("Product created: {ProductId} {Title}", product.Id, product.Title);
             return Result<ProductResponse>.Success(ProductHandlerHelpers.MapResponse(_mapper, product));

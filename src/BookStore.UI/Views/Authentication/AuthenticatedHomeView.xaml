@@ -12,6 +12,8 @@
              xmlns:reportViews="clr-namespace:BookStore.UI.Views.Reports"
              xmlns:receiptViews="clr-namespace:BookStore.UI.Views.Receipts"
              xmlns:backupViews="clr-namespace:BookStore.UI.Views.Backup"
+             xmlns:auditViews="clr-namespace:BookStore.UI.Views.Audit"
+             xmlns:dataQualityViews="clr-namespace:BookStore.UI.Views.DataQuality"
              xmlns:settingsViews="clr-namespace:BookStore.UI.Views.Settings"
              xmlns:views="clr-namespace:BookStore.UI.Views.Shell"
              xmlns:viewModels="clr-namespace:BookStore.UI.ViewModels">
@@ -172,6 +174,12 @@
         <DataTemplate DataType="{x:Type viewModels:BackupRestoreViewModel}">
             <backupViews:BackupRestoreView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:AuditTrailViewModel}">
+            <auditViews:AuditTrailView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type viewModels:DataQualityViewModel}">
+            <dataQualityViews:DataQualityView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:DatabaseHealthViewModel}">
             <backupViews:DatabaseHealthView />
         </DataTemplate>
@@ -184,7 +192,7 @@
         <KeyBinding Key="D" Modifiers="Control" Command="{Binding NavigateDashboardCommand}" />
         <KeyBinding Key="P" Modifiers="Control" Command="{Binding NavigateProductsCommand}" />
         <KeyBinding Key="I" Modifiers="Control" Command="{Binding NavigateInventoryCommand}" />
-        <KeyBinding Key="S" Modifiers="Control" Command="{Binding NavigateSalesCommand}" />
+        <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding NavigateSalesCommand}" />
         <KeyBinding Key="R" Modifiers="Control" Command="{Binding NavigateReportsCommand}" />
         <KeyBinding Key="B" Modifiers="Control" Command="{Binding NavigateBackupCommand}" />
         <KeyBinding Key="L" Modifiers="Control" Command="{Binding LogoutCommand}" />
@@ -192,8 +200,8 @@
 
     <Grid Background="{DynamicResource BookstorePageBrush}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="{Binding FirstColumnWidth}" />
+            <ColumnDefinition Width="{Binding SecondColumnWidth}" />
         </Grid.ColumnDefinitions>
 
         <Border Grid.Column="{Binding SidebarColumn}" Background="{DynamicResource WarmChromeBrush}">
@@ -211,8 +219,10 @@
                 <Button DockPanel.Dock="Top"
                         Height="48"
                         Command="{Binding ToggleSidebarCommand}"
+                        AutomationProperties.Name="{DynamicResource Shell.ToggleSidebar}"
+                        ToolTip="{DynamicResource Shell.ToggleSidebar}"
                         Content="☰"
-                        Foreground="#FFE9A3"
+                        Foreground="{DynamicResource BrandOnChromeTextBrush}"
                         Background="{DynamicResource WarmChromeBrush}"
                         BorderThickness="0" />
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -231,16 +241,20 @@
                                             <Setter Property="Background" Value="{DynamicResource WarmChromeAltBrush}" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource BookstoreGoldBrush}" />
-                                                    <Setter Property="Foreground" Value="#1E1711" />
+                                                    <Setter Property="Background" Value="{DynamicResource BookstoreGreenBrush}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource OnAccentTextBrush}" />
                                                 </DataTrigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource BrandOnChromeTextBrush}" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource OnAccentTextBrush}" />
+                                                </Trigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Button.Style>
-                                    <DockPanel LastChildFill="True" FlowDirection="{DynamicResource AppFlowDirection}">
-                                        <TextBlock Width="42" FontWeight="SemiBold" Text="{Binding Icon}" />
-                                        <TextBlock Margin="10,0,10,0" VerticalAlignment="Center" Text="{Binding Text}" />
-                                    </DockPanel>
+                                    <TextBlock Margin="10,0,10,0" TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center"
+                                               FlowDirection="{DynamicResource AppFlowDirection}"
+                                               Text="{Binding Text}" />
                                 </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -290,8 +304,8 @@
             <Border Grid.Row="1" Background="{DynamicResource SurfaceAltBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                 <DockPanel Margin="18,0" FlowDirection="{DynamicResource AppFlowDirection}">
                     <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Width="34" Command="{Binding GoBackCommand}" Content="‹" />
-                        <Button Width="34" Margin="6,0,0,0" Command="{Binding GoForwardCommand}" Content="›" />
+                        <Button MinWidth="44" MinHeight="44" Command="{Binding GoBackCommand}" AutomationProperties.Name="{DynamicResource Nav.Back}" ToolTip="{DynamicResource Nav.Back}" Content="‹" />
+                        <Button MinWidth="44" MinHeight="44" Margin="6,0,0,0" Command="{Binding GoForwardCommand}" AutomationProperties.Name="{DynamicResource Nav.Forward}" ToolTip="{DynamicResource Nav.Forward}" Content="›" />
                         <Button Width="84" Margin="8,0,8,0" Command="{Binding RefreshCommand}" Content="{DynamicResource Shell.Refresh}" />
                     </StackPanel>
                     <TextBlock Margin="18,0,18,0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextBrush}" Text="{Binding ShellNavigation.Breadcrumb}" />
@@ -303,7 +317,7 @@
                     <ContentControl Margin="18" Content="{Binding ShellNavigation.CurrentViewModel}" />
                 </Border>
 
-                <controls:LoadingOverlay IsBusy="{Binding IsLoading}" Message="{Binding LoadingText}" />
+                <controls:LoadingOverlay IsBusy="{Binding IsLoading}" Message="{Binding LoadingText, Converter={StaticResource LocalizeConverter}}" />
 
                 <Border Width="360"
                         MaxHeight="420"
@@ -355,7 +369,7 @@
                                                 CornerRadius="6">
                                             <StackPanel>
                                                 <TextBlock FontWeight="SemiBold" Text="{Binding Title}" />
-                                                <TextBlock Margin="0,4,0,0" Text="{Binding Message}" TextWrapping="Wrap" />
+                                                <TextBlock Margin="0,4,0,0" Text="{Binding Message, Converter={StaticResource LocalizeConverter}}" TextWrapping="Wrap" />
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
@@ -365,13 +379,17 @@
                     </DockPanel>
                 </Border>
 
-                <ItemsControl Margin="0,16,16,0" HorizontalAlignment="Right" VerticalAlignment="Top" ItemsSource="{Binding Notifications}">
+                <ItemsControl Margin="0,16,16,0"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Top"
+                              Visibility="{Binding IsNotificationsOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                              ItemsSource="{Binding Notifications}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Style="{StaticResource ToastNotificationStyle}">
                                 <StackPanel>
                                     <TextBlock FontWeight="SemiBold" Text="{Binding Title}" />
-                                    <TextBlock Margin="0,4,0,0" Text="{Binding Message}" TextWrapping="Wrap" />
+                                    <TextBlock Margin="0,4,0,0" Text="{Binding Message, Converter={StaticResource LocalizeConverter}}" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
                         </DataTemplate>

@@ -21,7 +21,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="RowHeight" Value="42" />
         <Setter Property="RowBackground" Value="{DynamicResource SurfaceBrush}" />
-        <Setter Property="AlternatingRowBackground" Value="#FFFBEC" />
+        <Setter Property="AlternatingRowBackground" Value="{DynamicResource GridAlternateRowBrush}" />
         <Setter Property="SelectionMode" Value="Single" />
         <Setter Property="SelectionUnit" Value="FullRow" />
     </Style>
@@ -33,8 +33,8 @@
         <Setter Property="MinHeight" Value="36" />
         <Setter Property="Padding" Value="10,6" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Background" Value="{DynamicResource BookstoreGoldBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        <Setter Property="Background" Value="{DynamicResource GridHeaderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource GridHeaderTextBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     </Style>
 
@@ -43,7 +43,7 @@
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}" />
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="#FFF0B3" />
+                <Setter Property="Background" Value="{DynamicResource GridSelectedRowBrush}" />
                 <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
             </Trigger>
         </Style.Triggers>

@@ -23,14 +23,28 @@
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="{DynamicResource CornerRadiusMedium}">
-                                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" Foreground="{DynamicResource AccentBrush}" Text="{TemplateBinding Icon}" />
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Icon, RelativeSource={RelativeSource AncestorType=controls:AppCard}, Converter={StaticResource IconGlyphConverter}}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="16"
+                                               Foreground="{DynamicResource AccentBrush}"
+                                               Text="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource IconGlyphConverter}}" />
                                 </Border>
                                 <StackPanel>
-                                    <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{TemplateBinding Title}" />
-                                    <TextBlock FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Text="{TemplateBinding Subtitle}" />
+                                    <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" TextTrimming="CharacterEllipsis" Text="{TemplateBinding Title}" />
+                                    <TextBlock FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" TextWrapping="Wrap" Text="{TemplateBinding Subtitle}" />
                                 </StackPanel>
                             </DockPanel>
-                            <TextBlock Margin="0,12,0,0" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{TemplateBinding Value}" />
+                            <TextBlock Margin="0,12,0,0" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" TextTrimming="CharacterEllipsis" ToolTip="{TemplateBinding Value}" Text="{TemplateBinding Value}" />
                             <ContentPresenter Margin="0,12,0,0" />
                             <ContentPresenter Margin="0,12,0,0" Content="{TemplateBinding Footer}" />
                         </StackPanel>

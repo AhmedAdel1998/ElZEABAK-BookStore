@@ -2,19 +2,21 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:BookStore.UI.Controls">
-    <controls:AppCard Width="620" HorizontalAlignment="Left" Title="Barcode Settings" Subtitle="Loaded from appsettings; persistence prepared for future implementation." Icon="S">
-        <UniformGrid Columns="2">
-            <StackPanel Margin="0,0,12,12"><TextBlock Text="Default Type" /><TextBlock FontWeight="SemiBold" Text="{Binding Settings.DefaultFormat}" /></StackPanel>
-            <StackPanel Margin="0,0,12,12"><TextBlock Text="Prefix" /><controls:TextInputBox Text="{Binding Settings.Prefix}" /></StackPanel>
-            <StackPanel Margin="0,0,12,12"><TextBlock Text="Starting Number" /><controls:NumericTextBox Text="{Binding Settings.StartingNumber}" /></StackPanel>
-            <StackPanel Margin="0,0,12,12"><TextBlock Text="Length" /><controls:NumericTextBox Text="{Binding Settings.Length}" /></StackPanel>
-            <StackPanel Margin="0,0,12,12"><TextBlock Text="Label Width mm" /><controls:NumericTextBox Text="{Binding Settings.LabelWidthMm}" /></StackPanel>
-            <StackPanel Margin="0,0,12,12"><TextBlock Text="Label Height mm" /><controls:NumericTextBox Text="{Binding Settings.LabelHeightMm}" /></StackPanel>
-            <StackPanel Margin="0,0,12,12"><TextBlock Text="Printer" /><controls:TextInputBox Text="{Binding Settings.PrinterName}" /></StackPanel>
-            <StackPanel Margin="0,0,12,12"><TextBlock Text="Scan Timeout ms" /><controls:NumericTextBox Text="{Binding Settings.ScanTimeoutMilliseconds}" /></StackPanel>
-            <CheckBox Margin="0,0,12,12" Content="Automatic Generation" IsChecked="{Binding Settings.AutomaticGenerationEnabled}" />
-            <CheckBox Margin="0,0,12,12" Content="Manual Generation" IsChecked="{Binding Settings.ManualGenerationEnabled}" />
-            <controls:PrimaryButton Command="{Binding SaveCommand}" Content="Save" Icon="S" />
-        </UniformGrid>
-    </controls:AppCard>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <controls:AppCard Width="620" HorizontalAlignment="Left" Title="Barcode Settings" Subtitle="Generation format, prefix, length, and label sizes used when printing barcodes." Icon="Settings">
+            <UniformGrid Columns="2">
+                <StackPanel Margin="0,0,12,12"><TextBlock Text="Default Type" /><TextBlock FontWeight="SemiBold" Text="{Binding Settings.DefaultFormat}" /></StackPanel>
+                <StackPanel Margin="0,0,12,12"><TextBlock Text="Prefix" /><controls:TextInputBox Text="{Binding Settings.Prefix}" /></StackPanel>
+                <StackPanel Margin="0,0,12,12"><TextBlock Text="Starting Number" /><controls:NumericTextBox Text="{Binding Settings.StartingNumber}" /></StackPanel>
+                <StackPanel Margin="0,0,12,12"><TextBlock Text="Length" /><controls:NumericTextBox Text="{Binding Settings.Length}" /></StackPanel>
+                <StackPanel Margin="0,0,12,12"><TextBlock Text="Label Width mm" /><controls:NumericTextBox Text="{Binding Settings.LabelWidthMm}" /></StackPanel>
+                <StackPanel Margin="0,0,12,12"><TextBlock Text="Label Height mm" /><controls:NumericTextBox Text="{Binding Settings.LabelHeightMm}" /></StackPanel>
+                <StackPanel Margin="0,0,12,12"><TextBlock Text="Printer" /><controls:TextInputBox Text="{Binding Settings.PrinterName}" /></StackPanel>
+                <StackPanel Margin="0,0,12,12"><TextBlock Text="Scan Timeout ms" /><controls:NumericTextBox Text="{Binding Settings.ScanTimeoutMilliseconds}" /></StackPanel>
+                <CheckBox Margin="0,0,12,12" Content="Automatic Generation" IsChecked="{Binding Settings.AutomaticGenerationEnabled}" />
+                <CheckBox Margin="0,0,12,12" Content="Manual Generation" IsChecked="{Binding Settings.ManualGenerationEnabled}" />
+                <controls:PrimaryButton Command="{Binding SaveCommand}" Content="Save" Icon="Save" />
+            </UniformGrid>
+        </controls:AppCard>
+    </ScrollViewer>
 </UserControl>

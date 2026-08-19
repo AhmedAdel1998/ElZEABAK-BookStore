@@ -12,9 +12,9 @@
         <DockPanel Margin="0,0,0,12">
             <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Inventory" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding HistoryCommand}" Content="Ledger" Icon="L" />
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
-                <controls:PrimaryButton Command="{Binding AdjustCommand}" Content="Adjust" Icon="A" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding HistoryCommand}" Content="Ledger" Icon="History" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="Refresh" />
+                <controls:PrimaryButton Command="{Binding AdjustCommand}" Content="Adjust" Icon="Adjust" />
             </StackPanel>
         </DockPanel>
         <Border Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
@@ -25,27 +25,27 @@
             </WrapPanel>
         </Border>
         <Grid Grid.Row="2">
-            <controls:AppDataGrid ItemsSource="{Binding Items}">
+            <controls:AppDataGrid HorizontalScrollBarVisibility="Auto" ItemsSource="{Binding Items}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding ImagePath}" Header="Product Image" Width="1.4*" />
-                    <DataGridTextColumn Binding="{Binding Barcode}" Header="Barcode" Width="*" />
-                    <DataGridTextColumn Binding="{Binding ISBN}" Header="ISBN" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Title}" Header="Title" Width="2*" />
-                    <DataGridTextColumn Binding="{Binding CategoryName}" Header="Category" Width="*" />
-                    <DataGridTextColumn Binding="{Binding CurrentQuantity}" Header="Current Quantity" Width="*" />
-                    <DataGridTextColumn Binding="{Binding MinimumStock}" Header="Minimum Stock" Width="*" />
-                    <DataGridTextColumn Binding="{Binding InventoryStatus}" Header="Inventory Status" Width="*" />
-                    <DataGridTextColumn Binding="{Binding LastUpdated, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Header="Last Updated" Width="*" />
+                    <DataGridTextColumn Binding="{Binding ImagePath}" Header="Product Image" Width="1.4*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Barcode}" Header="Barcode" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding ISBN}" Header="ISBN" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Title}" Header="Title" Width="2*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding CategoryName}" Header="Category" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding CurrentQuantity}" Header="Current Quantity" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding MinimumStock}" Header="Minimum Stock" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding InventoryStatus}" Header="Inventory Status" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding LastUpdated, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Header="Last Updated" Width="*" MinWidth="110" />
                 </DataGrid.Columns>
             </controls:AppDataGrid>
+            <controls:NoDataView
+                                Title="No Products"
+                                Message="No products found."
+                                Visibility="{Binding Items.Count, Converter={StaticResource EmptyCollectionToVisibilityConverter}}" />
             <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading inventory..." />
         </Grid>
         <Border Grid.Row="3" Margin="0,12,0,0" Style="{StaticResource PanelBorderStyle}">
-            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
-                <Run Text="Page " /><Run Text="{Binding PageNumber}" />
-                <Run Text=" | Page size " /><Run Text="{Binding PageSize}" />
-                <Run Text=" | Total " /><Run Text="{Binding TotalCount}" />
-            </TextBlock>
+            <controls:PaginationBar />
         </Border>
     </Grid>
 </UserControl>

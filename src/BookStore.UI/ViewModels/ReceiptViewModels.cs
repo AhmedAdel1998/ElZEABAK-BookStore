@@ -82,7 +82,11 @@ public partial class ReprintReceiptViewModel : BaseViewModel
     private async Task SearchAsync()
     {
         IsBusy = true;
-        var date = SaleDate.HasValue ? new DateTimeOffset(SaleDate.Value.Date) : (DateTimeOffset?)null;
+        // The start of the chosen local day, carrying its real offset so the repository can build
+        // an exact 24-hour window without guessing a time zone.
+        var date = SaleDate.HasValue
+            ? new DateTimeOffset(SaleDate.Value.Date, TimeZoneInfo.Local.GetUtcOffset(SaleDate.Value.Date))
+            : (DateTimeOffset?)null;
         var result = await _searchHandler.HandleAsync(new SearchReceiptSalesQuery(InvoiceNumber, date));
         IsBusy = false;
         Results.Clear();

@@ -95,6 +95,20 @@ public partial class CustomerDetailsViewModel : BaseViewModel
         await LoadHistoryAsync();
     }
 
+    private static DateTimeOffset? ToOffset(DateTime? value)
+    {
+        return value.HasValue ? new DateTimeOffset(value.Value.Date, TimeZoneInfo.Local.GetUtcOffset(value.Value.Date)) : null;
+    }
+
+    /// <summary>
+    /// Turns the day chosen in the "to" picker into an exclusive upper bound, so the whole of that
+    /// day is included rather than only its first instant.
+    /// </summary>
+    private static DateTimeOffset? ToExclusiveEnd(DateTime? value)
+    {
+        return value.HasValue ? ToOffset(value.Value.Date.AddDays(1)) : null;
+    }
+
     private async Task LoadHistoryAsync()
     {
         if (_navigationState.SelectedCustomerId is null || !CanViewHistory)
@@ -104,8 +118,8 @@ public partial class CustomerDetailsViewModel : BaseViewModel
 
         var result = await _historyHandler.HandleAsync(new GetCustomerSalesHistoryRequest(
             _navigationState.SelectedCustomerId.Value,
-            DateFrom.HasValue ? new DateTimeOffset(DateFrom.Value) : null,
-            DateTo.HasValue ? new DateTimeOffset(DateTo.Value) : null,
+            ToOffset(DateFrom),
+            ToExclusiveEnd(DateTo),
             PageNumber,
             PageSize));
         SalesHistory.Clear();

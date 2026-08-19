@@ -12,36 +12,36 @@
             <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Reports Dashboard" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <controls:ReportDateRangeControl Margin="0,0,8,0" SelectedPreset="{Binding SelectedPreset}" StartDate="{Binding StartDate}" EndDate="{Binding EndDate}" />
-                <controls:PrimaryButton Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
+                <controls:PrimaryButton Command="{Binding RefreshCommand}" Content="Refresh" Icon="Refresh" />
             </StackPanel>
         </DockPanel>
-        <UniformGrid Grid.Row="1" Columns="5">
-            <controls:AppCard Margin="0,0,12,12" Title="Today's Sales" Value="{Binding Dashboard.TodaysSales, StringFormat={}{0:C}}" Icon="$" />
-            <controls:AppCard Margin="0,0,12,12" Title="Transactions" Value="{Binding Dashboard.TodaysTransactions}" Icon="#" />
-            <controls:AppCard Margin="0,0,12,12" Title="Profit" Value="{Binding Dashboard.TodaysProfit, StringFormat={}{0:C}}" Icon="P" />
-            <controls:AppCard Margin="0,0,12,12" Title="Inventory Value" Value="{Binding Dashboard.CurrentInventoryValue, StringFormat={}{0:C}}" Icon="I" />
-            <controls:AppCard Margin="0,0,12,12" Title="Low Stock" Value="{Binding Dashboard.LowStockProducts}" Icon="!" />
-            <controls:AppCard Margin="0,0,12,12" Title="Out of Stock" Value="{Binding Dashboard.OutOfStockProducts}" Icon="0" />
-            <controls:AppCard Margin="0,0,12,12" Title="Best Product" Value="{Binding Dashboard.BestSellingProduct}" Icon="B" />
-            <controls:AppCard Margin="0,0,12,12" Title="Top Customer" Value="{Binding Dashboard.TopCustomer}" Icon="C" />
-            <controls:AppCard Margin="0,0,12,12" Title="Top Cashier" Value="{Binding Dashboard.TopCashier}" Icon="U" />
-            <controls:AppCard Margin="0,0,12,12" Title="Tax" Value="{Binding Dashboard.TodaysTax, StringFormat={}{0:C}}" Icon="T" />
-        </UniformGrid>
+        <WrapPanel Grid.Row="1" ItemWidth="210">
+            <controls:AppCard Margin="0,0,12,12" Title="Sales" Value="{Binding Dashboard.TodaysSales, Converter={StaticResource CurrencyConverter}}" />
+            <controls:AppCard Margin="0,0,12,12" Title="Transactions" Value="{Binding Dashboard.TodaysTransactions}" />
+            <controls:AppCard Margin="0,0,12,12" Title="Profit" Value="{Binding Dashboard.TodaysProfit, StringFormat={}{0:C}}" />
+            <controls:AppCard Margin="0,0,12,12" Title="Inventory Value" Value="{Binding Dashboard.CurrentInventoryValue, StringFormat={}{0:C}}" />
+            <controls:AppCard Margin="0,0,12,12" Title="Low Stock" Value="{Binding Dashboard.LowStockProducts}" />
+            <controls:AppCard Margin="0,0,12,12" Title="Out of Stock" Value="{Binding Dashboard.OutOfStockProducts}" />
+            <controls:AppCard Margin="0,0,12,12" Title="Best Product" Value="{Binding Dashboard.BestSellingProduct}" />
+            <controls:AppCard Margin="0,0,12,12" Title="Top Customer" Value="{Binding Dashboard.TopCustomer}" />
+            <controls:AppCard Margin="0,0,12,12" Title="Top Cashier" Value="{Binding Dashboard.TopCashier}" />
+            <controls:AppCard Margin="0,0,12,12" Title="Tax" Value="{Binding Dashboard.TodaysTax, StringFormat={}{0:C}}" />
+        </WrapPanel>
         <Grid Grid.Row="2">
-            <UniformGrid Columns="4" VerticalAlignment="Top">
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenSalesSummaryCommand}" Content="Sales Summary" Icon="S" />
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenSalesDetailsCommand}" Content="Sales Details" Icon="D" />
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenProfitCommand}" Content="Profit" Icon="P" />
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenBestProductsCommand}" Content="Best Products" Icon="B" />
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenInventoryCommand}" Content="Inventory" Icon="I" />
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenMovementsCommand}" Content="Movements" Icon="M" />
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenLowStockCommand}" Content="Low Stock" Icon="!" />
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenCustomersCommand}" Content="Customers" Icon="C" />
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenCashiersCommand}" Content="Cashiers" Icon="U" />
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenPaymentsCommand}" Content="Payments" Icon="$" />
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenDailyCommand}" Content="Daily Sales" Icon="D" />
-                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenHourlyCommand}" Content="Hourly Sales" Icon="H" />
-            </UniformGrid>
+            <WrapPanel VerticalAlignment="Top" ItemWidth="210">
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenSalesSummaryCommand}" Content="Sales Summary" Icon="Reports" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenSalesDetailsCommand}" Content="Sales Details" Icon="Reports" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenProfitCommand}" Content="Profit" Icon="Reports" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenBestProductsCommand}" Content="Best Products" Icon="Products" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenInventoryCommand}" Content="Inventory" Icon="Inventory" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenMovementsCommand}" Content="Movements" Icon="History" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenLowStockCommand}" Content="Low Stock" Icon="Warning" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenCustomersCommand}" Content="Customers" Icon="Customers" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenCashiersCommand}" Content="Cashiers" Icon="Cashier" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenPaymentsCommand}" Content="Payments" Icon="Reports" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenDailyCommand}" Content="Daily Sales" Icon="Calendar" />
+                <controls:SecondaryButton Margin="0,0,8,8" Command="{Binding OpenHourlyCommand}" Content="Hourly Sales" Icon="Calendar" />
+            </WrapPanel>
             <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading reports..." />
         </Grid>
     </Grid>

@@ -13,6 +13,9 @@ namespace BookStore.UI.Services;
 /// </summary>
 public class ThemeService : IThemeService
 {
+    private static readonly Uri LightThemeSource = new("/BookStore.UI;component/Themes/Light.xaml", UriKind.Relative);
+    private static readonly Uri DarkThemeSource = new("/BookStore.UI;component/Themes/Dark.xaml", UriKind.Relative);
+
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ThemeService> _logger;
     private string _currentTheme = ApplicationConstants.DefaultTheme;
@@ -55,44 +58,68 @@ public class ThemeService : IThemeService
 
     private void ApplyTheme(string theme)
     {
-        _currentTheme = string.Equals(theme, "Dark", StringComparison.OrdinalIgnoreCase) ? "Dark" : "Light";
-        var resources = System.Windows.Application.Current.Resources;
-
-        if (_currentTheme == "Dark")
+        var application = System.Windows.Application.Current;
+        if (application is null)
         {
-            resources["AppBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(17, 24, 39));
-            resources["SurfaceBrush"] = new SolidColorBrush(Color.FromRgb(31, 41, 55));
-            resources["SurfaceAltBrush"] = new SolidColorBrush(Color.FromRgb(39, 52, 73));
-            resources["PrimaryTextBrush"] = new SolidColorBrush(Color.FromRgb(243, 244, 246));
-            resources["SecondaryTextBrush"] = new SolidColorBrush(Color.FromRgb(203, 213, 225));
-            resources["MutedTextBrush"] = new SolidColorBrush(Color.FromRgb(148, 163, 184));
-            resources["BorderBrush"] = new SolidColorBrush(Color.FromRgb(55, 65, 81));
-            resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(96, 165, 250));
-            resources["AccentHoverBrush"] = new SolidColorBrush(Color.FromRgb(147, 197, 253));
-            resources["OverlayBrush"] = new SolidColorBrush(Color.FromArgb(179, 0, 0, 0));
+            return;
+        }
+
+        // Brushes and the resource dictionary are dispatcher-affine, and settings changes can
+        // be raised from a background thread.
+        if (!application.Dispatcher.CheckAccess())
+        {
+            application.Dispatcher.Invoke(() => ApplyTheme(theme));
+            return;
+        }
+
+        var isDark = string.Equals(theme, "Dark", StringComparison.OrdinalIgnoreCase);
+        _currentTheme = isDark ? "Dark" : "Light";
+
+        // Swap the whole palette dictionary rather than overwriting a handful of brushes in code.
+        // The old approach reassigned ten keys and left every other brush -- input backgrounds, grid
+        // rows, status colours -- at its light value, so dark mode rendered near-white text on
+        // near-white fills and Dark.xaml was never loaded at all.
+        var dictionaries = application.Resources.MergedDictionaries;
+        var replacement = new ResourceDictionary { Source = isDark ? DarkThemeSource : LightThemeSource };
+        var existing = dictionaries.FirstOrDefault(IsThemeDictionary);
+
+        if (existing is null)
+        {
+            dictionaries.Add(replacement);
         }
         else
         {
-            resources["AppBackgroundBrush"] = new SolidColorBrush(Color.FromRgb(255, 248, 231));
-            resources["SurfaceBrush"] = new SolidColorBrush(Colors.White);
-            resources["SurfaceAltBrush"] = new SolidColorBrush(Color.FromRgb(255, 243, 196));
-            resources["PrimaryTextBrush"] = new SolidColorBrush(Color.FromRgb(30, 23, 17));
-            resources["SecondaryTextBrush"] = new SolidColorBrush(Color.FromRgb(116, 92, 43));
-            resources["MutedTextBrush"] = new SolidColorBrush(Color.FromRgb(165, 138, 73));
-            resources["BorderBrush"] = new SolidColorBrush(Color.FromRgb(233, 216, 154));
-            resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(217, 154, 0));
-            resources["AccentHoverBrush"] = new SolidColorBrush(Color.FromRgb(184, 120, 0));
-            resources["OverlayBrush"] = new SolidColorBrush(Color.FromArgb(153, 30, 23, 17));
+            dictionaries[dictionaries.IndexOf(existing)] = replacement;
         }
 
         _logger.LogInformation("Theme applied: {Theme}", _currentTheme);
     }
 
+    /// <summary>
+    /// Reports whether a merged dictionary is one of the swappable theme palettes.
+    /// </summary>
+    private static bool IsThemeDictionary(ResourceDictionary dictionary)
+    {
+        var source = dictionary.Source?.OriginalString;
+        return source is not null
+            && (source.EndsWith("Themes/Light.xaml", StringComparison.OrdinalIgnoreCase)
+                || source.EndsWith("Themes/Dark.xaml", StringComparison.OrdinalIgnoreCase));
+    }
+
     private async void OnSettingsChanged(object? sender, SettingsChangedEvent e)
     {
-        if (e.Category == SettingsCategory.Appearance)
+        if (e.Category != SettingsCategory.Appearance)
+        {
+            return;
+        }
+
+        try
         {
             await ApplyConfiguredThemeAsync();
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Failed to reapply the theme after an appearance settings change");
         }
     }
 }

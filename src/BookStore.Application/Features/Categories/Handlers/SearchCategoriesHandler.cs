@@ -37,6 +37,6 @@ public sealed class SearchCategoriesHandler
             return Result<PagedResult<CategoryDto>>.Failure(validation.Errors[0].ErrorMessage);
         }
 
-        return await _getCategoriesHandler.LoadAsync(request.SearchTerm, request.PageNumber, request.PageSize, cancellationToken);
+        return await _getCategoriesHandler.LoadAsync(request.SearchTerm, request.PageNumber, request.PageSize, request.IsActive, cancellationToken);
     }
 }

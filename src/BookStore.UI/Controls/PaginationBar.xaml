@@ -1,0 +1,36 @@
+<UserControl x:Class="BookStore.UI.Controls.PaginationBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls"
+             FlowDirection="{DynamicResource AppFlowDirection}">
+    <!--
+        One shared pager for every list view. The views previously rendered their paging state as
+        <Run> text inside a TextBlock, which the tree localizer can never reach (a Run is not a visual
+        child), so the labels stayed English in Arabic mode - and there were no controls to change
+        page with anyway.
+    -->
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+            <controls:SecondaryButton Margin="0,0,8,0"
+                                      MinWidth="112"
+                                      Command="{Binding PreviousPageCommand}"
+                                      Icon="Back"
+                                      AutomationProperties.Name="{DynamicResource Paging.Previous}"
+                                      Content="{DynamicResource Paging.Previous}" />
+            <controls:SecondaryButton MinWidth="112"
+                                      Command="{Binding NextPageCommand}"
+                                      Icon="Forward"
+                                      AutomationProperties.Name="{DynamicResource Paging.Next}"
+                                      Content="{DynamicResource Paging.Next}" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="{DynamicResource Paging.Page}" />
+            <TextBlock Margin="6,0,0,0" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{Binding PageNumber}" />
+            <TextBlock Margin="6,0,0,0" Foreground="{DynamicResource SecondaryTextBrush}" Text="{DynamicResource Paging.Of}" />
+            <TextBlock Margin="6,0,0,0" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{Binding TotalPages}" />
+            <TextBlock Margin="16,0,0,0" Foreground="{DynamicResource SecondaryTextBrush}" Text="{DynamicResource Paging.Total}" />
+            <TextBlock Margin="6,0,0,0" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}" Text="{Binding TotalCount}" />
+        </StackPanel>
+    </DockPanel>
+</UserControl>

@@ -62,7 +62,8 @@ public class InventoryRepository(BookStoreDbContext dbContext) : Repository<Inve
 
         if (dateTo.HasValue)
         {
-            query = query.Where(transaction => transaction.Date <= dateTo.Value);
+            // Exclusive upper bound: callers pass the start of the day after the one they mean.
+            query = query.Where(transaction => transaction.Date < dateTo.Value);
         }
 
         if (transactionType.HasValue)

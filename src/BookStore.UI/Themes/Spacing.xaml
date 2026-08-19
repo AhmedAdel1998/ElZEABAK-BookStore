@@ -7,6 +7,7 @@
     <Thickness x:Key="Space12">12</Thickness>
     <Thickness x:Key="Space16">16</Thickness>
     <Thickness x:Key="Space24">24</Thickness>
-    <sys:Double x:Key="ControlHeight">36</sys:Double>
+    <sys:Double x:Key="ControlHeight">42</sys:Double>
+    <sys:Double x:Key="TouchControlHeight">48</sys:Double>
     <sys:Double x:Key="ToolbarHeight">48</sys:Double>
 </ResourceDictionary>

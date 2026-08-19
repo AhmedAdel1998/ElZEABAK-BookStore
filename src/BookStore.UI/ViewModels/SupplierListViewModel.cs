@@ -124,7 +124,7 @@ public partial class SupplierListViewModel : BaseViewModel
             return;
         }
 
-        var result = await _deleteHandler.HandleAsync(new DeleteSupplierRequest(SelectedSupplier.Id));
+        var result = await _deleteHandler.HandleAsync(new DeleteSupplierRequest(SelectedSupplier.PersistedId));
         ShowOperation(result.Succeeded, SelectedSupplier.ProductCount > 0 ? "Supplier contains associated products. Supplier deleted and products were preserved." : "Supplier deleted successfully.", result.Errors.FirstOrDefault()?.Message);
         await LoadAsync();
     }
@@ -134,7 +134,7 @@ public partial class SupplierListViewModel : BaseViewModel
     private async Task ActivateAsync()
     {
         if (SelectedSupplier is null) return;
-        var result = await _activateHandler.HandleAsync(new ActivateSupplierRequest(SelectedSupplier.Id));
+        var result = await _activateHandler.HandleAsync(new ActivateSupplierRequest(SelectedSupplier.PersistedId));
         ShowOperation(result.Succeeded, "Supplier activated successfully.", result.Errors.FirstOrDefault()?.Message);
         await LoadAsync();
     }
@@ -144,7 +144,7 @@ public partial class SupplierListViewModel : BaseViewModel
     private async Task DeactivateAsync()
     {
         if (SelectedSupplier is null) return;
-        var result = await _deactivateHandler.HandleAsync(new DeactivateSupplierRequest(SelectedSupplier.Id));
+        var result = await _deactivateHandler.HandleAsync(new DeactivateSupplierRequest(SelectedSupplier.PersistedId));
         ShowOperation(result.Succeeded, "Supplier deactivated successfully.", result.Errors.FirstOrDefault()?.Message);
         await LoadAsync();
     }
@@ -152,6 +152,46 @@ public partial class SupplierListViewModel : BaseViewModel
     private bool CanEditSelected() => CanEdit && SelectedSupplier is not null;
     private bool CanDeleteSelected() => CanDelete && SelectedSupplier is not null;
     private bool CanSelectSupplier() => SelectedSupplier is not null && _authorizationService.HasPermission(PermissionConstants.SupplierView);
+
+/// <summary>Gets the number of pages available for the current filters.</summary>
+    public int TotalPages => PageSize <= 0 ? 1 : Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
+
+    /// <summary>Gets whether an earlier page exists.</summary>
+    public bool CanGoToPreviousPage => PageNumber > 1;
+
+    /// <summary>Gets whether a later page exists.</summary>
+    public bool CanGoToNextPage => PageNumber < TotalPages;
+
+    partial void OnPageNumberChanged(int value) => NotifyPagingChanged();
+
+    partial void OnTotalCountChanged(int value) => NotifyPagingChanged();
+
+    partial void OnPageSizeChanged(int value) => NotifyPagingChanged();
+
+    private void NotifyPagingChanged()
+    {
+        OnPropertyChanged(nameof(TotalPages));
+        OnPropertyChanged(nameof(CanGoToPreviousPage));
+        OnPropertyChanged(nameof(CanGoToNextPage));
+        NextPageCommand.NotifyCanExecuteChanged();
+        PreviousPageCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>Moves to the next page of results.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoToNextPage))]
+    private async Task NextPageAsync()
+    {
+        PageNumber++;
+        await LoadAsync();
+    }
+
+    /// <summary>Moves to the previous page of results.</summary>
+    [RelayCommand(CanExecute = nameof(CanGoToPreviousPage))]
+    private async Task PreviousPageAsync()
+    {
+        PageNumber--;
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {

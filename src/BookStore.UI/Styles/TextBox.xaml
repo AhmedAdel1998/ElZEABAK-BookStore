@@ -21,7 +21,23 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="{DynamicResource CornerRadiusMedium}" />
                         <DockPanel Margin="{TemplateBinding Padding}">
-                            <TextBlock DockPanel.Dock="Left" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}" Text="{TemplateBinding Icon}" />
+                            <TextBlock DockPanel.Dock="Left"
+                                       Margin="0,0,8,0"
+                                       VerticalAlignment="Center"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       Text="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource IconGlyphConverter}}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                             <Grid>
                                 <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="Center" />
                                 <TextBlock x:Name="PlaceholderText"
@@ -40,7 +56,7 @@
                         <Trigger Property="IsKeyboardFocusWithin" Value="True">
                             <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                             <Setter TargetName="Root" Property="BorderThickness" Value="2" />
-                            <Setter TargetName="Root" Property="Background" Value="#FFFDF5" />
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource InputFocusBackgroundBrush}" />
                         </Trigger>
                         <Trigger Property="Validation.HasError" Value="True">
                             <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
@@ -61,24 +77,6 @@
     <Style TargetType="{x:Type controls:EmailTextBox}" BasedOn="{StaticResource AppTextInputStyle}" />
     <Style TargetType="{x:Type controls:PhoneTextBox}" BasedOn="{StaticResource AppTextInputStyle}" />
 
-    <Style TargetType="{x:Type controls:PasswordInputBox}">
-        <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type controls:PasswordInputBox}">
-                    <Border MinHeight="{TemplateBinding MinHeight}"
-                            Padding="10,6"
-                            Background="{DynamicResource SurfaceBrush}"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="{DynamicResource CornerRadiusMedium}">
-                        <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}" Text="{TemplateBinding Placeholder}" />
-                    </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
     <Style TargetType="{x:Type controls:AppDatePicker}">
         <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -91,12 +89,54 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     </Style>
 
-    <Style TargetType="{x:Type controls:AutoCompleteBox}" BasedOn="{StaticResource {x:Type controls:AppComboBox}}" />
+
+    <Style TargetType="ComboBox">
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
+        <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        <Setter Property="FlowDirection" Value="{DynamicResource AppFlowDirection}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}" />
+    </Style>
+
+    <Style TargetType="ComboBoxItem">
+        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+    </Style>
+
+    <Style TargetType="DatePicker">
+        <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
+        <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}" />
+    </Style>
+
+    <Style TargetType="PasswordBox">
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
+        <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource PrimaryTextBrush}" />
+        <Setter Property="FlowDirection" Value="{DynamicResource AppFlowDirection}" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}" />
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                <Setter Property="BorderThickness" Value="2" />
+                <Setter Property="Background" Value="{DynamicResource InputFocusBackgroundBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
 
     <Style TargetType="TextBox">
         <Setter Property="Padding" Value="10,6" />
-        <Setter Property="MinHeight" Value="34" />
-        <Setter Property="Background" Value="#FFFDF5" />
+        <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
+        <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
         <Setter Property="FlowDirection" Value="{DynamicResource AppFlowDirection}" />

@@ -15,8 +15,8 @@
                 <TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Manage customer contact information and sales history." />
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="R" />
-                <controls:PrimaryButton Command="{Binding AddCommand}" Content="Add" Icon="+" />
+                <controls:SecondaryButton Margin="0,0,8,0" Command="{Binding RefreshCommand}" Content="Refresh" Icon="Refresh" />
+                <controls:PrimaryButton Command="{Binding AddCommand}" Content="Add" Icon="Add" />
             </StackPanel>
         </DockPanel>
         <Border Grid.Row="1" Margin="0,0,0,12" Style="{StaticResource PanelBorderStyle}">
@@ -31,6 +31,7 @@
         </Border>
         <Grid Grid.Row="2">
             <controls:AppDataGrid x:Name="CustomerGrid"
+                                  HorizontalScrollBarVisibility="Auto"
                                   ItemsSource="{Binding Customers}"
                                   SelectedItem="{Binding SelectedCustomer, Mode=TwoWay}"
                                   IsLoading="{Binding IsBusy}">
@@ -49,18 +50,18 @@
                     </ContextMenu>
                 </controls:AppDataGrid.ContextMenu>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding FullName}" Header="Customer Name" Width="1.6*" />
-                    <DataGridTextColumn Binding="{Binding Phone}" Header="Phone" Width="*" />
-                    <DataGridTextColumn Binding="{Binding Email}" Header="Email" Width="1.2*" />
-                    <DataGridTextColumn Binding="{Binding Address}" Header="Address" Width="1.4*" />
+                    <DataGridTextColumn Binding="{Binding FullName}" Header="Customer Name" Width="1.6*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Phone}" Header="Phone" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Email}" Header="Email" Width="1.2*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding Address}" Header="Address" Width="1.4*" MinWidth="110" />
                     <DataGridTextColumn Binding="{Binding SalesCount}" Header="Sales" Width="80" />
-                    <DataGridTextColumn Binding="{Binding TotalPurchases, StringFormat=N2}" Header="Total Purchases" Width="*" />
-                    <DataGridTextColumn Binding="{Binding LastPurchaseDate}" Header="Last Purchase" Width="*" />
+                    <DataGridTextColumn Binding="{Binding TotalPurchases, StringFormat=N2}" Header="Total Purchases" Width="*" MinWidth="110" />
+                    <DataGridTextColumn Binding="{Binding LastPurchaseDate}" Header="Last Purchase" Width="*" MinWidth="110" />
                     <DataGridTextColumn Binding="{Binding Status}" Header="Status" Width="90" />
-                    <DataGridTextColumn Binding="{Binding CreatedAt}" Header="Created" Width="*" />
+                    <DataGridTextColumn Binding="{Binding CreatedAt}" Header="Created" Width="*" MinWidth="110" />
                 </DataGrid.Columns>
             </controls:AppDataGrid>
-            <controls:NoDataView Title="No Customers" Message="{Binding EmptyMessage}">
+            <controls:NoDataView Title="No Customers" Message="{Binding EmptyMessage, Converter={StaticResource LocalizeConverter}}">
                 <controls:NoDataView.Style>
                     <Style TargetType="{x:Type controls:NoDataView}" BasedOn="{StaticResource {x:Type controls:NoDataView}}">
                         <Setter Property="Visibility" Value="Collapsed" />
@@ -75,11 +76,7 @@
             <controls:LoadingOverlay IsBusy="{Binding IsBusy}" Message="Loading customers..." />
         </Grid>
         <Border Grid.Row="3" Margin="0,12,0,0" Style="{StaticResource PanelBorderStyle}">
-            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
-                <Run Text="Page " /><Run Text="{Binding PageNumber}" />
-                <Run Text=" | Page size " /><Run Text="{Binding PageSize}" />
-                <Run Text=" | Total " /><Run Text="{Binding TotalCount}" />
-            </TextBlock>
+            <controls:PaginationBar />
         </Border>
     </Grid>
 </UserControl>

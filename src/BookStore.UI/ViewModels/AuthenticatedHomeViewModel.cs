@@ -6,6 +6,7 @@ using BookStore.UI.Navigation;
 using BookStore.UI.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Windows;
 using System.Windows.Threading;
 
 namespace BookStore.UI.ViewModels;
@@ -59,6 +60,12 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
 
     [ObservableProperty]
     private int contentColumn = 1;
+
+    [ObservableProperty]
+    private GridLength firstColumnWidth = GridLength.Auto;
+
+    [ObservableProperty]
+    private GridLength secondColumnWidth = new(1, GridUnitType.Star);
 
     [ObservableProperty]
     private bool isNotificationsOpen;
@@ -253,6 +260,18 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     private Task NavigateBackupAsync() => NavigateAsync<BackupListViewModel>("Nav.Backup");
 
     /// <summary>
+    /// Navigates to audit trail.
+    /// </summary>
+    [RelayCommand]
+    private Task NavigateAuditAsync() => NavigateAsync<AuditTrailViewModel>("Nav.Audit");
+
+    /// <summary>
+    /// Navigates to data quality.
+    /// </summary>
+    [RelayCommand]
+    private Task NavigateDataQualityAsync() => NavigateAsync<DataQualityViewModel>("Nav.DataQuality");
+
+    /// <summary>
     /// Navigates to change password.
     /// </summary>
     [RelayCommand]
@@ -293,6 +312,8 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
         AddMenuItem("Nav.Users", "U", PermissionConstants.UsersManage, new AsyncRelayCommand(() => NavigateAsync<UsersViewModel>("Nav.Users")));
         AddMenuItem("Nav.Roles", "RO", PermissionConstants.RolesManage, new AsyncRelayCommand(() => NavigateAsync<RolesViewModel>("Nav.Roles")));
         AddMenuItem("Nav.Backup", "B", PermissionConstants.BackupView, NavigateBackupCommand);
+        AddMenuItem("Nav.Audit", "A", PermissionConstants.AuditView, NavigateAuditCommand);
+        AddMenuItem("Nav.DataQuality", "DQ", PermissionConstants.DataQualityView, NavigateDataQualityCommand);
         AddMenuItem("Nav.Logout", "L", null, LogoutCommand);
     }
 
@@ -352,9 +373,18 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
             : _localizationService.T("Language.SwitchToArabic");
     }
 
+    /// <summary>
+    /// Moves the sidebar to the trailing edge for right-to-left layouts. The column widths move
+    /// with it: the sidebar is fixed width and the content region takes the remaining space, so
+    /// swapping only the column indexes would leave the sidebar in the star column and squeeze
+    /// the content down to its own desired width.
+    /// </summary>
     private void UpdateShellColumns()
     {
-        SidebarColumn = _localizationService.IsRightToLeft ? 1 : 0;
-        ContentColumn = _localizationService.IsRightToLeft ? 0 : 1;
+        var rightToLeft = _localizationService.IsRightToLeft;
+        SidebarColumn = rightToLeft ? 1 : 0;
+        ContentColumn = rightToLeft ? 0 : 1;
+        FirstColumnWidth = rightToLeft ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+        SecondColumnWidth = rightToLeft ? GridLength.Auto : new GridLength(1, GridUnitType.Star);
     }
 }

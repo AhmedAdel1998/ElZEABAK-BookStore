@@ -59,7 +59,7 @@ public partial class CustomerSelectionViewModel : BaseViewModel
             return;
         }
 
-        foreach (var customer in result.Value.Items.Select(item => new CustomerSelectionItem { Id = item.Id, FullName = item.FullName, Phone = item.Phone }))
+        foreach (var customer in result.Value.Items.Select(item => new CustomerSelectionItem { Id = item.PersistedId, FullName = item.FullName, Phone = item.Phone }))
         {
             Customers.Add(customer);
         }

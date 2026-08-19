@@ -6,8 +6,8 @@
         <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
         <Setter Property="MinWidth" Value="88" />
         <Setter Property="Padding" Value="14,8" />
-        <Setter Property="Foreground" Value="#1E1711" />
-        <Setter Property="Background" Value="{DynamicResource BookstoreGoldBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnAccentTextBrush}" />
+        <Setter Property="Background" Value="{DynamicResource BookstoreGreenBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Cursor" Value="Hand" />
@@ -23,7 +23,22 @@
                             CornerRadius="{DynamicResource CornerRadiusMedium}">
                         <Grid>
                             <StackPanel x:Name="ContentPanel" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="{TemplateBinding Icon}" />
+                                <TextBlock x:Name="IconGlyph"
+                                           Margin="0,0,8,0"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="14"
+                                           Text="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource IconGlyphConverter}}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource Self}}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                                 <ContentPresenter VerticalAlignment="Center" RecognizesAccessKey="True" />
                             </StackPanel>
                             <ProgressBar x:Name="LoadingBar" Height="3" VerticalAlignment="Bottom" IsIndeterminate="True" Visibility="Collapsed" />
@@ -54,14 +69,16 @@
     <Style TargetType="{x:Type controls:DangerButton}" BasedOn="{StaticResource AppButtonBaseStyle}">
         <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnDangerTextBrush}" />
     </Style>
     <Style TargetType="{x:Type controls:SuccessButton}" BasedOn="{StaticResource AppButtonBaseStyle}">
         <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource SuccessBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OnDangerTextBrush}" />
     </Style>
     <Style TargetType="{x:Type controls:IconButton}" BasedOn="{StaticResource AppButtonBaseStyle}">
-        <Setter Property="MinWidth" Value="36" />
-        <Setter Property="Width" Value="36" />
+        <Setter Property="MinWidth" Value="{DynamicResource ControlHeight}" />
+        <Setter Property="MinHeight" Value="{DynamicResource ControlHeight}" />
         <Setter Property="Padding" Value="8" />
     </Style>
     <Style TargetType="{x:Type controls:RoundedButton}" BasedOn="{StaticResource AppButtonBaseStyle}">

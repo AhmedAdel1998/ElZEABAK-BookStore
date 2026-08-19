@@ -8,6 +8,7 @@ using BookStore.Persistence;
 using BookStore.Reporting;
 using BookStore.Shared.Constants;
 using BookStore.Shared.Models;
+using BookStore.UI.Dialogs;
 using BookStore.UI.Navigation;
 using BookStore.UI.Services;
 using BookStore.UI.ViewModels;
@@ -25,7 +26,6 @@ namespace BookStore.UI;
 public partial class App : System.Windows.Application
 {
     private IHost? _host;
-    private IErrorDialogService? _errorDialogService;
     private Microsoft.Extensions.Logging.ILogger<App>? _logger;
 
     /// <summary>
@@ -47,16 +47,39 @@ public partial class App : System.Windows.Application
             await _host.StartAsync();
 
             _logger = _host.Services.GetRequiredService<Microsoft.Extensions.Logging.ILogger<App>>();
-            _errorDialogService = _host.Services.GetRequiredService<IErrorDialogService>();
 
             _logger.LogInformation("Application start");
 
             await _host.Services.GetRequiredService<IApplicationFolderService>().EnsureRequiredFoldersAsync();
-            await _host.Services.GetRequiredService<ILocalizationService>().ApplyConfiguredCultureAsync();
+            var localizationService = _host.Services.GetRequiredService<ILocalizationService>();
+            await localizationService.ApplyConfiguredCultureAsync();
+
+            // View models translate their own titles on read; they are presentational, so the service
+            // is handed to the base class rather than injected into forty-odd constructors.
+            BookStore.UI.ViewModels.BaseViewModel.UseLocalization(localizationService);
+            BookStore.UI.Converters.LocalizeConverter.UseLocalization(localizationService);
+            ValidationLocalization.Apply(localizationService);
+            LocalizationHelper.UseLocalization(localizationService);
             await _host.Services.GetRequiredService<IThemeService>().ApplyConfiguredThemeAsync();
+
+            // CurrencyValueConverter is instantiated by XAML with no constructor, so it cannot
+            // receive this service through DI; assigning the resolved singleton here is what lets
+            // every {StaticResource CurrencyConverter} binding read the configured currency.
+            var currencyFormatter = _host.Services.GetRequiredService<ICurrencyFormatterService>();
+            await currencyFormatter.ApplyConfiguredCurrencyAsync();
+            BookStore.UI.Converters.CurrencyValueConverter.FormatterService = currencyFormatter;
             var navigationService = _host.Services.GetRequiredService<INavigationService>();
-            var firstRunSetupService = _host.Services.GetRequiredService<IFirstRunSetupService>();
-            if (await firstRunSetupService.IsSetupRequiredAsync())
+
+            // First-run detection and session restore both reach the database, so they run inside a
+            // short-lived startup scope. The signed-in session itself lives on a singleton, so it
+            // outlives the scope that established it.
+            bool setupRequired;
+            using (var startupScope = _host.Services.CreateScope())
+            {
+                setupRequired = await startupScope.ServiceProvider.GetRequiredService<IFirstRunSetupService>().IsSetupRequiredAsync();
+            }
+
+            if (setupRequired)
             {
                 await navigationService.NavigateToAsync<FirstRunSetupViewModel>();
                 var setupWindow = _host.Services.GetRequiredService<MainWindow>();
@@ -65,11 +88,16 @@ public partial class App : System.Windows.Application
                 return;
             }
 
-            var authenticationService = _host.Services.GetRequiredService<IAuthenticationService>();
             var sessionTimeoutService = _host.Services.GetRequiredService<ISessionTimeoutService>();
-            var rememberedSession = await authenticationService.TryRestoreRememberedSessionAsync();
 
-            if (rememberedSession.Succeeded)
+            bool sessionRestored;
+            using (var sessionScope = _host.Services.CreateScope())
+            {
+                var authenticationService = sessionScope.ServiceProvider.GetRequiredService<IAuthenticationService>();
+                sessionRestored = (await authenticationService.TryRestoreRememberedSessionAsync()).Succeeded;
+            }
+
+            if (sessionRestored)
             {
                 sessionTimeoutService.Start();
                 await navigationService.NavigateToAsync<AuthenticatedHomeViewModel>();
@@ -114,6 +142,14 @@ public partial class App : System.Windows.Application
     public static IHostBuilder CreateHostBuilder(string[] args)
     {
         return Host.CreateDefaultBuilder(args)
+            // Validated in every configuration, not just Development. Navigation resolving scoped
+            // services from the root provider is exactly the defect these two checks catch, and it
+            // shipped precisely because the release build stayed silent about it.
+            .UseDefaultServiceProvider(options =>
+            {
+                options.ValidateScopes = true;
+                options.ValidateOnBuild = true;
+            })
             .ConfigureAppConfiguration((context, builder) =>
             {
                 builder.SetBasePath(AppContext.BaseDirectory);
@@ -167,49 +203,112 @@ public partial class App : System.Windows.Application
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        LogException(e.Exception, "Unhandled UI exception");
-        ShowFriendlyError();
+        var correlationId = NewCorrelationId();
+        LogException(e.Exception, "Unhandled UI exception", correlationId);
+        ShowFriendlyError(e.Exception, correlationId);
         e.Handled = true;
     }
 
     private void OnUnhandledAppDomainException(object sender, UnhandledExceptionEventArgs e)
     {
+        var correlationId = NewCorrelationId();
         if (e.ExceptionObject is Exception exception)
         {
-            LogException(exception, "Unhandled AppDomain exception");
+            LogException(exception, "Unhandled AppDomain exception", correlationId);
+            ShowFriendlyError(exception, correlationId);
         }
-
-        ShowFriendlyError();
+        else
+        {
+            // AppDomain.UnhandledExceptionEventArgs.ExceptionObject is documented as "usually" an
+            // Exception, but is untyped, so a non-Exception payload (rare, but legal in .NET) must
+            // still be logged and reported under its own correlation id rather than silently
+            // dropped.
+            Log.Error("Unhandled AppDomain exception with non-exception payload {Payload} (correlation {CorrelationId})", e.ExceptionObject, correlationId);
+            ShowFriendlyError(exception: null, correlationId);
+        }
     }
 
     private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
-        LogException(e.Exception, "Unhandled task exception");
-        ShowFriendlyError();
+        var correlationId = NewCorrelationId();
+        LogException(e.Exception, "Unhandled task exception", correlationId);
+        ShowFriendlyError(e.Exception, correlationId);
         e.SetObserved();
     }
 
-    private void LogException(Exception exception, string message)
+    /// <summary>
+    /// Generates a short identifier to join a user-facing crash report with its log entry. Full
+    /// GUIDs are unreadable when a user has to read one aloud or retype it; eight hex characters
+    /// keep collisions implausible for a single desktop install while staying easy to communicate.
+    /// </summary>
+    private static string NewCorrelationId() => Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+
+    private void LogException(Exception exception, string message, string correlationId)
     {
-        _logger?.LogError(exception, "{Message}", message);
-        Log.Error(exception, "{Message}", message);
+        _logger?.LogError(exception, "{Message} (correlation {CorrelationId})", message, correlationId);
+        Log.Error(exception, "{Message} (correlation {CorrelationId})", message, correlationId);
     }
 
-    private void ShowFriendlyError()
+    /// <summary>
+    /// Shows the crash dialog with the same correlation id the exception was just logged under, so
+    /// a user report and its log entry can be matched without asking what the user was doing.
+    /// </summary>
+    private void ShowFriendlyError(Exception? exception, string correlationId)
     {
-        if (_errorDialogService is not null)
+        var model = new CrashDialogModel(correlationId, BuildCrashDetails(exception, correlationId));
+
+        void ShowDialog()
         {
-            _ = _errorDialogService.ShowErrorAsync(ApplicationConstants.ApplicationName, MessageConstants.FriendlyUnhandledException);
-            return;
+            try
+            {
+                new CrashDialogWindow(model) { Owner = TryFindOwnerWindow() }.ShowDialog();
+            }
+            catch (Exception dialogException)
+            {
+                // The crash dialog itself failing to render (for example, no window session is
+                // available yet) must not prevent the user from learning the operation failed.
+                Log.Error(dialogException, "Failed to show the crash dialog (correlation {CorrelationId})", correlationId);
+                ShowFallbackError(correlationId);
+            }
         }
 
-        ShowFallbackError();
+        // The three global handlers above can each fire from a background thread (a task's
+        // finalizer thread for UnobservedTaskException in particular), and a WPF Window can only
+        // be created and shown on the dispatcher thread that owns it.
+        if (Dispatcher.CheckAccess())
+        {
+            ShowDialog();
+        }
+        else
+        {
+            Dispatcher.Invoke(ShowDialog);
+        }
     }
 
-    private static void ShowFallbackError()
+    private static string BuildCrashDetails(Exception? exception, string correlationId)
     {
+        var header = $"{ApplicationConstants.ApplicationName}{Environment.NewLine}" +
+                     $"Correlation: {correlationId}{Environment.NewLine}" +
+                     $"Time (UTC): {DateTimeOffset.UtcNow:O}";
+
+        return exception is null ? header : $"{header}{Environment.NewLine}{Environment.NewLine}{exception}";
+    }
+
+    private Window? TryFindOwnerWindow() =>
+        Windows.OfType<Window>().FirstOrDefault(window => window.IsActive) ?? MainWindow;
+
+    /// <summary>
+    /// Last-resort error surface used before the host (and therefore the WPF resource dictionaries
+    /// the crash dialog depends on) has finished building, and if the crash dialog itself throws.
+    /// </summary>
+    private static void ShowFallbackError(string? correlationId = null)
+    {
+        var message = correlationId is null
+            ? MessageConstants.FriendlyUnhandledException
+            : $"{MessageConstants.FriendlyUnhandledException}{Environment.NewLine}Reference: {correlationId}";
+
         MessageBox.Show(
-            MessageConstants.FriendlyUnhandledException,
+            message,
             ApplicationConstants.ApplicationName,
             MessageBoxButton.OK,
             MessageBoxImage.Error);

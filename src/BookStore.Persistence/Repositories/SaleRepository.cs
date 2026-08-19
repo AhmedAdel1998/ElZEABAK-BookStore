@@ -58,7 +58,9 @@ public class SaleRepository(BookStoreDbContext dbContext) : Repository<Sale>(dbC
 
         if (date.HasValue)
         {
-            var start = date.Value.ToUniversalTime().Date;
+            // Compare offsets directly. Truncating with .Date after ToUniversalTime() dropped the
+            // time component and moved the window onto the previous day.
+            var start = date.Value;
             var end = start.AddDays(1);
             query = query.Where(sale => sale.SaleDate >= start && sale.SaleDate < end);
         }
