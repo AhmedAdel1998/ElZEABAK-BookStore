@@ -47,11 +47,11 @@ public static class IconGlyphs
         ["Users"] = "\uE716",
         ["Cashier"] = "\uE77B",
         ["Contact"] = "\uE77B",
-        ["Reports"] = "\uE7C3",
+        ["Reports"] = "\uE9D2",
         ["History"] = "\uE81C",
-        ["Folder"] = "\uE8B7",
+        ["Folder"] = "\uE7C3",
         ["Backup"] = "\uE78C",
-        ["Barcode"] = "\uE7C3",
+        ["Barcode"] = "\uE8C7",
         ["Calendar"] = "\uE787",
         ["Logout"] = "\uE7E8",
         ["Menu"] = "\uE700",
@@ -62,6 +62,16 @@ public static class IconGlyphs
         ["Warning"] = "\uE7BA",
         ["Error"] = "\uE783",
         ["Success"] = "\uE73E",
+
+        // Dashboard metric tiles. These reuse glyphs already verified in this map rather than
+        // introducing unproven codepoints, which would render as missing-glyph boxes.
+        ["Sales"] = "\uE7BF",
+        ["Transactions"] = "\uE81C",
+        ["Profit"] = "\uE73E",
+        ["Discount"] = "\uE946",
+        ["LowStock"] = "\uE7BA",
+        ["OutOfStock"] = "\uE783",
+        ["PurchaseValue"] = "\uE8EC",
         ["Question"] = "\uE9CE"
     };
 

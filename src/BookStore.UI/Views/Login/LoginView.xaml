@@ -1,6 +1,7 @@
 <UserControl x:Class="BookStore.UI.Views.Login.LoginView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:services="clr-namespace:BookStore.UI.Services">
     <UserControl.Resources>
         <Storyboard x:Key="LoginEntranceStoryboard">
             <DoubleAnimation Storyboard.TargetName="BrandPanel"
@@ -215,7 +216,7 @@
                 <Grid ClipToBounds="True">
                     <Border Width="1"
                             HorizontalAlignment="Left"
-                            Background="#334ADE80"
+                            Background="#33F9D57A"
                             Opacity="0.55"
                             RenderTransformOrigin="0.5,0.5">
                         <Border.RenderTransform>
@@ -225,7 +226,7 @@
                     <Border x:Name="ScanLine"
                             Height="110"
                             VerticalAlignment="Top"
-                            Background="#224ADE80"
+                            Background="#2247D6C9"
                             Opacity="0.05">
                         <Border.RenderTransform>
                             <TranslateTransform x:Name="ScanLineTransform" />
@@ -235,7 +236,7 @@
                         <Border Width="116"
                                 Height="116"
                                 HorizontalAlignment="Left"
-                                Background="{DynamicResource BookstoreGreenBrush}"
+                                Background="{DynamicResource BookstoreBrandBrush}"
                                 CornerRadius="10"
                                 RenderTransformOrigin="0.5,0.5">
                             <Border.RenderTransform>
@@ -244,7 +245,7 @@
                             <Grid>
                                 <Border x:Name="LogoPulse"
                                         Margin="-8"
-                                        BorderBrush="#884ADE80"
+                                        BorderBrush="#88F9D57A"
                                         BorderThickness="2"
                                         CornerRadius="14"
                                         Opacity="0.28" />
@@ -253,19 +254,20 @@
                                            Foreground="{DynamicResource OnAccentTextBrush}"
                                            FontSize="32"
                                            FontWeight="Bold"
+                                           services:UiTreeLocalizer.Exclude="True"
                                            Text="POS" />
                             </Grid>
                         </Border>
-                        <TextBlock Margin="0,26,0,0" FontSize="36" FontWeight="SemiBold" Foreground="#BBF7D0" Text="EL ZEABAK" />
-                        <TextBlock FontSize="22" Foreground="#DCFCE7" Text="{DynamicResource App.Product}" />
+                        <TextBlock Margin="0,26,0,0" FontSize="36" FontWeight="SemiBold" Foreground="{DynamicResource BrandOnChromeTextBrush}" Text="EL ZEABAK" />
+                        <TextBlock FontSize="22" Foreground="#EAF2FB" Text="{DynamicResource App.Product}" />
                         <Border x:Name="AccentLine"
                                 Width="0"
                                 Height="4"
                                 Margin="0,24,0,18"
                                 HorizontalAlignment="Left"
-                                Background="{DynamicResource BookstoreGreenBrush}"
+                                Background="{DynamicResource BookstoreBrandBrush}"
                                 CornerRadius="2" />
-                        <TextBlock MaxWidth="320" Foreground="#F0FDF4" FontSize="14" Text="{DynamicResource Auth.SignInSubtitle}" TextWrapping="Wrap" />
+                        <TextBlock MaxWidth="320" Foreground="#F4F7FB" FontSize="14" Text="{DynamicResource Auth.SignInSubtitle}" TextWrapping="Wrap" />
                         <StackPanel x:Name="FeatureRail"
                                     Margin="0,28,0,0"
                                     Opacity="0"
@@ -274,14 +276,14 @@
                                 <TranslateTransform x:Name="FeatureRailTransform" />
                             </StackPanel.RenderTransform>
                             <WrapPanel MaxWidth="330">
-                                <Border Margin="0,0,8,8" Padding="12,7" Background="#183E2A" BorderBrush="#336EE7A5" BorderThickness="1" CornerRadius="16">
-                                    <TextBlock Foreground="#D1FAE5" FontSize="12" Text="Fast barcode scan" />
+                                <Border Margin="0,0,8,8" Padding="12,7" Background="#1C2633" BorderBrush="#3347D6C9" BorderThickness="1" CornerRadius="16">
+                                    <TextBlock Foreground="{DynamicResource BrandOnChromeTextBrush}" FontSize="12" Text="Fast barcode scan" />
                                 </Border>
-                                <Border Margin="0,0,8,8" Padding="12,7" Background="#183E2A" BorderBrush="#336EE7A5" BorderThickness="1" CornerRadius="16">
-                                    <TextBlock Foreground="#D1FAE5" FontSize="12" Text="Receipt ready" />
+                                <Border Margin="0,0,8,8" Padding="12,7" Background="#1C2633" BorderBrush="#3347D6C9" BorderThickness="1" CornerRadius="16">
+                                    <TextBlock Foreground="{DynamicResource BrandOnChromeTextBrush}" FontSize="12" Text="Receipt ready" />
                                 </Border>
-                                <Border Margin="0,0,8,8" Padding="12,7" Background="#183E2A" BorderBrush="#336EE7A5" BorderThickness="1" CornerRadius="16">
-                                    <TextBlock Foreground="#D1FAE5" FontSize="12" Text="Inventory guarded" />
+                                <Border Margin="0,0,8,8" Padding="12,7" Background="#1C2633" BorderBrush="#3347D6C9" BorderThickness="1" CornerRadius="16">
+                                    <TextBlock Foreground="{DynamicResource BrandOnChromeTextBrush}" FontSize="12" Text="Inventory guarded" />
                                 </Border>
                             </WrapPanel>
                             <Grid Margin="0,18,0,0" MaxWidth="330">
@@ -290,18 +292,18 @@
                                     <ColumnDefinition Width="12" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" Padding="14" Background="#142D20" BorderBrush="#245B3B" BorderThickness="1" CornerRadius="8">
+                                <Border Grid.Column="0" Padding="14" Background="#18212F" BorderBrush="#2F3D50" BorderThickness="1" CornerRadius="8">
                                     <StackPanel>
-                                        <TextBlock Foreground="#86EFAC" FontSize="12" Text="Checkout" />
-                                        <TextBlock Margin="0,4,0,0" Foreground="#F0FDF4" FontSize="22" FontWeight="SemiBold" Text="Ready" />
+                                        <TextBlock Foreground="{DynamicResource DataVizTealBrush}" FontSize="12" Text="Checkout" />
+                                        <TextBlock Margin="0,4,0,0" Foreground="#F4F7FB" FontSize="22" FontWeight="SemiBold" Text="Ready" />
                                     </StackPanel>
                                 </Border>
-                                <Border Grid.Column="2" Padding="14" Background="#142D20" BorderBrush="#245B3B" BorderThickness="1" CornerRadius="8">
+                                <Border Grid.Column="2" Padding="14" Background="#18212F" BorderBrush="#2F3D50" BorderThickness="1" CornerRadius="8">
                                     <StackPanel>
-                                        <TextBlock Foreground="#86EFAC" FontSize="12" Text="Local database" />
+                                        <TextBlock Foreground="{DynamicResource DataVizBlueBrush}" FontSize="12" Text="Local database" />
                                         <StackPanel Margin="0,6,0,0" Orientation="Horizontal">
-                                            <Ellipse x:Name="LiveDot" Width="9" Height="9" Margin="0,0,8,0" VerticalAlignment="Center" Fill="#22C55E" Opacity="0.25" />
-                                            <TextBlock Foreground="#F0FDF4" FontSize="18" FontWeight="SemiBold" Text="Online" />
+                                            <Ellipse x:Name="LiveDot" Width="9" Height="9" Margin="0,0,8,0" VerticalAlignment="Center" Fill="{DynamicResource DataVizTealBrush}" Opacity="0.25" />
+                                            <TextBlock Foreground="#F4F7FB" FontSize="18" FontWeight="SemiBold" Text="Online" />
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>
@@ -431,7 +433,7 @@
                                 <Rectangle Height="8" Margin="0,0,0,7" Fill="{DynamicResource PrimaryTextBrush}" />
                                 <Rectangle Height="8" Width="180" HorizontalAlignment="Left" Fill="{DynamicResource PrimaryTextBrush}" />
                             </StackPanel>
-                            <Border Width="42" Background="#664ADE80">
+                            <Border Width="42" Background="#66F9D57A">
                                 <Border.RenderTransform>
                                     <TranslateTransform x:Name="BarcodeSweepTransform" />
                                 </Border.RenderTransform>
@@ -477,7 +479,7 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Border Width="46" Height="46" Background="{DynamicResource BookstoreGreenBrush}" CornerRadius="8">
+                        <Border Width="46" Height="46" Background="{DynamicResource BookstoreBrandBrush}" CornerRadius="8">
                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="{DynamicResource OnAccentTextBrush}" Text="R" />
                         </Border>
                         <StackPanel Grid.Column="1" Margin="12,0,0,0">

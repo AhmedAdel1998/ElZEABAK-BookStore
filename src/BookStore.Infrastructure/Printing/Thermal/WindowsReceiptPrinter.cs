@@ -29,7 +29,10 @@ public sealed class WindowsReceiptPrinter : IReceiptPrinter
         if (string.IsNullOrWhiteSpace(printerName) || !await IsPrinterAvailableAsync(printerName, cancellationToken))
         {
             _logger.LogWarning("Printer unavailable. Printer={PrinterName} RequestId={PrintRequestId}", printerName, job.RequestId);
-            return ReceiptPrintResult.Failure(job.RequestId, "Sale completed, but the printer is unavailable.", printerName, job.Receipt);
+            // Describes the printing fault only. Callers compose the surrounding sentence -- the POS
+            // notification already reads "Sale completed, but receipt printing failed. {0}", so
+            // repeating "Sale completed, but" here printed the same clause twice.
+            return ReceiptPrintResult.Failure(job.RequestId, "The printer is unavailable.", printerName, job.Receipt);
         }
 
         var content = _receiptFormatter.Format(job.Receipt, job.Options);
@@ -74,7 +77,7 @@ public sealed class WindowsReceiptPrinter : IReceiptPrinter
         var requestId = Guid.NewGuid();
         if (string.IsNullOrWhiteSpace(resolvedPrinter) || !await IsPrinterAvailableAsync(resolvedPrinter, cancellationToken))
         {
-            return ReceiptPrintResult.Failure(requestId, "Printer is unavailable.", resolvedPrinter);
+            return ReceiptPrintResult.Failure(requestId, "The printer is unavailable.", resolvedPrinter);
         }
 
         var content = _receiptFormatter.FormatTestPrint(resolvedPrinter, DateTimeOffset.UtcNow, ReceiptPaperWidth.Mm80);

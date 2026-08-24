@@ -18,6 +18,62 @@
              xmlns:views="clr-namespace:BookStore.UI.Views.Shell"
              xmlns:viewModels="clr-namespace:BookStore.UI.ViewModels">
     <UserControl.Resources>
+        <Storyboard x:Key="ShellEntranceAnimation">
+            <DoubleAnimation Storyboard.TargetName="SidebarRoot"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0"
+                             To="1"
+                             Duration="0:0:0.25" />
+            <DoubleAnimation Storyboard.TargetName="SidebarTransform"
+                             Storyboard.TargetProperty="X"
+                             From="-18"
+                             To="0"
+                             Duration="0:0:0.32">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetName="ShellContent"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0"
+                             To="1"
+                             BeginTime="0:0:0.08"
+                             Duration="0:0:0.28" />
+            <DoubleAnimation Storyboard.TargetName="ContentTransform"
+                             Storyboard.TargetProperty="Y"
+                             From="14"
+                             To="0"
+                             BeginTime="0:0:0.08"
+                             Duration="0:0:0.34">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+        <Storyboard x:Key="LogoLoopAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="LogoHalo"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0.18"
+                             To="0.58"
+                             AutoReverse="True"
+                             Duration="0:0:1.8"
+                             RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="LogoScale"
+                             Storyboard.TargetProperty="ScaleX"
+                             From="1"
+                             To="1.045"
+                             AutoReverse="True"
+                             Duration="0:0:2.2"
+                             RepeatBehavior="Forever" />
+            <DoubleAnimation Storyboard.TargetName="LogoScale"
+                             Storyboard.TargetProperty="ScaleY"
+                             From="1"
+                             To="1.045"
+                             AutoReverse="True"
+                             Duration="0:0:2.2"
+                             RepeatBehavior="Forever" />
+        </Storyboard>
+
         <DataTemplate DataType="{x:Type viewModels:ModulePlaceholderViewModel}">
             <views:ModulePlaceholderView />
         </DataTemplate>
@@ -197,6 +253,12 @@
         <KeyBinding Key="B" Modifiers="Control" Command="{Binding NavigateBackupCommand}" />
         <KeyBinding Key="L" Modifiers="Control" Command="{Binding LogoutCommand}" />
     </UserControl.InputBindings>
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard Storyboard="{StaticResource ShellEntranceAnimation}" />
+            <BeginStoryboard Storyboard="{StaticResource LogoLoopAnimation}" />
+        </EventTrigger>
+    </UserControl.Triggers>
 
     <Grid Background="{DynamicResource BookstorePageBrush}">
         <Grid.ColumnDefinitions>
@@ -204,7 +266,15 @@
             <ColumnDefinition Width="{Binding SecondColumnWidth}" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="{Binding SidebarColumn}" Background="{DynamicResource WarmChromeBrush}">
+        <Border x:Name="SidebarRoot"
+                Grid.Column="{Binding SidebarColumn}"
+                Background="{DynamicResource WarmChromeBrush}"
+                BorderBrush="{DynamicResource ChromeBorderBrush}"
+                BorderThickness="0,0,1,0"
+                Opacity="0">
+            <Border.RenderTransform>
+                <TranslateTransform x:Name="SidebarTransform" />
+            </Border.RenderTransform>
             <Border.Style>
                 <Style TargetType="Border">
                     <Setter Property="Width" Value="272" />
@@ -216,32 +286,139 @@
                 </Style>
             </Border.Style>
             <DockPanel>
+                <Border DockPanel.Dock="Top"
+                        MinHeight="82"
+                        Padding="14,16"
+                        Background="{DynamicResource WarmChromeAltBrush}"
+                        BorderBrush="{DynamicResource ChromeBorderBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="42" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="44"
+                                Height="44"
+                                Background="{DynamicResource BookstoreBrandBrush}"
+                                CornerRadius="8"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform x:Name="LogoScale" />
+                            </Border.RenderTransform>
+                            <Grid>
+                                <Border x:Name="LogoHalo"
+                                        Margin="-5"
+                                        BorderBrush="{DynamicResource BrandOnChromeTextBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="11"
+                                        Opacity="0.18" />
+                                <Path Width="27"
+                                      Height="24"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Data="M 2,4 C 6,1.8 10,1.8 14,4 L 14,22 C 10,19.7 6,19.7 2,22 Z M 14,4 C 18,1.8 22,1.8 26,4 L 26,22 C 22,19.7 18,19.7 14,22 Z"
+                                      Fill="#FFF8E1"
+                                      Stretch="Fill"
+                                      Stroke="{DynamicResource OnAccentTextBrush}"
+                                      StrokeThickness="1.15" />
+                                <Path Width="20"
+                                      Height="12"
+                                      Margin="0,4,0,0"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Data="M 0,2 L 8,2 M 0,6 L 8,6 M 12,2 L 20,2 M 12,6 L 20,6"
+                                      Stretch="Fill"
+                                      Stroke="{DynamicResource OnAccentTextBrush}"
+                                      StrokeEndLineCap="Round"
+                                      StrokeThickness="1.1" />
+                            </Grid>
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSidebarCollapsed}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource BrandOnChromeTextBrush}"
+                                       Text="EL ZEABAK" />
+                            <TextBlock Margin="0,2,0,0"
+                                       FontSize="12"
+                                       Foreground="#CCFFFFFF"
+                                       Text="{DynamicResource App.Product}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
                 <Button DockPanel.Dock="Top"
                         Height="48"
                         Command="{Binding ToggleSidebarCommand}"
                         AutomationProperties.Name="{DynamicResource Shell.ToggleSidebar}"
                         ToolTip="{DynamicResource Shell.ToggleSidebar}"
-                        Content="☰"
                         Foreground="{DynamicResource BrandOnChromeTextBrush}"
-                        Background="{DynamicResource WarmChromeBrush}"
-                        BorderThickness="0" />
+                        Background="{DynamicResource WarmChromeAltBrush}"
+                        BorderThickness="0">
+                    <!--
+                        The glyph has to be an explicit TextBlock carrying its own FontFamily. String
+                        content is rendered by an implicit TextBlock, and the app-wide TextBlock style
+                        in Typography.xaml sets FontFamily, and a style setter beats the family
+                        inherited from this button, so the icon font never reached the glyph and the
+                        hamburger drew as a missing-character box. Every other icon is written this way.
+                    -->
+                    <TextBlock FontFamily="Segoe MDL2 Assets"
+                               FontSize="16"
+                               Foreground="{DynamicResource BrandOnChromeTextBrush}"
+                               Text="&#xE700;" />
+                </Button>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding MenuItems}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Button Margin="10,4"
                                         MinHeight="46"
-                                        Padding="14,10"
+                                        Padding="10,10"
                                         HorizontalContentAlignment="Stretch"
                                         Command="{Binding Command}"
                                         Foreground="White"
                                         BorderThickness="0">
                                     <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Style TargetType="Button">
                                             <Setter Property="Background" Value="{DynamicResource WarmChromeAltBrush}" />
+                                            <Setter Property="Foreground" Value="White" />
+                                            <Setter Property="Cursor" Value="Hand" />
+                                            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="Root"
+                                                                Padding="{TemplateBinding Padding}"
+                                                                Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="{DynamicResource CornerRadiusMedium}">
+                                                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                              RecognizesAccessKey="True" />
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsPressed" Value="True">
+                                                                <Setter TargetName="Root" Property="Opacity" Value="0.86" />
+                                                            </Trigger>
+                                                            <Trigger Property="IsEnabled" Value="False">
+                                                                <Setter TargetName="Root" Property="Opacity" Value="0.52" />
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                    <Setter Property="Background" Value="{DynamicResource BookstoreGreenBrush}" />
+                                                    <Setter Property="Background" Value="{DynamicResource BookstoreBrandBrush}" />
                                                     <Setter Property="Foreground" Value="{DynamicResource OnAccentTextBrush}" />
                                                 </DataTrigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
@@ -251,10 +428,69 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Button.Style>
-                                    <TextBlock Margin="10,0,10,0" TextTrimming="CharacterEllipsis"
-                                               VerticalAlignment="Center"
-                                               FlowDirection="{DynamicResource AppFlowDirection}"
-                                               Text="{Binding Text}" />
+                                    <Grid RenderTransformOrigin="0.5,0.5">
+                                        <Grid.RenderTransform>
+                                            <TranslateTransform x:Name="MenuItemTransform" />
+                                        </Grid.RenderTransform>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="34" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0"
+                                                Width="28"
+                                                Height="28"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Background="#18FFFFFF"
+                                                BorderBrush="#24FFFFFF"
+                                                BorderThickness="1"
+                                                CornerRadius="6">
+                                            <TextBlock HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       FontFamily="Segoe MDL2 Assets"
+                                                       FontSize="15"
+                                                       Text="{Binding Icon, Converter={StaticResource IconGlyphConverter}}" />
+                                        </Border>
+                                        <TextBlock Grid.Column="1"
+                                                   Margin="10,0,10,0"
+                                                   VerticalAlignment="Center"
+                                                   FlowDirection="{DynamicResource AppFlowDirection}"
+                                                   Text="{Binding Text}"
+                                                   TextTrimming="CharacterEllipsis">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding DataContext.IsSidebarCollapsed, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                    <Button.Triggers>
+                                        <EventTrigger RoutedEvent="MouseEnter">
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="MenuItemTransform"
+                                                                     Storyboard.TargetProperty="X"
+                                                                     To="-4"
+                                                                     Duration="0:0:0.12" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                        <EventTrigger RoutedEvent="MouseLeave">
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="MenuItemTransform"
+                                                                     Storyboard.TargetProperty="X"
+                                                                     To="0"
+                                                                     Duration="0:0:0.14" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                    </Button.Triggers>
                                 </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -263,7 +499,13 @@
             </DockPanel>
         </Border>
 
-        <Grid Grid.Column="{Binding ContentColumn}" FlowDirection="{DynamicResource AppFlowDirection}">
+        <Grid x:Name="ShellContent"
+              Grid.Column="{Binding ContentColumn}"
+              FlowDirection="{DynamicResource AppFlowDirection}"
+              Opacity="0">
+            <Grid.RenderTransform>
+                <TranslateTransform x:Name="ContentTransform" />
+            </Grid.RenderTransform>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="42" />
@@ -271,7 +513,7 @@
                 <RowDefinition Height="30" />
             </Grid.RowDefinitions>
 
-            <Border Grid.Row="0" Padding="18,8" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+            <Border Grid.Row="0" Padding="20,10" Background="{DynamicResource ShellHeaderBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -282,40 +524,155 @@
                         <TextBlock FontSize="12" Foreground="{DynamicResource PrimaryTextBrush}" Opacity="0.65">
                             <Run Text="{Binding DisplayName, Mode=OneWay}" />
                             <Run Text=" • " />
-                            <Run Text="{Binding Role, Mode=OneWay}" />
+                            <Run Text="{Binding Role, Mode=OneWay, Converter={StaticResource LocalizeConverter}}" />
                         </TextBlock>
                     </StackPanel>
                     <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Orientation="Horizontal">
-                        <controls:SearchBox Width="250" Margin="6,3" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="{DynamicResource Shell.SearchTooltip}" />
-                        <Button Margin="6,3" Command="{Binding ToggleLanguageCommand}" Content="{Binding LanguageToggleText}" />
-                        <Button Margin="6,3" Command="{Binding ToggleThemeCommand}" Content="{DynamicResource Shell.Theme}" />
+                        <Grid Width="250" Margin="6,3">
+                            <!--  Every keystroke reaches the view model, which debounces before it queries, so Enter always acts on the whole term.  -->
+                            <controls:SearchBox x:Name="GlobalSearchBox"
+                                                Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                ToolTip="{DynamicResource Shell.SearchTooltip}">
+                                <controls:SearchBox.InputBindings>
+                                    <KeyBinding Key="Return" Command="{Binding OpenTopSearchResultCommand}" />
+                                    <KeyBinding Key="Escape" Command="{Binding CloseSearchResultsCommand}" />
+                                </controls:SearchBox.InputBindings>
+                            </controls:SearchBox>
+                            <Popup AllowsTransparency="True"
+                                   IsOpen="{Binding IsSearchResultsOpen, Mode=TwoWay}"
+                                   Placement="Bottom"
+                                   PlacementTarget="{Binding ElementName=GlobalSearchBox}"
+                                   StaysOpen="False">
+                                <!--  A popup is its own visual tree root, so the shell's flow direction does not reach it on its own.  -->
+                                <Border MinWidth="320"
+                                        MaxWidth="420"
+                                        Padding="6"
+                                        Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Effect="{DynamicResource PopupShadow}"
+                                        FlowDirection="{DynamicResource AppFlowDirection}">
+                                    <StackPanel>
+                                        <TextBlock Margin="8,6"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   Text="{Binding SearchStatus}"
+                                                   TextWrapping="Wrap">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding SearchStatus}" Value="">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <ScrollViewer MaxHeight="320" VerticalScrollBarVisibility="Auto">
+                                            <ItemsControl ItemsSource="{Binding SearchResults}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Padding="8,6"
+                                                                HorizontalContentAlignment="Stretch"
+                                                                Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Command="{Binding DataContext.OpenSearchResultCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                CommandParameter="{Binding}">
+                                                            <StackPanel>
+                                                                <TextBlock FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource PrimaryTextBrush}"
+                                                                           Text="{Binding PrimaryText}"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <TextBlock FontSize="11"
+                                                                           Foreground="{DynamicResource SecondaryTextBrush}"
+                                                                           Text="{Binding Caption}"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <Button Margin="6,3" Command="{Binding ToggleLanguageCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,8,0" FontFamily="Segoe MDL2 Assets" Text="&#xE774;" />
+                                <TextBlock Text="{Binding LanguageToggleText}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Margin="6,3" Command="{Binding ToggleThemeCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,8,0" FontFamily="Segoe MDL2 Assets" Text="&#xE790;" />
+                                <TextBlock Text="{DynamicResource Shell.Theme}" />
+                            </StackPanel>
+                        </Button>
                         <Button Margin="6,3" Command="{Binding ToggleNotificationsCommand}">
                             <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,8,0" FontFamily="Segoe MDL2 Assets" Text="&#xE7F4;" />
                                 <TextBlock Text="{DynamicResource Shell.Notifications}" />
                                 <TextBlock Margin="6,0,0,0" FontWeight="SemiBold" Text="{Binding NotificationCount}" />
                             </StackPanel>
                         </Button>
-                        <Button Margin="6,3" Command="{Binding ChangePasswordCommand}" Content="{DynamicResource Shell.Settings}" />
-                        <Button Margin="6,3" Command="{Binding LogoutCommand}" Content="{DynamicResource Nav.Logout}" />
+                        <Button Margin="6,3" Command="{Binding ChangePasswordCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,8,0" FontFamily="Segoe MDL2 Assets" Text="&#xE713;" />
+                                <TextBlock Text="{DynamicResource Shell.Settings}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Margin="6,3" Command="{Binding LogoutCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,8,0" FontFamily="Segoe MDL2 Assets" Text="&#xE7E8;" />
+                                <TextBlock Text="{DynamicResource Nav.Logout}" />
+                            </StackPanel>
+                        </Button>
                     </WrapPanel>
                 </Grid>
             </Border>
 
-            <Border Grid.Row="1" Background="{DynamicResource SurfaceAltBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+            <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                 <DockPanel Margin="18,0" FlowDirection="{DynamicResource AppFlowDirection}">
                     <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button MinWidth="44" MinHeight="44" Command="{Binding GoBackCommand}" AutomationProperties.Name="{DynamicResource Nav.Back}" ToolTip="{DynamicResource Nav.Back}" Content="‹" />
-                        <Button MinWidth="44" MinHeight="44" Margin="6,0,0,0" Command="{Binding GoForwardCommand}" AutomationProperties.Name="{DynamicResource Nav.Forward}" ToolTip="{DynamicResource Nav.Forward}" Content="›" />
-                        <Button Width="84" Margin="8,0,8,0" Command="{Binding RefreshCommand}" Content="{DynamicResource Shell.Refresh}" />
+                        <Button MinWidth="44" MinHeight="44" Command="{Binding GoBackCommand}" AutomationProperties.Name="{DynamicResource Nav.Back}" ToolTip="{DynamicResource Nav.Back}">
+                            <Viewbox Width="14" Height="14">
+                                <Path Data="M 10,1 L 3,7 L 10,13"
+                                      Fill="Transparent"
+                                      Stretch="Uniform"
+                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                      StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"
+                                      StrokeStartLineCap="Round"
+                                      StrokeThickness="2" />
+                            </Viewbox>
+                        </Button>
+                        <Button MinWidth="44" MinHeight="44" Margin="6,0,0,0" Command="{Binding GoForwardCommand}" AutomationProperties.Name="{DynamicResource Nav.Forward}" ToolTip="{DynamicResource Nav.Forward}">
+                            <Viewbox Width="14" Height="14">
+                                <Path Data="M 4,1 L 11,7 L 4,13"
+                                      Fill="Transparent"
+                                      Stretch="Uniform"
+                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                      StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"
+                                      StrokeStartLineCap="Round"
+                                      StrokeThickness="2" />
+                            </Viewbox>
+                        </Button>
+                        <Button Width="94" Margin="8,0,8,0" Command="{Binding RefreshCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Margin="0,0,8,0" FontFamily="Segoe MDL2 Assets" Text="&#xE72C;" />
+                                <TextBlock Text="{DynamicResource Shell.Refresh}" />
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
                     <TextBlock Margin="18,0,18,0" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryTextBrush}" Text="{Binding ShellNavigation.Breadcrumb}" />
                 </DockPanel>
             </Border>
 
             <Grid Grid.Row="2">
-                <Border Margin="18" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8">
-                    <ContentControl Margin="18" Content="{Binding ShellNavigation.CurrentViewModel}" />
-                </Border>
+                <ContentControl Margin="18" Content="{Binding ShellNavigation.CurrentViewModel}" />
 
                 <controls:LoadingOverlay IsBusy="{Binding IsLoading}" Message="{Binding LoadingText, Converter={StaticResource LocalizeConverter}}" />
 
@@ -329,6 +686,7 @@
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="1"
                         CornerRadius="8"
+                        Effect="{DynamicResource PopupShadow}"
                         Visibility="{Binding IsNotificationsOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <DockPanel LastChildFill="True">
                         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
@@ -397,8 +755,14 @@
                 </ItemsControl>
             </Grid>
 
-            <Border Grid.Row="3" Background="{DynamicResource WarmChromeBrush}">
-                <DockPanel Margin="12,0">
+            <Border Grid.Row="3" Background="{DynamicResource WarmChromeBrush}" BorderBrush="{DynamicResource ChromeBorderBrush}" BorderThickness="0,1,0,0">
+                <!--
+                    LastChildFill has to be off here. With it on, the last child fills the leftover
+                    space instead of honouring its Dock, so the version and clock were pinned
+                    directly onto the end of the session text ("Tasks: 0v1.0") rather than sitting
+                    at the far edge of the bar.
+                -->
+                <DockPanel Margin="12,0" LastChildFill="False">
                     <TextBlock VerticalAlignment="Center" Foreground="White">
                         <Run Text="{DynamicResource Shell.User}" />
                         <Run Text="{Binding DisplayName, Mode=OneWay}" />

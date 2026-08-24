@@ -1,11 +1,18 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using BookStore.Application.Features.Customers.DTOs;
+using BookStore.Application.Features.Customers.Handlers;
+using BookStore.Application.Features.Customers.Queries.SearchCustomers;
+using BookStore.Application.Features.Products.DTOs;
+using BookStore.Application.Features.Products.Handlers;
+using BookStore.Application.Features.Products.Queries.SearchProducts;
 using BookStore.Application.Interfaces;
 using BookStore.Shared.Constants;
 using BookStore.UI.Navigation;
 using BookStore.UI.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -26,13 +33,35 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     private readonly ILoadingService _loadingService;
     private readonly IThemeService _themeService;
     private readonly ILocalizationService _localizationService;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IProductNavigationState _productNavigationState;
+    private readonly ICustomerNavigationState _customerNavigationState;
+    private readonly IGlobalSearchState _globalSearchState;
     private readonly DispatcherTimer _clockTimer;
+
+    /// <summary>Cancels the in-flight global search once a newer keystroke supersedes it.</summary>
+    private CancellationTokenSource? _searchCancellation;
 
     [ObservableProperty]
     private bool isSidebarCollapsed;
 
+    /// <summary>
+    /// The collapse state the cashier chose by hand, remembered across automatic collapses so that
+    /// widening the window restores what they actually wanted.
+    /// </summary>
+    private bool _sidebarCollapsedByUser;
+
+    /// <summary>Whether the current collapse was forced by the window being too narrow.</summary>
+    private bool _sidebarCollapsedByWidth;
+
     [ObservableProperty]
     private string searchText = string.Empty;
+
+    [ObservableProperty]
+    private bool isSearchResultsOpen;
+
+    [ObservableProperty]
+    private string searchStatus = string.Empty;
 
     [ObservableProperty]
     private string currentTime = string.Empty;
@@ -83,7 +112,11 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
         INotificationService notificationService,
         ILoadingService loadingService,
         IThemeService themeService,
-        ILocalizationService localizationService)
+        ILocalizationService localizationService,
+        IServiceScopeFactory scopeFactory,
+        IProductNavigationState productNavigationState,
+        ICustomerNavigationState customerNavigationState,
+        IGlobalSearchState globalSearchState)
     {
         _authenticationService = authenticationService;
         _applicationNavigationService = applicationNavigationService;
@@ -95,6 +128,10 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
         _loadingService = loadingService;
         _themeService = themeService;
         _localizationService = localizationService;
+        _scopeFactory = scopeFactory;
+        _productNavigationState = productNavigationState;
+        _customerNavigationState = customerNavigationState;
+        _globalSearchState = globalSearchState;
         _loadingService.StateChanged += OnLoadingStateChanged;
         _localizationService.CultureChanged += OnCultureChanged;
         _notificationService.Notifications.CollectionChanged += OnNotificationsChanged;
@@ -116,6 +153,11 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     /// Gets menu items available to the current user.
     /// </summary>
     public ObservableCollection<NavigationItem> MenuItems { get; } = [];
+
+    /// <summary>
+    /// Gets the matches for the text currently in the global search box.
+    /// </summary>
+    public ObservableCollection<GlobalSearchResult> SearchResults { get; } = [];
 
     /// <summary>
     /// Gets active notifications.
@@ -143,13 +185,307 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
     public string Version => "v1.0";
 
     /// <summary>
+    /// Shortest term the global search will run. One character matches most of the catalogue and
+    /// makes the dropdown useless.
+    /// </summary>
+    private const int MinimumSearchLength = 2;
+
+    /// <summary>Most product rows the dropdown shows.</summary>
+    private const int MaximumProductResults = 5;
+
+    /// <summary>Most customer rows the dropdown shows.</summary>
+    private const int MaximumCustomerResults = 3;
+
+    /// <summary>Most page rows the dropdown shows.</summary>
+    private const int MaximumPageResults = 3;
+
+    /// <summary>
+    /// How long typing must pause before the search reaches the database. Debouncing lives here
+    /// rather than in the binding so that <see cref="SearchText"/> always holds what has actually
+    /// been typed -- Enter acts on the whole term even when it follows the last keystroke at once.
+    /// </summary>
+    private static readonly TimeSpan SearchDebounce = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>
+    /// Re-runs the global search whenever the box changes.
+    /// </summary>
+    partial void OnSearchTextChanged(string value) => _ = RunGlobalSearchAsync(value);
+
+    /// <summary>
+    /// Opens the result the cashier clicked.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenSearchResultAsync(GlobalSearchResult? result)
+    {
+        if (result is null)
+        {
+            return;
+        }
+
+        // Emptying the box also closes the dropdown and clears the rows, so the shell is back to
+        // its resting state by the time the destination page appears.
+        SearchText = string.Empty;
+        await result.Open();
+    }
+
+    /// <summary>
+    /// Opens the first match, which is what Enter in the search box does. With no matches at all
+    /// the term is handed to the product list, so a search that finds nothing still lands
+    /// somewhere the cashier can widen it.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenTopSearchResultAsync()
+    {
+        if (SearchResults.Count > 0)
+        {
+            await OpenSearchResultAsync(SearchResults[0]);
+            return;
+        }
+
+        var term = SearchText.Trim();
+        if (term.Length < MinimumSearchLength || !_authorizationService.HasPermission(PermissionConstants.ProductView))
+        {
+            return;
+        }
+
+        _globalSearchState.SetPendingFilter(term);
+        SearchText = string.Empty;
+        await NavigateProductsAsync();
+    }
+
+    /// <summary>
+    /// Closes the results dropdown, keeping the typed term so it can be edited.
+    /// </summary>
+    [RelayCommand]
+    private void CloseSearchResults()
+    {
+        SearchResults.Clear();
+        SearchStatus = string.Empty;
+        IsSearchResultsOpen = false;
+    }
+
+    private async Task RunGlobalSearchAsync(string text)
+    {
+        // Whatever the previous keystroke started is stale now. Cancelling it also stops its
+        // results from arriving after this run's and overwriting them. Only the run that owns a
+        // source disposes it, so cancelling here cannot pull the token out from under a query
+        // that is still reading it.
+        var previous = _searchCancellation;
+        _searchCancellation = null;
+        previous?.Cancel();
+
+        var term = text.Trim();
+        if (term.Length < MinimumSearchLength)
+        {
+            CloseSearchResults();
+            return;
+        }
+
+        var cancellation = new CancellationTokenSource();
+        _searchCancellation = cancellation;
+        try
+        {
+            await Task.Delay(SearchDebounce, cancellation.Token);
+            var matches = await FindMatchesAsync(term, cancellation.Token);
+            if (cancellation.IsCancellationRequested)
+            {
+                return;
+            }
+
+            SearchResults.Clear();
+            foreach (var match in matches)
+            {
+                SearchResults.Add(match);
+            }
+
+            SearchStatus = matches.Count == 0 ? _localizationService.T("Search.NoMatches") : string.Empty;
+            IsSearchResultsOpen = true;
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer term.
+        }
+        catch (Exception)
+        {
+            SearchResults.Clear();
+            SearchStatus = _localizationService.T("Search.Failed");
+            IsSearchResultsOpen = true;
+        }
+        finally
+        {
+            if (ReferenceEquals(_searchCancellation, cancellation))
+            {
+                _searchCancellation = null;
+            }
+
+            cancellation.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Collects the pages, products and customers matching a term.
+    /// </summary>
+    /// <remarks>
+    /// The shell outlives every page, so it must not hold a database context of its own: a context
+    /// kept for the whole session would be shared by overlapping searches and throw "a second
+    /// operation was started on this context". Each search takes a scope of its own instead, which
+    /// is the same guarantee <see cref="ViewModelFactory"/> gives a page.
+    /// </remarks>
+    private async Task<List<GlobalSearchResult>> FindMatchesAsync(string term, CancellationToken cancellationToken)
+    {
+        var matches = new List<GlobalSearchResult>();
+        var pageGroup = _localizationService.T("Search.Pages");
+        // Logout is deliberately not reachable from here: signing out is not something to trigger
+        // by typing three letters and pressing Enter.
+        foreach (var item in MenuItems
+            .Where(menuItem => menuItem.Command is not null
+                && !string.Equals(menuItem.TextKey, "Nav.Logout", StringComparison.Ordinal)
+                && menuItem.Text.Contains(term, StringComparison.CurrentCultureIgnoreCase))
+            .Take(MaximumPageResults))
+        {
+            var command = item.Command!;
+            matches.Add(new GlobalSearchResult
+            {
+                Group = pageGroup,
+                PrimaryText = item.Text,
+                Open = () =>
+                {
+                    if (command.CanExecute(null))
+                    {
+                        command.Execute(null);
+                    }
+
+                    return Task.CompletedTask;
+                }
+            });
+        }
+
+        using var scope = _scopeFactory.CreateScope();
+
+        if (_authorizationService.HasPermission(PermissionConstants.ProductView))
+        {
+            var productHandler = scope.ServiceProvider.GetRequiredService<SearchProductsHandler>();
+            var products = await productHandler.HandleAsync(
+                new SearchProductsRequest(new ProductFilter { SearchTerm = term, PageSize = MaximumProductResults }),
+                cancellationToken);
+            if (products.IsSuccess && products.Value is not null)
+            {
+                var productGroup = _localizationService.T("Search.Products");
+                foreach (var product in products.Value.Items)
+                {
+                    var productId = product.Id;
+                    matches.Add(new GlobalSearchResult
+                    {
+                        Group = productGroup,
+                        PrimaryText = product.Title,
+                        SecondaryText = product.Barcode,
+                        Open = () =>
+                        {
+                            _productNavigationState.SelectedProductId = productId;
+                            return OpenPageAsync<ProductDetailsViewModel>("Products > Details");
+                        }
+                    });
+                }
+            }
+        }
+
+        if (_authorizationService.HasPermission(PermissionConstants.CustomerView))
+        {
+            var customerHandler = scope.ServiceProvider.GetRequiredService<SearchCustomersHandler>();
+            var customers = await customerHandler.HandleAsync(
+                new SearchCustomersRequest(new CustomerFilter { SearchTerm = term, PageSize = MaximumCustomerResults }),
+                cancellationToken);
+            if (customers.IsSuccess && customers.Value is not null)
+            {
+                var customerGroup = _localizationService.T("Search.Customers");
+                foreach (var customer in customers.Value.Items.Where(candidate => candidate.Id.HasValue))
+                {
+                    var customerId = customer.Id!.Value;
+                    matches.Add(new GlobalSearchResult
+                    {
+                        Group = customerGroup,
+                        PrimaryText = customer.FullName,
+                        SecondaryText = customer.Phone,
+                        Open = () =>
+                        {
+                            _customerNavigationState.SelectedCustomerId = customerId;
+                            return OpenPageAsync<CustomerDetailsViewModel>("Customers > Details");
+                        }
+                    });
+                }
+            }
+        }
+
+        return matches;
+    }
+
+    private async Task OpenPageAsync<TViewModel>(string breadcrumb)
+        where TViewModel : BaseViewModel
+    {
+        _loadingService.Show(_localizationService.T("Loading.OpeningPage"));
+        try
+        {
+            await _shellNavigationService.NavigateToAsync<TViewModel>(breadcrumb);
+        }
+        finally
+        {
+            _loadingService.Hide();
+        }
+    }
+
+    /// <summary>
     /// Toggles sidebar collapsed state.
     /// </summary>
     [RelayCommand]
     private void ToggleSidebar()
     {
         IsSidebarCollapsed = !IsSidebarCollapsed;
+        _sidebarCollapsedByUser = IsSidebarCollapsed;
+        _sidebarCollapsedByWidth = false;
     }
+
+    /// <summary>
+    /// Reacts to the shell being resized by collapsing the sidebar once the window is too narrow to
+    /// hold both it and a working page.
+    /// </summary>
+    /// <remarks>
+    /// The expanded rail is 272px. At the window minimum that left the POS screen roughly 690px for
+    /// three columns that need more than 800, so the payment panel -- and with it Complete Sale --
+    /// was pushed off screen and the sale could not be finished. Collapsing to the 76px icon rail
+    /// gives the page back the space it needs. A manual choice made while wide is restored when the
+    /// window grows again.
+    /// </remarks>
+    /// <param name="availableWidth">The shell's current width in device-independent pixels.</param>
+    public void ApplyAvailableWidth(double availableWidth)
+    {
+        if (double.IsNaN(availableWidth) || availableWidth <= 0)
+        {
+            return;
+        }
+
+        if (availableWidth < SidebarCollapseWidth)
+        {
+            if (!IsSidebarCollapsed)
+            {
+                _sidebarCollapsedByWidth = true;
+                IsSidebarCollapsed = true;
+            }
+
+            return;
+        }
+
+        if (_sidebarCollapsedByWidth)
+        {
+            _sidebarCollapsedByWidth = false;
+            IsSidebarCollapsed = _sidebarCollapsedByUser;
+        }
+    }
+
+    /// <summary>
+    /// Width below which the sidebar collapses to its icon rail. Set from the widest page minimum
+    /// (the POS screen) plus the expanded rail.
+    /// </summary>
+    private const double SidebarCollapseWidth = 1120d;
 
     /// <summary>
     /// Toggles theme state for future theme persistence.
@@ -283,8 +619,10 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
         _loadingService.Show(_localizationService.T("Loading.OpeningPage"));
         try
         {
-            var breadcrumb = _localizationService.T(breadcrumbKey);
-            await _shellNavigationService.NavigateToAsync<TViewModel>(breadcrumb);
+            // The key travels, not its translation: the navigation service re-resolves the trail
+            // every time the language changes, and a value translated here would arrive already
+            // frozen in the current language.
+            await _shellNavigationService.NavigateToAsync<TViewModel>(breadcrumbKey);
             foreach (var item in MenuItems)
             {
                 item.IsActive = string.Equals(item.TextKey, breadcrumbKey, StringComparison.OrdinalIgnoreCase);
@@ -298,23 +636,23 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
 
     private void BuildNavigationItems()
     {
-        AddMenuItem("Nav.Dashboard", "D", null, NavigateDashboardCommand);
-        AddMenuItem("Nav.Categories", "C", PermissionConstants.CategoryView, new AsyncRelayCommand(() => NavigateAsync<CategoryListViewModel>("Nav.Categories")));
-        AddMenuItem("Nav.Products", "P", PermissionConstants.ProductView, NavigateProductsCommand);
-        AddMenuItem("Nav.Inventory", "I", PermissionConstants.InventoryView, NavigateInventoryCommand);
-        AddMenuItem("Nav.Barcode", "BC", PermissionConstants.BarcodeView, NavigateBarcodeCommand);
-        AddMenuItem("Nav.SalesPOS", "S", PermissionConstants.SalesCreate, NavigateSalesCommand);
-        AddMenuItem("Nav.Customers", "CU", PermissionConstants.CustomerView, new AsyncRelayCommand(() => NavigateAsync<CustomerListViewModel>("Nav.Customers")));
-        AddMenuItem("Nav.Suppliers", "SU", PermissionConstants.SupplierView, new AsyncRelayCommand(() => NavigateAsync<SupplierListViewModel>("Nav.Suppliers")));
-        AddMenuItem("Nav.Reports", "R", PermissionConstants.ReportView, NavigateReportsCommand);
-        AddMenuItem("Nav.Receipts", "RC", PermissionConstants.ReceiptReprint, NavigateReceiptsCommand);
-        AddMenuItem("Nav.Settings", "ST", PermissionConstants.SettingsView, new AsyncRelayCommand(() => NavigateAsync<SettingsViewModel>("Nav.Settings")));
-        AddMenuItem("Nav.Users", "U", PermissionConstants.UsersManage, new AsyncRelayCommand(() => NavigateAsync<UsersViewModel>("Nav.Users")));
-        AddMenuItem("Nav.Roles", "RO", PermissionConstants.RolesManage, new AsyncRelayCommand(() => NavigateAsync<RolesViewModel>("Nav.Roles")));
-        AddMenuItem("Nav.Backup", "B", PermissionConstants.BackupView, NavigateBackupCommand);
-        AddMenuItem("Nav.Audit", "A", PermissionConstants.AuditView, NavigateAuditCommand);
-        AddMenuItem("Nav.DataQuality", "DQ", PermissionConstants.DataQualityView, NavigateDataQualityCommand);
-        AddMenuItem("Nav.Logout", "L", null, LogoutCommand);
+        AddMenuItem("Nav.Dashboard", "Dashboard", null, NavigateDashboardCommand);
+        AddMenuItem("Nav.Categories", "Categories", PermissionConstants.CategoryView, new AsyncRelayCommand(() => NavigateAsync<CategoryListViewModel>("Nav.Categories")));
+        AddMenuItem("Nav.Products", "Products", PermissionConstants.ProductView, NavigateProductsCommand);
+        AddMenuItem("Nav.Inventory", "Inventory", PermissionConstants.InventoryView, NavigateInventoryCommand);
+        AddMenuItem("Nav.Barcode", "Barcode", PermissionConstants.BarcodeView, NavigateBarcodeCommand);
+        AddMenuItem("Nav.SalesPOS", "Sales", PermissionConstants.SalesCreate, NavigateSalesCommand);
+        AddMenuItem("Nav.Customers", "Customers", PermissionConstants.CustomerView, new AsyncRelayCommand(() => NavigateAsync<CustomerListViewModel>("Nav.Customers")));
+        AddMenuItem("Nav.Suppliers", "Suppliers", PermissionConstants.SupplierView, new AsyncRelayCommand(() => NavigateAsync<SupplierListViewModel>("Nav.Suppliers")));
+        AddMenuItem("Nav.Reports", "Reports", PermissionConstants.ReportView, NavigateReportsCommand);
+        AddMenuItem("Nav.Receipts", "Print", PermissionConstants.ReceiptReprint, NavigateReceiptsCommand);
+        AddMenuItem("Nav.Settings", "Settings", PermissionConstants.SettingsView, new AsyncRelayCommand(() => NavigateAsync<SettingsViewModel>("Nav.Settings")));
+        AddMenuItem("Nav.Users", "Users", PermissionConstants.UsersManage, new AsyncRelayCommand(() => NavigateAsync<UsersViewModel>("Nav.Users")));
+        AddMenuItem("Nav.Roles", "Contact", PermissionConstants.RolesManage, new AsyncRelayCommand(() => NavigateAsync<RolesViewModel>("Nav.Roles")));
+        AddMenuItem("Nav.Backup", "Backup", PermissionConstants.BackupView, NavigateBackupCommand);
+        AddMenuItem("Nav.Audit", "History", PermissionConstants.AuditView, NavigateAuditCommand);
+        AddMenuItem("Nav.DataQuality", "Validate", PermissionConstants.DataQualityView, NavigateDataQualityCommand);
+        AddMenuItem("Nav.Logout", "Logout", null, LogoutCommand);
     }
 
     private void AddMenuItem(string textKey, string icon, string? permission, System.Windows.Input.ICommand command)
@@ -333,6 +671,19 @@ public partial class AuthenticatedHomeViewModel : BaseViewModel
             Command = command,
             Breadcrumb = _localizationService.T(textKey)
         });
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _searchCancellation?.Cancel();
+            _searchCancellation = null;
+            _clockTimer.Stop();
+        }
+
+        base.Dispose(disposing);
     }
 
     private void OnLoadingStateChanged(object? sender, EventArgs e)

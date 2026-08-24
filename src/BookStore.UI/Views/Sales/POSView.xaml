@@ -10,6 +10,7 @@
     <UserControl.InputBindings>
         <KeyBinding Key="F2" Command="{Binding StartSaleCommand}" />
         <KeyBinding Key="F3" Command="{Binding SuspendSaleCommand}" />
+        <KeyBinding Key="F4" Command="{Binding CloseInvoiceCommand}" />
         <KeyBinding Key="F8" Command="{Binding PayExactCommand}" />
         <KeyBinding Key="F9" Command="{Binding CompleteSaleCommand}" />
         <KeyBinding Key="Delete" Command="{Binding RemoveSelectedItemCommand}" />
@@ -19,6 +20,7 @@
           FlowDirection="{DynamicResource AppFlowDirection}"
           FocusManager.FocusedElement="{Binding ElementName=BarcodeInput}">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
@@ -37,7 +39,7 @@
                                    Text="{DynamicResource POS.Cashier}" />
                     <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
                         <TextBlock Foreground="{DynamicResource BrandOnChromeTextBrush}" Opacity="0.9" Text="{Binding CurrentSale.InvoiceNumber}" />
-                        <TextBlock Margin="12,0,0,0" Foreground="{DynamicResource BrandOnChromeTextBrush}" Opacity="0.9" Text="{Binding CurrentSale.CustomerName}" />
+                        <TextBlock Margin="12,0,0,0" Foreground="{DynamicResource BrandOnChromeTextBrush}" Opacity="0.9" Text="{Binding CurrentSale.CustomerName, Converter={StaticResource LocalizeConverter}}" />
                         <TextBlock Margin="6,0,0,0" Foreground="{DynamicResource BrandOnChromeTextBrush}" Opacity="0.9" Text="{Binding CurrentSale.CustomerPhone}" />
                     </StackPanel>
                     <TextBlock Margin="0,6,0,0"
@@ -51,33 +53,114 @@
                     <Button Margin="8,0,0,0"
                             Padding="14,8"
                             Command="{Binding StartSaleCommand}"
-                            Click="OnCashierActionClicked"
-                            Content="{DynamicResource POS.NewSale}" />
+                           
+                            Content="{DynamicResource POS.NewInvoice}" />
                     <Button Margin="8,0,0,0"
                             Padding="14,8"
                             Command="{Binding SuspendSaleCommand}"
-                            Click="OnCashierActionClicked"
+                           
                             Content="{DynamicResource POS.Suspend}" />
                     <Button Margin="8,0,0,0"
                             Padding="14,8"
                             Command="{Binding CancelSaleCommand}"
-                            Click="OnCashierActionClicked"
+                           
                             Content="{DynamicResource POS.Cancel}" />
                 </StackPanel>
             </DockPanel>
         </Border>
 
-        <Grid Grid.Row="1"
+        <!--
+            The open invoice strip. Several invoices are alive at once; this is the only place that
+            says which they are and which one the screen below is editing, so it stays visible rather
+            than living in a menu.
+        -->
+        <Border Grid.Row="1"
+                Padding="10,6"
+                Background="{DynamicResource SurfaceAltBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <DockPanel LastChildFill="True"
+                       FlowDirection="{DynamicResource AppFlowDirection}">
+                <TextBlock DockPanel.Dock="Left"
+                           Margin="0,0,10,0"
+                           VerticalAlignment="Center"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource PrimaryTextBrush}"
+                           Text="{DynamicResource POS.OpenInvoices}" />
+                <TextBlock DockPanel.Dock="Right"
+                           Margin="10,0,0,0"
+                           VerticalAlignment="Center"
+                           FontSize="12"
+                           Foreground="{DynamicResource SecondaryTextBrush}"
+                           Text="{Binding OpenInvoicesText}" />
+                <ListBox BorderThickness="0"
+                         Background="Transparent"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         ItemsSource="{Binding OpenInvoices}"
+                         SelectedItem="{Binding SelectedOpenInvoice}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <!-- Without this the container reports its data type to assistive technology,
+                         so the tab announced "SaleSessionDto" instead of the invoice number. -->
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                            <Setter Property="AutomationProperties.Name" Value="{Binding InvoiceNumber}" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="4,2"
+                                       MinWidth="150"
+                                       ToolTip="{DynamicResource POS.SwitchInvoice}">
+                                <Button DockPanel.Dock="Right"
+                                        Width="24"
+                                        Height="24"
+                                        Margin="8,0,0,0"
+                                        Padding="0"
+                                        VerticalAlignment="Center"
+                                        Command="{Binding DataContext.CloseInvoiceCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                        CommandParameter="{Binding}"
+                                        AutomationProperties.Name="{DynamicResource POS.CloseInvoice}"
+                                        ToolTip="{DynamicResource POS.CloseInvoice}"
+                                        Content="&#x2715;" />
+                                <StackPanel>
+                                    <TextBlock FontWeight="SemiBold"
+                                               FlowDirection="LeftToRight"
+                                               Text="{Binding InvoiceNumber}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock FontSize="11"
+                                               Opacity="0.75">
+                                        <Run Text="{Binding Items.Count, Mode=OneWay}" />
+                                        <Run Text=" | " />
+                                        <Run Text="{Binding Summary.GrandTotal, Mode=OneWay, StringFormat={}{0:N2}}" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Row="2"
               Margin="0">
             <Grid.ColumnDefinitions>
                 <!--
                     Proportional with bounds rather than hard pixels. 300 + 310 fixed left the cart
                     roughly 350px at the window minimum, which collapsed the star-sized product
                     column to nothing while eight numeric columns kept their pixels.
+
+                    The minimums total 730 rather than 840. At 840 the three columns could not fit
+                    the width left by the shell at the window minimum, and the overflow fell off the
+                    end of the page, taking the payment panel and Complete Sale with it.
                 -->
-                <ColumnDefinition Width="0.24*" MinWidth="250" MaxWidth="340" />
-                <ColumnDefinition Width="*" MinWidth="320" />
-                <ColumnDefinition Width="0.26*" MinWidth="270" MaxWidth="360" />
+                <ColumnDefinition Width="0.24*" MinWidth="215" MaxWidth="340" />
+                <ColumnDefinition Width="*" MinWidth="260" />
+                <ColumnDefinition Width="0.26*" MinWidth="255" MaxWidth="360" />
             </Grid.ColumnDefinitions>
 
             <Border Grid.Column="0"
@@ -107,7 +190,7 @@
                                     Width="72"
                                     Margin="8,0,0,0"
                                     Command="{Binding AddBarcodeCommand}"
-                                    Click="OnBarcodeAddClicked"
+                                   
                                     Content="{DynamicResource POS.Add}" />
                             <TextBox x:Name="BarcodeInput"
                                      MinHeight="{DynamicResource ControlHeight}"
@@ -265,7 +348,13 @@
             <Grid Grid.Column="1"
                   Margin="14">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
+                    <!--
+                        MinHeight keeps the cart visible on a short screen. Without it the control
+                        bar below (which wraps to two or three lines when narrow) took the whole
+                        column and the cart grid was arranged at zero height: the cashier could see
+                        neither what had been scanned nor the line they were about to change.
+                    -->
+                    <RowDefinition Height="*" MinHeight="130" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
@@ -285,7 +374,7 @@
                         <DataGridTextColumn Width="Auto"
                                             MinWidth="90"
                                             Binding="{Binding CategoryName}"
-                                            Header="{DynamicResource POS.Category}" />
+                                            Header="{DynamicResource POS.CategoryColumn}" />
                         <DataGridTextColumn Width="Auto"
                                             MinWidth="90"
                                             Binding="{Binding Barcode}"
@@ -395,6 +484,9 @@
                         <Grid Margin="0,12,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
+                                <!-- A fixed gutter: Arabic labels are longer than the English ones and
+                                     ran straight into the amounts without it. -->
+                                <ColumnDefinition Width="12" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -406,27 +498,27 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <TextBlock Text="{DynamicResource POS.Subtotal}" />
-                            <TextBlock Grid.Column="1"
+                            <TextBlock Grid.Column="2"
                                        Text="{Binding CurrentSale.Summary.Subtotal, StringFormat=N2}" />
                             <TextBlock Grid.Row="1"
                                        Margin="0,8,0,0"
                                        Text="{DynamicResource POS.Discounts}" />
                             <TextBlock Grid.Row="1"
-                                       Grid.Column="1"
+                                       Grid.Column="2"
                                        Margin="0,8,0,0"
                                        Text="{Binding CurrentSale.Summary.LineDiscount, StringFormat=N2}" />
                             <TextBlock Grid.Row="2"
                                        Margin="0,8,0,0"
                                        Text="{DynamicResource POS.InvoiceDiscount}" />
                             <TextBlock Grid.Row="2"
-                                       Grid.Column="1"
+                                       Grid.Column="2"
                                        Margin="0,8,0,0"
                                        Text="{Binding CurrentSale.Summary.InvoiceDiscount, StringFormat=N2}" />
                             <TextBlock Grid.Row="3"
                                        Margin="0,8,0,0"
                                        Text="{DynamicResource POS.Tax}" />
                             <TextBlock Grid.Row="3"
-                                       Grid.Column="1"
+                                       Grid.Column="2"
                                        Margin="0,8,0,0"
                                        Text="{Binding CurrentSale.Summary.Tax, StringFormat=N2}" />
                             <TextBlock Grid.Row="4"
@@ -436,7 +528,7 @@
                            Foreground="{DynamicResource AccentBrush}"
                            Text="{DynamicResource POS.Total}" />
                             <TextBlock Grid.Row="4"
-                                       Grid.Column="1"
+                                       Grid.Column="2"
                            Margin="0,14,0,0"
                            FontSize="18"
                            FontWeight="SemiBold"
@@ -447,7 +539,7 @@
                                        FontWeight="SemiBold"
                                        Text="{DynamicResource POS.Change}" />
                             <TextBlock Grid.Row="5"
-                                       Grid.Column="1"
+                                       Grid.Column="2"
                                        Margin="0,8,0,0"
                                        FontWeight="SemiBold"
                                        Text="{Binding CurrentSale.Summary.Change, StringFormat=N2}" />
@@ -457,7 +549,13 @@
                                    Text="{DynamicResource POS.PaymentMethod}" />
                         <ComboBox MinHeight="{DynamicResource ControlHeight}"
                                   ItemsSource="{Binding PaymentMethods}"
-                                  SelectedItem="{Binding SelectedPaymentMethod}" />
+                                  SelectedItem="{Binding SelectedPaymentMethod}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={StaticResource EnumDisplayConverter}}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         <TextBlock Margin="0,12,0,6"
                                    Text="{DynamicResource POS.AmountPaid}" />
                         <DockPanel>
@@ -465,7 +563,7 @@
                                     Width="74"
                                     Margin="8,0,0,0"
                                     Command="{Binding PayExactCommand}"
-                                    Click="OnCashierActionClicked"
+                                   
                                     Content="{DynamicResource POS.PayExact}" />
                             <TextBox MinHeight="{DynamicResource ControlHeight}"
                                      FlowDirection="LeftToRight"
@@ -477,9 +575,9 @@
                                    Foreground="{DynamicResource SecondaryTextBrush}"
                                    Text="{DynamicResource POS.QuickCash}" />
                         <UniformGrid Columns="3">
-                            <Button Margin="0,0,6,0" Command="{Binding AddQuickCashCommand}" CommandParameter="50" Click="OnCashierActionClicked" Content="50" />
-                            <Button Margin="0,0,6,0" Command="{Binding AddQuickCashCommand}" CommandParameter="100" Click="OnCashierActionClicked" Content="100" />
-                            <Button Command="{Binding AddQuickCashCommand}" CommandParameter="200" Click="OnCashierActionClicked" Content="200" />
+                            <Button Margin="0,0,6,0" Command="{Binding AddQuickCashCommand}" CommandParameter="50" Content="50" />
+                            <Button Margin="0,0,6,0" Command="{Binding AddQuickCashCommand}" CommandParameter="100" Content="100" />
+                            <Button Command="{Binding AddQuickCashCommand}" CommandParameter="200" Content="200" />
                         </UniformGrid>
                         <TextBlock Margin="0,8,0,0"
                                    FontWeight="SemiBold"
@@ -541,7 +639,7 @@
                                             Margin="0,14,0,0"
                                             MinHeight="48"
                                             Command="{Binding CompleteSaleCommand}"
-                                            Click="OnCashierActionClicked"
+                                           
                                             AutomationProperties.Name="{DynamicResource POS.CompleteSale}"
                                             Content="{DynamicResource POS.CompleteSale}" />
                 </Grid>
@@ -550,7 +648,7 @@
 
         <!-- POSView had no busy state at all, so nothing stopped a second tap on Complete Sale
              while the sale was committing and printing. -->
-        <controls:LoadingOverlay Grid.RowSpan="2"
+        <controls:LoadingOverlay Grid.RowSpan="3"
                                  IsBusy="{Binding IsBusy}"
                                  Message="{DynamicResource Loading.Default}" />
     </Grid>

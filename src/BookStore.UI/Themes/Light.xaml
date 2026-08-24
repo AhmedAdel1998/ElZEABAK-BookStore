@@ -5,51 +5,76 @@
         theme-varying brush must be declared in BOTH files under the same key. A brush that exists
         only here keeps its light value in dark mode, which is how the app ended up rendering
         near-white text on near-white input backgrounds.
+
+        The palette uses a calm work-surface base with a warm gold brand accent. Teal and blue
+        support colors are reserved for data visualization and secondary emphasis so the UI does not
+        become a single-hue theme.
     -->
 
     <!-- Surfaces and text -->
-    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F2FBF4" />
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F4F7FB" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="SurfaceAltBrush" Color="#E4F6E8" />
-    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#102016" />
-    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#2F5E3F" />
-    <SolidColorBrush x:Key="MutedTextBrush" Color="#5F8A6A" />
-    <SolidColorBrush x:Key="BorderBrush" Color="#B9DEC3" />
-    <SolidColorBrush x:Key="AccentBrush" Color="#16833A" />
-    <SolidColorBrush x:Key="AccentHoverBrush" Color="#0F6A2E" />
-    <SolidColorBrush x:Key="OverlayBrush" Color="#99102016" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="#F8FAFC" />
+    <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#18212F" />
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#48566A" />
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#748196" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#D9E1EC" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#B87514" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#8F5A0C" />
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="#FFF3D7" />
+    <SolidColorBrush x:Key="OverlayBrush" Color="#9918212F" />
 
     <!-- Status -->
     <SolidColorBrush x:Key="SuccessBrush" Color="#2E7D32" />
     <SolidColorBrush x:Key="WarningBrush" Color="#A15C00" />
     <SolidColorBrush x:Key="DangerBrush" Color="#B91C1C" />
     <SolidColorBrush x:Key="InfoBrush" Color="#0F766E" />
-    <SolidColorBrush x:Key="FocusBrush" Color="#22C55E" />
+    <SolidColorBrush x:Key="FocusBrush" Color="#D49A2A" />
+    <SolidColorBrush x:Key="DataVizTealBrush" Color="#0F766E" />
+    <SolidColorBrush x:Key="DataVizBlueBrush" Color="#2563EB" />
 
     <!-- Input and grid chrome. These replaced hard-coded hex values in the control styles. -->
-    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#F7FFF9" />
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#F8FAFC" />
     <SolidColorBrush x:Key="InputFocusBackgroundBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="GridAlternateRowBrush" Color="#F3FCF5" />
-    <SolidColorBrush x:Key="GridSelectedRowBrush" Color="#DDFBE6" />
-    <SolidColorBrush x:Key="GridHeaderBrush" Color="#DCF5E3" />
-    <SolidColorBrush x:Key="GridHeaderTextBrush" Color="#102016" />
+    <SolidColorBrush x:Key="GridAlternateRowBrush" Color="#F7FAFD" />
+    <SolidColorBrush x:Key="GridSelectedRowBrush" Color="#FFF0C7" />
+    <SolidColorBrush x:Key="GridHeaderBrush" Color="#EEF3F9" />
+    <SolidColorBrush x:Key="GridHeaderTextBrush" Color="#18212F" />
 
-    <!-- Foreground for anything sitting on the accent/brand fill. -->
-    <SolidColorBrush x:Key="OnAccentTextBrush" Color="#052E16" />
+    <!-- Foreground for anything sitting on the brand fill. Dark, because the fill is bright gold. -->
+    <SolidColorBrush x:Key="OnAccentTextBrush" Color="#1C1605" />
     <SolidColorBrush x:Key="OnDangerTextBrush" Color="#FFFFFF" />
 
     <!-- Brand chrome -->
-    <SolidColorBrush x:Key="WarmChromeBrush" Color="#102016" />
-    <SolidColorBrush x:Key="WarmChromeAltBrush" Color="#16351F" />
-    <SolidColorBrush x:Key="BrandOnChromeTextBrush" Color="#BBF7D0" />
-    <SolidColorBrush x:Key="BrandDeepTextBrush" Color="#052E16" />
-    <LinearGradientBrush x:Key="BookstoreGreenBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#BBF7D0" Offset="0" />
-        <GradientStop Color="#22C55E" Offset="0.46" />
-        <GradientStop Color="#15803D" Offset="1" />
+    <SolidColorBrush x:Key="WarmChromeBrush" Color="#121923" />
+    <SolidColorBrush x:Key="WarmChromeAltBrush" Color="#1C2633" />
+    <SolidColorBrush x:Key="SidebarHoverBrush" Color="#263345" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#2F3D50" />
+    <SolidColorBrush x:Key="BrandOnChromeTextBrush" Color="#F9D57A" />
+    <SolidColorBrush x:Key="BrandDeepTextBrush" Color="#1C1605" />
+    <LinearGradientBrush x:Key="BookstoreBrandBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFE9A8" Offset="0" />
+        <GradientStop Color="#F6C760" Offset="0.48" />
+        <GradientStop Color="#B87514" Offset="1" />
     </LinearGradientBrush>
-    <LinearGradientBrush x:Key="BookstorePageBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#F7FFF9" Offset="0" />
-        <GradientStop Color="#E9F8EE" Offset="1" />
+    <LinearGradientBrush x:Key="BookstorePageBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#F8FBFF" Offset="0" />
+        <GradientStop Color="#F3F7FC" Offset="0.55" />
+        <GradientStop Color="#EEF3F8" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="PanelGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFFFFF" Offset="0" />
+        <GradientStop Color="#F8FAFC" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="ShellHeaderBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FFFFFF" Offset="0" />
+        <GradientStop Color="#F9FBFE" Offset="0.58" />
+        <GradientStop Color="#FFF4D9" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="HeroPanelBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#121923" Offset="0" />
+        <GradientStop Color="#1E2A39" Offset="0.55" />
+        <GradientStop Color="#B87514" Offset="1" />
     </LinearGradientBrush>
 </ResourceDictionary>

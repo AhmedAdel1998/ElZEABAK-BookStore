@@ -21,3 +21,9 @@ namespace BookStore.Application.Features.Sales.Queries.GetSaleSummary
     /// <summary>Requests current sale summary.</summary>
     public sealed record GetSaleSummaryRequest;
 }
+
+namespace BookStore.Application.Features.Sales.Queries.GetOpenInvoices
+{
+    /// <summary>Requests every POS invoice that is currently open on this workstation.</summary>
+    public sealed record GetOpenInvoicesRequest;
+}

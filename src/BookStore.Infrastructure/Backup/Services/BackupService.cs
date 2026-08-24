@@ -7,6 +7,7 @@ using System.Text.Json;
 using BookStore.Application.Features.Backup.DTOs;
 using BookStore.Application.Features.Backup.Services;
 using BookStore.Application.Interfaces;
+using BookStore.Shared.Constants;
 using BookStore.Shared.Models;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
@@ -418,7 +419,9 @@ public sealed class BackupService : IBackupService
         var path = string.IsNullOrWhiteSpace(configuredPath)
             ? Path.Combine(programData, "BookStore", fallbackFolder)
             : configuredPath.Replace("%ProgramData%", programData, StringComparison.OrdinalIgnoreCase);
-        return Path.GetFullPath(Path.IsPathRooted(path) ? path : Path.Combine(AppContext.BaseDirectory, path));
+        // A relative configured path used to land in the read-only install directory. Rooted paths --
+        // which every default and documented setting uses -- are unaffected.
+        return ApplicationPaths.ResolveDataPath(path);
     }
 
     private static string BuildFileName(BackupType backupType)

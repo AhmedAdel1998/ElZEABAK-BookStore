@@ -193,7 +193,7 @@ public class CustomerModuleTests
         }
 
         public FakeCustomerRepository CustomerRepository { get; } = new();
-        public FakePosSaleSessionStore SessionStore { get; } = new();
+        public InMemoryPosSaleSessionStore SessionStore { get; } = new();
         public FakeUnitOfWork UnitOfWork { get; }
         public CreateCustomerHandler Create { get; }
         public UpdateCustomerHandler Update { get; }
@@ -277,16 +277,6 @@ public class CustomerModuleTests
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(1);
     }
 
-    private sealed class FakePosSaleSessionStore : IPosSaleSessionStore
-    {
-        private SaleSessionDto? _current;
-        public Task<SaleSessionDto?> GetCurrentAsync(CancellationToken cancellationToken = default) => Task.FromResult(_current);
-        public Task SaveCurrentAsync(SaleSessionDto sale, CancellationToken cancellationToken = default) { _current = sale; return Task.CompletedTask; }
-        public Task ClearCurrentAsync(CancellationToken cancellationToken = default) { _current = null; return Task.CompletedTask; }
-        public Task SuspendAsync(SaleSessionDto sale, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task<IReadOnlyCollection<SaleSessionDto>> GetHeldAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<SaleSessionDto>>([]);
-        public Task<SaleSessionDto?> ResumeAsync(Guid saleId, CancellationToken cancellationToken = default) => Task.FromResult<SaleSessionDto?>(null);
-    }
 
     private sealed class FakeAuthorizationService(IReadOnlyCollection<string> permissions) : IAuthorizationService
     {

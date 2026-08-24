@@ -186,7 +186,7 @@ public partial class ProductEditorViewModel : BaseViewModel
 
     private async Task InitializeAsync()
     {
-        var categories = await _categorySearchHandler.HandleAsync(new SearchCategoriesRequest(null, 1, 500, IsActive: true));
+        var categories = await _categorySearchHandler.HandleAsync(new SearchCategoriesRequest(null, 1, PagingConstants.MaxPageSize, IsActive: true));
         if (categories.IsSuccess && categories.Value is not null)
         {
             foreach (var category in categories.Value.Items)

@@ -61,6 +61,24 @@ public sealed class UiTreeLocalizer : IUiTreeLocalizer
     private static readonly DependencyProperty OriginalErrorMessageProperty =
         DependencyProperty.RegisterAttached("OriginalErrorMessage", typeof(string), typeof(UiTreeLocalizer), new PropertyMetadata(null));
 
+    /// <summary>
+    /// Marks an element whose text must be left in the language it was authored in. Brand marks are
+    /// the case this exists for: the login badge reads "POS", which the dictionary translates to
+    /// "نقطة البيع" -- four times as wide, and clipped inside a fixed square logo tile.
+    /// </summary>
+    public static readonly DependencyProperty ExcludeProperty =
+        DependencyProperty.RegisterAttached("Exclude", typeof(bool), typeof(UiTreeLocalizer), new PropertyMetadata(false));
+
+    /// <summary>Sets whether this element and its children are left untranslated.</summary>
+    /// <param name="element">The element to mark.</param>
+    /// <param name="value"><see langword="true"/> to leave the element untranslated.</param>
+    public static void SetExclude(DependencyObject element, bool value) => element.SetValue(ExcludeProperty, value);
+
+    /// <summary>Gets whether this element is left untranslated.</summary>
+    /// <param name="element">The element to test.</param>
+    /// <returns><see langword="true"/> when the element is excluded.</returns>
+    public static bool GetExclude(DependencyObject element) => (bool)element.GetValue(ExcludeProperty);
+
     private readonly ILocalizationService _localizationService;
     private readonly List<WeakReference<FrameworkElement>> _attachedRoots = [];
     private bool _walkQueued;
@@ -201,6 +219,13 @@ public sealed class UiTreeLocalizer : IUiTreeLocalizer
 
     private void LocalizeSubtree(DependencyObject element)
     {
+        // An excluded element takes its children with it: a logo tile's caption is no more
+        // translatable than the tile itself.
+        if (GetExclude(element))
+        {
+            return;
+        }
+
         LocalizeSelf(element);
 
         // A context menu and a tooltip live in their own popup trees, so the visual walk below never
@@ -258,6 +283,28 @@ public sealed class UiTreeLocalizer : IUiTreeLocalizer
     /// Translates the inline runs of a text block. Text assembled from &lt;Run&gt; elements is not
     /// reachable through the visual tree, so pagination footers and detail summaries stayed English.
     /// </summary>
+    /// <summary>
+    /// Reports whether the author composed this block from inline elements rather than setting
+    /// Text. Assigning <c>Text="literal"</c> also produces a single run, and translating that run
+    /// in place is equivalent to translating Text, so only a genuine composition -- more than one
+    /// inline, an inline that is not a run, or a single run carrying its own binding -- has to be
+    /// handled run by run.
+    /// </summary>
+    private static bool HasAuthoredInlines(TextBlock textBlock)
+    {
+        if (textBlock.Inlines.Count == 0)
+        {
+            return false;
+        }
+
+        if (textBlock.Inlines.Count > 1)
+        {
+            return true;
+        }
+
+        return textBlock.Inlines.FirstInline is not Run run || IsBound(run, Run.TextProperty);
+    }
+
     private void LocalizeInlines(TextBlock textBlock)
     {
         foreach (var inline in textBlock.Inlines.ToArray())
@@ -276,8 +323,19 @@ public sealed class UiTreeLocalizer : IUiTreeLocalizer
             case TextBlock textBlock:
                 // Writing Text over a block built from inline runs destroys those runs (including any
                 // bound ones), so pick whichever the author actually used.
-                if (DependencyPropertyHelper.GetValueSource(textBlock, TextBlock.TextProperty).BaseValueSource == BaseValueSource.Default
-                    && textBlock.Inlines.Count > 0)
+                //
+                // The choice used to be made on TextBlock.Text having its default value. That does
+                // not hold for a block composed of runs -- WPF keeps Text in step with the inline
+                // collection, so the source reads as Local and the whole status bar took the branch
+                // below. Writing its concatenated text back collapsed eight runs into one literal,
+                // which is why the clock stopped ticking and the status bar stayed in the language
+                // it was first walked in. Ask the inline collection instead.
+                if (IsBound(textBlock, TextBlock.TextProperty))
+                {
+                    break;
+                }
+
+                if (HasAuthoredInlines(textBlock))
                 {
                     LocalizeInlines(textBlock);
                 }
@@ -414,9 +472,32 @@ public sealed class UiTreeLocalizer : IUiTreeLocalizer
             return true;
         }
 
+        // ReadLocalValue hands back the expression object itself rather than the value it resolved
+        // to. GetValueSource below did not report a DynamicResource on an object-typed property as
+        // an expression, so Content="{DynamicResource ...}" was being overwritten with a literal:
+        // the button kept whatever language was current when the tree was first walked and never
+        // followed the resource again.
+        if (element.ReadLocalValue(property) is Expression)
+        {
+            return true;
+        }
+
         // DynamicResource resolves to a ResourceReferenceExpression rather than a binding, and
         // ApplyCulture already swaps those resource values, so leave expression-driven properties
-        // untouched. Literals authored inside a template are still translated.
-        return DependencyPropertyHelper.GetValueSource(element, property).IsExpression;
+        // untouched.
+        var source = DependencyPropertyHelper.GetValueSource(element, property);
+        if (source.IsExpression)
+        {
+            return true;
+        }
+
+        // A value handed down by a control template belongs to the templated parent, not to this
+        // element: the search box's placeholder text and a button's generated content text both
+        // arrive this way. Writing a literal here replaces the TemplateBinding with a frozen
+        // string, and the control stops following the property the author actually set -- which is
+        // why the search box kept its first placeholder and a button's caption stopped following
+        // its resource. The owning property is translated separately, so there is nothing to do
+        // here. No template in this application authors a translatable literal of its own.
+        return source.BaseValueSource is BaseValueSource.ParentTemplate or BaseValueSource.TemplateTrigger;
     }
 }

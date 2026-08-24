@@ -2,17 +2,21 @@ using BookStore.Application.Features.Sales.Commands.AddItem;
 using BookStore.Application.Features.Sales.Commands.ApplyInvoiceDiscount;
 using BookStore.Application.Features.Sales.Commands.ApplyLineDiscount;
 using BookStore.Application.Features.Sales.Commands.CancelSale;
+using BookStore.Application.Features.Sales.Commands.CloseInvoice;
 using BookStore.Application.Features.Sales.Commands.CompleteSale;
 using BookStore.Application.Features.Sales.Commands.RemoveItem;
 using BookStore.Application.Features.Sales.Commands.ResumeSale;
+using BookStore.Application.Features.Sales.Commands.SaveInvoiceDraft;
 using BookStore.Application.Features.Sales.Commands.ClearCustomer;
 using BookStore.Application.Features.Sales.Commands.SelectCustomer;
 using BookStore.Application.Features.Sales.Commands.StartSale;
 using BookStore.Application.Features.Sales.Commands.SuspendSale;
+using BookStore.Application.Features.Sales.Commands.SwitchInvoice;
 using BookStore.Application.Features.Sales.Commands.UpdateItemQuantity;
 using BookStore.Application.Features.Sales.DTOs;
 using BookStore.Application.Features.Sales.Queries.GetCurrentSale;
 using BookStore.Application.Features.Sales.Queries.GetHeldSales;
+using BookStore.Application.Features.Sales.Queries.GetOpenInvoices;
 using BookStore.Application.Features.Sales.Queries.GetSaleSummary;
 using BookStore.Application.Features.Sales.Queries.SearchProduct;
 using BookStore.Application.Features.Sales.Responses;
@@ -29,20 +33,53 @@ using Microsoft.Extensions.Logging;
 
 namespace BookStore.Application.Features.Sales.Handlers;
 
+/// <summary>
+/// Shared lookup used by every POS command that edits one of the invoices open on the workstation.
+/// </summary>
+internal static class PosSessionTarget
+{
+    /// <summary>The message used whenever a request names an invoice that is not open.</summary>
+    internal const string NotOpen = "That invoice is not open.";
+
+    /// <summary>The message used whenever a request needs an invoice and none is open.</summary>
+    internal const string NoneOpen = "There is no open invoice.";
+
+    /// <summary>
+    /// Resolves the invoice a request is aimed at: the one it names, or the active one when it names
+    /// none.
+    /// </summary>
+    internal static Task<SaleSessionDto?> ResolveAsync(IPosSaleSessionStore store, Guid? saleId, CancellationToken cancellationToken) =>
+        saleId is null
+            ? store.GetCurrentAsync(cancellationToken)
+            : store.GetAsync(saleId.Value, cancellationToken);
+
+    /// <summary>Picks the message that fits how the invoice was addressed.</summary>
+    internal static string MissingMessage(Guid? saleId) => saleId is null ? NoneOpen : NotOpen;
+
+    /// <summary>Stamps the last-edit time of an invoice.</summary>
+    internal static SaleSessionDto Touch(SaleSessionDto sale)
+    {
+        sale.UpdatedAt = DateTimeOffset.UtcNow;
+        return sale;
+    }
+}
+
 /// <summary>Handles POS sale creation.</summary>
 public sealed class StartSaleHandler
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly IPosSaleSessionStore _sessionStore;
+    private readonly IPosCartStockService _cartStockService;
     private readonly IPricingService _pricingService;
     private readonly IValidator<StartSaleRequest> _validator;
     private readonly ILogger<StartSaleHandler> _logger;
 
     /// <summary>Initializes a new instance of the <see cref="StartSaleHandler"/> class.</summary>
-    public StartSaleHandler(ICurrentUserService currentUserService, IPosSaleSessionStore sessionStore, IPricingService pricingService, IValidator<StartSaleRequest> validator, ILogger<StartSaleHandler> logger)
+    public StartSaleHandler(ICurrentUserService currentUserService, IPosSaleSessionStore sessionStore, IPosCartStockService cartStockService, IPricingService pricingService, IValidator<StartSaleRequest> validator, ILogger<StartSaleHandler> logger)
     {
         _currentUserService = currentUserService;
         _sessionStore = sessionStore;
+        _cartStockService = cartStockService;
         _pricingService = pricingService;
         _validator = validator;
         _logger = logger;
@@ -57,22 +94,27 @@ public sealed class StartSaleHandler
             return Result<SaleSessionDto>.Failure(validation.Errors[0].ErrorMessage);
         }
 
-        var existing = await _sessionStore.GetCurrentAsync(cancellationToken);
-        if (existing is { IsSuspended: false, Items.Count: > 0 })
-        {
-            if (!request.ForceNew)
-            {
-                // Resume rather than replace. Returning to the POS screen -- or restarting after a
-                // crash -- must not discard a cart that already has items in it.
-                await _pricingService.RecalculateAsync(existing, cancellationToken);
-                _logger.LogInformation("POS sale resumed in progress. Invoice={InvoiceNumber} Lines={Lines}", existing.InvoiceNumber, existing.Items.Count);
-                return Result<SaleSessionDto>.Success(existing);
-            }
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var active = await _sessionStore.GetCurrentAsync(cancellationToken);
 
-            // An explicit new sale parks the current cart in Held Sales, so nothing is lost.
-            existing.IsSuspended = true;
-            await _sessionStore.SuspendAsync(existing, cancellationToken);
-            _logger.LogInformation("Active POS cart suspended to start a new sale. Invoice={InvoiceNumber}", existing.InvoiceNumber);
+        // Returning to the POS screen -- or restarting after a crash -- must land back on the invoice
+        // the cashier was editing, however far along it is. Asking for a new invoice while sitting on
+        // an untouched one reuses it rather than leaving an empty tab behind on every click.
+        if (active is not null && (!request.ForceNew || IsBlank(active)))
+        {
+            await _cartStockService.SynchronizeAsync(active, cancellationToken);
+            await _pricingService.RecalculateAsync(active, cancellationToken);
+            await _sessionStore.SaveCurrentAsync(active, cancellationToken);
+            _logger.LogInformation("POS invoice re-opened. Invoice={InvoiceNumber} Lines={Lines}", active.InvoiceNumber, active.Items.Count);
+            return Result<SaleSessionDto>.Success(active);
+        }
+
+        // Invoices already open stay open. The limit exists so a strip of forgotten carts cannot hold
+        // stock away from the invoices that are actually being served.
+        var open = await _sessionStore.GetOpenAsync(cancellationToken);
+        if (open.Count >= PosConstants.MaxOpenInvoices)
+        {
+            return Result<SaleSessionDto>.Failure($"No more than {PosConstants.MaxOpenInvoices} invoices can be open at once. Complete, hold or close one first.");
         }
 
         var sale = new SaleSessionDto
@@ -88,25 +130,31 @@ public sealed class StartSaleHandler
         var suffix = sale.SaleId.ToString("N")[..4].ToUpperInvariant();
         sale.InvoiceNumber = $"POS-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}-{suffix}";
         await _pricingService.RecalculateAsync(sale, cancellationToken);
-        await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
-        _logger.LogInformation("POS sale started. Invoice={InvoiceNumber} Cashier={Cashier}", sale.InvoiceNumber, sale.CashierName);
+        await _sessionStore.SaveCurrentAsync(PosSessionTarget.Touch(sale), cancellationToken);
+        _logger.LogInformation("POS invoice opened. Invoice={InvoiceNumber} Cashier={Cashier} OpenCount={OpenCount}", sale.InvoiceNumber, sale.CashierName, open.Count + 1);
         return Result<SaleSessionDto>.Success(sale);
     }
+
+    /// <summary>An invoice nobody has typed anything into yet.</summary>
+    private static bool IsBlank(SaleSessionDto sale) =>
+        sale.Items.Count == 0 && sale.CustomerId is null && sale.InvoiceDiscount == 0m && sale.AmountPaid == 0m;
 }
 
-/// <summary>Handles adding products to the active POS cart.</summary>
+/// <summary>Handles adding products to a POS cart.</summary>
 public sealed class AddItemHandler
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPosSaleSessionStore _sessionStore;
+    private readonly IPosCartStockService _cartStockService;
     private readonly IPricingService _pricingService;
     private readonly IValidator<AddItemRequest> _validator;
 
     /// <summary>Initializes a new instance of the <see cref="AddItemHandler"/> class.</summary>
-    public AddItemHandler(IUnitOfWork unitOfWork, IPosSaleSessionStore sessionStore, IPricingService pricingService, IValidator<AddItemRequest> validator)
+    public AddItemHandler(IUnitOfWork unitOfWork, IPosSaleSessionStore sessionStore, IPosCartStockService cartStockService, IPricingService pricingService, IValidator<AddItemRequest> validator)
     {
         _unitOfWork = unitOfWork;
         _sessionStore = sessionStore;
+        _cartStockService = cartStockService;
         _pricingService = pricingService;
         _validator = validator;
     }
@@ -120,6 +168,15 @@ public sealed class AddItemHandler
             return Result<SaleSessionDto>.Failure(validation.Errors[0].ErrorMessage);
         }
 
+        // Fabricating a session here used to produce a cart with no invoice number, which then failed
+        // at checkout with a domain validation error rather than at the till with a clear message.
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await PosSessionTarget.ResolveAsync(_sessionStore, request.SaleId, cancellationToken);
+        if (sale is null)
+        {
+            return Result<SaleSessionDto>.Failure(PosSessionTarget.MissingMessage(request.SaleId));
+        }
+
         var product = await _unitOfWork.Products.GetByIdAsync(request.ProductId, cancellationToken);
         if (product is null)
         {
@@ -131,53 +188,59 @@ public sealed class AddItemHandler
             return Result<SaleSessionDto>.Failure("Inactive products cannot be sold.");
         }
 
-        var sale = await _sessionStore.GetCurrentAsync(cancellationToken) ?? new SaleSessionDto();
         var existing = sale.Items.FirstOrDefault(item => item.ProductId == product.Id);
         var requestedQuantity = request.Quantity + (existing?.Quantity ?? 0);
-        if (requestedQuantity > product.Quantity)
+
+        // Available means available to this invoice: whatever the other open invoices are holding is
+        // already spoken for, so two tabs cannot both sell the last copy.
+        var available = await _cartStockService.GetAvailableAsync(product.Id, sale.SaleId, cancellationToken);
+        if (requestedQuantity > available)
         {
-            return Result<SaleSessionDto>.Failure("Requested quantity exceeds available stock.");
+            return Result<SaleSessionDto>.Failure(available <= 0
+                ? $"{product.Title} has no stock left for this invoice."
+                : $"Requested quantity exceeds available stock. {available} left for this invoice.");
         }
 
         if (existing is null)
         {
-            sale.Items.Add(ToCartItem(product, request.Quantity));
+            sale.Items.Add(new SaleCartItemDto
+            {
+                ProductId = product.Id,
+                Barcode = product.Barcode.Value,
+                Title = product.Title,
+                CategoryName = product.Category?.Name,
+                Quantity = request.Quantity,
+                AvailableQuantity = available - request.Quantity,
+                UnitPrice = product.SellingPrice
+            });
         }
         else
         {
             existing.Quantity = requestedQuantity;
-            existing.AvailableQuantity = product.Quantity - requestedQuantity;
-            existing.CategoryName = product.Category?.Name;
+            existing.AvailableQuantity = available - requestedQuantity;
+            existing.CategoryName = product.Category?.Name ?? existing.CategoryName;
+            existing.UnitPrice = product.SellingPrice;
         }
 
         await _pricingService.RecalculateAsync(sale, cancellationToken);
-        await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
+        await _sessionStore.SaveAsync(PosSessionTarget.Touch(sale), cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
-
-    private static SaleCartItemDto ToCartItem(Product product, int quantity) => new()
-    {
-        ProductId = product.Id,
-        Barcode = product.Barcode.Value,
-        Title = product.Title,
-        CategoryName = product.Category?.Name,
-        Quantity = quantity,
-        AvailableQuantity = product.Quantity - quantity,
-        UnitPrice = product.SellingPrice
-    };
 }
 
 /// <summary>Handles cart quantity updates.</summary>
 public sealed class UpdateItemQuantityHandler
 {
     private readonly IPosSaleSessionStore _sessionStore;
+    private readonly IPosCartStockService _cartStockService;
     private readonly IPricingService _pricingService;
     private readonly IValidator<UpdateItemQuantityRequest> _validator;
 
     /// <summary>Initializes a new instance of the <see cref="UpdateItemQuantityHandler"/> class.</summary>
-    public UpdateItemQuantityHandler(IPosSaleSessionStore sessionStore, IPricingService pricingService, IValidator<UpdateItemQuantityRequest> validator)
+    public UpdateItemQuantityHandler(IPosSaleSessionStore sessionStore, IPosCartStockService cartStockService, IPricingService pricingService, IValidator<UpdateItemQuantityRequest> validator)
     {
         _sessionStore = sessionStore;
+        _cartStockService = cartStockService;
         _pricingService = pricingService;
         _validator = validator;
     }
@@ -191,23 +254,28 @@ public sealed class UpdateItemQuantityHandler
             return Result<SaleSessionDto>.Failure(validation.Errors[0].ErrorMessage);
         }
 
-        var sale = await _sessionStore.GetCurrentAsync(cancellationToken);
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await PosSessionTarget.ResolveAsync(_sessionStore, request.SaleId, cancellationToken);
         var item = sale?.Items.FirstOrDefault(existing => existing.Id == request.ItemId);
         if (sale is null || item is null)
         {
             return Result<SaleSessionDto>.Failure("Cart item was not found.");
         }
 
-        var maximumQuantity = item.Quantity + item.AvailableQuantity;
-        if (request.Quantity > maximumQuantity)
+        // The line's own cached AvailableQuantity was the only ceiling before, so a cart left open
+        // while stock moved elsewhere could be raised past what the shelf actually held.
+        var available = await _cartStockService.GetAvailableAsync(item.ProductId, sale.SaleId, cancellationToken);
+        if (request.Quantity > available)
         {
-            return Result<SaleSessionDto>.Failure("Requested quantity exceeds available stock.");
+            return Result<SaleSessionDto>.Failure(available <= 0
+                ? $"{item.Title} has no stock left for this invoice."
+                : $"Requested quantity exceeds available stock. {available} left for this invoice.");
         }
 
         item.Quantity = request.Quantity;
-        item.AvailableQuantity = maximumQuantity - request.Quantity;
+        item.AvailableQuantity = available - request.Quantity;
         await _pricingService.RecalculateAsync(sale, cancellationToken);
-        await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
+        await _sessionStore.SaveAsync(PosSessionTarget.Touch(sale), cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
 }
@@ -236,7 +304,8 @@ public sealed class RemoveItemHandler
             return Result<SaleSessionDto>.Failure(validation.Errors[0].ErrorMessage);
         }
 
-        var sale = await _sessionStore.GetCurrentAsync(cancellationToken);
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await PosSessionTarget.ResolveAsync(_sessionStore, request.SaleId, cancellationToken);
         var removed = sale?.Items.RemoveAll(item => item.Id == request.ItemId) > 0;
         if (sale is null || !removed)
         {
@@ -244,7 +313,7 @@ public sealed class RemoveItemHandler
         }
 
         await _pricingService.RecalculateAsync(sale, cancellationToken);
-        await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
+        await _sessionStore.SaveAsync(PosSessionTarget.Touch(sale), cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
 }
@@ -280,7 +349,8 @@ public sealed class ApplyLineDiscountHandler
             return Result<SaleSessionDto>.Failure(validation.Errors[0].ErrorMessage);
         }
 
-        var sale = await _sessionStore.GetCurrentAsync(cancellationToken);
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await PosSessionTarget.ResolveAsync(_sessionStore, request.SaleId, cancellationToken);
         var item = sale?.Items.FirstOrDefault(existing => existing.Id == request.ItemId);
         if (sale is null || item is null)
         {
@@ -294,7 +364,7 @@ public sealed class ApplyLineDiscountHandler
 
         item.Discount = request.Discount;
         await _pricingService.RecalculateAsync(sale, cancellationToken);
-        await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
+        await _sessionStore.SaveAsync(PosSessionTarget.Touch(sale), cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
 }
@@ -330,15 +400,16 @@ public sealed class ApplyInvoiceDiscountHandler
             return Result<SaleSessionDto>.Failure(validation.Errors[0].ErrorMessage);
         }
 
-        var sale = await _sessionStore.GetCurrentAsync(cancellationToken);
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await PosSessionTarget.ResolveAsync(_sessionStore, request.SaleId, cancellationToken);
         if (sale is null)
         {
-            return Result<SaleSessionDto>.Failure("There is no active sale.");
+            return Result<SaleSessionDto>.Failure(PosSessionTarget.MissingMessage(request.SaleId));
         }
 
         sale.InvoiceDiscount = request.Discount;
         await _pricingService.RecalculateAsync(sale, cancellationToken);
-        await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
+        await _sessionStore.SaveAsync(PosSessionTarget.Touch(sale), cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
 }
@@ -374,9 +445,16 @@ public sealed class CancelSaleHandler
             return Result.Failure(validation.Errors[0].ErrorMessage);
         }
 
-        var sale = await _sessionStore.GetCurrentAsync(cancellationToken);
-        await _sessionStore.ClearCurrentAsync(cancellationToken);
-        _logger.LogWarning("POS sale cancelled. Invoice={InvoiceNumber} Reason={Reason}", sale?.InvoiceNumber, request.Reason);
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await PosSessionTarget.ResolveAsync(_sessionStore, request.SaleId, cancellationToken);
+        if (sale is null)
+        {
+            // Reporting success for a cancellation that cancelled nothing hid genuine failures.
+            return Result.Failure(request.SaleId is null ? "There is no open invoice to cancel." : PosSessionTarget.NotOpen);
+        }
+
+        await _sessionStore.CloseAsync(sale.SaleId, cancellationToken);
+        _logger.LogWarning("POS invoice cancelled. Invoice={InvoiceNumber} Reason={Reason}", sale.InvoiceNumber, request.Reason);
         return Result.Success();
     }
 }
@@ -402,15 +480,15 @@ public sealed class SuspendSaleHandler
             return Result.Failure("Current user cannot suspend sales.");
         }
 
-        var sale = await _sessionStore.GetCurrentAsync(cancellationToken);
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await PosSessionTarget.ResolveAsync(_sessionStore, request.SaleId, cancellationToken);
         if (sale is null || sale.Items.Count == 0)
         {
-            return Result.Failure("Only non-empty active sales can be suspended.");
+            return Result.Failure("Only non-empty open invoices can be suspended.");
         }
 
         sale.IsSuspended = true;
-        await _sessionStore.SuspendAsync(sale, cancellationToken);
-        await _sessionStore.ClearCurrentAsync(cancellationToken);
+        await _sessionStore.SuspendAsync(PosSessionTarget.Touch(sale), cancellationToken);
         return Result.Success();
     }
 }
@@ -419,12 +497,16 @@ public sealed class SuspendSaleHandler
 public sealed class ResumeSaleHandler
 {
     private readonly IPosSaleSessionStore _sessionStore;
+    private readonly IPosCartStockService _cartStockService;
+    private readonly IPricingService _pricingService;
     private readonly IValidator<ResumeSaleRequest> _validator;
 
     /// <summary>Initializes a new instance of the <see cref="ResumeSaleHandler"/> class.</summary>
-    public ResumeSaleHandler(IPosSaleSessionStore sessionStore, IValidator<ResumeSaleRequest> validator)
+    public ResumeSaleHandler(IPosSaleSessionStore sessionStore, IPosCartStockService cartStockService, IPricingService pricingService, IValidator<ResumeSaleRequest> validator)
     {
         _sessionStore = sessionStore;
+        _cartStockService = cartStockService;
+        _pricingService = pricingService;
         _validator = validator;
     }
 
@@ -437,23 +519,138 @@ public sealed class ResumeSaleHandler
             return Result<SaleSessionDto>.Failure(validation.Errors[0].ErrorMessage);
         }
 
-        // Whatever is on screen is parked, not binned. Resuming used to overwrite the active cart
-        // outright, so a cashier halfway through an order lost it with no warning and no way back.
-        var active = await _sessionStore.GetCurrentAsync(cancellationToken);
-        if (active is { Items.Count: > 0 } && active.SaleId != request.SaleId)
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+
+        // Nothing is parked or overwritten any more: a resumed sale simply becomes another open
+        // invoice next to the one already on screen.
+        var open = await _sessionStore.GetOpenAsync(cancellationToken);
+        if (open.Count >= PosConstants.MaxOpenInvoices)
         {
-            active.IsSuspended = true;
-            await _sessionStore.SuspendAsync(active, cancellationToken);
+            return Result<SaleSessionDto>.Failure($"No more than {PosConstants.MaxOpenInvoices} invoices can be open at once. Complete, hold or close one first.");
         }
 
-        var sale = await _sessionStore.ResumeAsync(request.SaleId, cancellationToken);
-        if (sale is null)
+        var resumed = await _sessionStore.ResumeAsync(request.SaleId, cancellationToken);
+        if (resumed is null)
         {
             return Result<SaleSessionDto>.Failure("Suspended sale was not found.");
         }
 
-        sale.IsSuspended = false;
+        resumed.IsSuspended = false;
+        await _cartStockService.SynchronizeAsync(resumed, cancellationToken);
+        await _pricingService.RecalculateAsync(resumed, cancellationToken);
+        await _sessionStore.SaveCurrentAsync(PosSessionTarget.Touch(resumed), cancellationToken);
+        return Result<SaleSessionDto>.Success(resumed);
+    }
+}
+
+/// <summary>Handles switching the cashier screen between the invoices that are already open.</summary>
+public sealed class SwitchInvoiceHandler
+{
+    private readonly IPosSaleSessionStore _sessionStore;
+    private readonly IPosCartStockService _cartStockService;
+    private readonly IPricingService _pricingService;
+    private readonly ILogger<SwitchInvoiceHandler> _logger;
+
+    /// <summary>Initializes a new instance of the <see cref="SwitchInvoiceHandler"/> class.</summary>
+    public SwitchInvoiceHandler(IPosSaleSessionStore sessionStore, IPosCartStockService cartStockService, IPricingService pricingService, ILogger<SwitchInvoiceHandler> logger)
+    {
+        _sessionStore = sessionStore;
+        _cartStockService = cartStockService;
+        _pricingService = pricingService;
+        _logger = logger;
+    }
+
+    /// <summary>Handles the request.</summary>
+    public async Task<Result<SaleSessionDto>> HandleAsync(SwitchInvoiceRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request.SaleId == Guid.Empty)
+        {
+            return Result<SaleSessionDto>.Failure(PosSessionTarget.NotOpen);
+        }
+
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await _sessionStore.SetActiveAsync(request.SaleId, cancellationToken);
+        if (sale is null)
+        {
+            return Result<SaleSessionDto>.Failure(PosSessionTarget.NotOpen);
+        }
+
+        // A cart that has been sitting in the background is re-checked against live stock before the
+        // cashier is allowed to keep building it.
+        await _cartStockService.SynchronizeAsync(sale, cancellationToken);
+        await _pricingService.RecalculateAsync(sale, cancellationToken);
         await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
+        _logger.LogInformation("POS switched invoice. Invoice={InvoiceNumber}", sale.InvoiceNumber);
+        return Result<SaleSessionDto>.Success(sale);
+    }
+}
+
+/// <summary>Handles closing an open invoice without completing it.</summary>
+public sealed class CloseInvoiceHandler
+{
+    private readonly IAuthorizationService _authorizationService;
+    private readonly IPosSaleSessionStore _sessionStore;
+    private readonly ILogger<CloseInvoiceHandler> _logger;
+
+    /// <summary>Initializes a new instance of the <see cref="CloseInvoiceHandler"/> class.</summary>
+    public CloseInvoiceHandler(IAuthorizationService authorizationService, IPosSaleSessionStore sessionStore, ILogger<CloseInvoiceHandler> logger)
+    {
+        _authorizationService = authorizationService;
+        _sessionStore = sessionStore;
+        _logger = logger;
+    }
+
+    /// <summary>Handles the request.</summary>
+    public async Task<Result> HandleAsync(CloseInvoiceRequest request, CancellationToken cancellationToken = default)
+    {
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await _sessionStore.GetAsync(request.SaleId, cancellationToken);
+        if (sale is null)
+        {
+            return Result.Failure(PosSessionTarget.NotOpen);
+        }
+
+        // Closing an empty invoice is housekeeping. Closing one with lines throws away a cart, which
+        // is the same act as cancelling it and needs the same permission.
+        if (sale.Items.Count > 0 && !_authorizationService.HasPermission(PermissionConstants.SalesCancel))
+        {
+            return Result.Failure("Current user cannot discard an invoice that has items.");
+        }
+
+        await _sessionStore.CloseAsync(request.SaleId, cancellationToken);
+        _logger.LogInformation("POS invoice closed. Invoice={InvoiceNumber} Lines={Lines} Reason={Reason}", sale.InvoiceNumber, sale.Items.Count, request.Reason);
+        return Result.Success();
+    }
+}
+
+/// <summary>Handles persisting the payment fields typed into an open invoice.</summary>
+public sealed class SaveInvoiceDraftHandler
+{
+    private readonly IPosSaleSessionStore _sessionStore;
+    private readonly IPricingService _pricingService;
+
+    /// <summary>Initializes a new instance of the <see cref="SaveInvoiceDraftHandler"/> class.</summary>
+    public SaveInvoiceDraftHandler(IPosSaleSessionStore sessionStore, IPricingService pricingService)
+    {
+        _sessionStore = sessionStore;
+        _pricingService = pricingService;
+    }
+
+    /// <summary>Handles the request.</summary>
+    public async Task<Result<SaleSessionDto>> HandleAsync(SaveInvoiceDraftRequest request, CancellationToken cancellationToken = default)
+    {
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await PosSessionTarget.ResolveAsync(_sessionStore, request.SaleId, cancellationToken);
+        if (sale is null)
+        {
+            return Result<SaleSessionDto>.Failure(PosSessionTarget.MissingMessage(request.SaleId));
+        }
+
+        sale.PaymentMethod = request.PaymentMethod;
+        sale.AmountPaid = Math.Max(request.AmountPaid, 0m);
+        sale.ReceiptCopies = Math.Clamp(request.ReceiptCopies, 1, 5);
+        await _pricingService.RecalculateAsync(sale, cancellationToken);
+        await _sessionStore.SaveAsync(sale, cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
 }
@@ -488,6 +685,8 @@ public sealed class CompleteSaleHandler
     /// <summary>Handles the request.</summary>
     public async Task<Result<CompleteSaleResponse>> HandleAsync(CompleteSaleRequest request, CancellationToken cancellationToken = default)
     {
+        // One checkout at a time for the whole workstation, however many invoices are open: the stock
+        // rows they touch overlap, so overlapping commits are what oversells.
         if (!await _checkoutGuard.TryEnterAsync(cancellationToken))
         {
             return Result<CompleteSaleResponse>.Failure("Checkout is already in progress.");
@@ -516,82 +715,92 @@ public sealed class CompleteSaleHandler
             return Result<CompleteSaleResponse>.Failure(validation.Errors[0].ErrorMessage);
         }
 
-        var session = await _sessionStore.GetCurrentAsync(cancellationToken);
-        if (session is null || session.Items.Count == 0)
-        {
-            return Result<CompleteSaleResponse>.Failure("A sale must contain at least one item.");
-        }
-
-        session.PaymentMethod = request.PaymentMethod;
-        session.AmountPaid = request.AmountPaid;
-        await _pricingService.RecalculateAsync(session, cancellationToken);
-        if (session.AmountPaid < session.Summary.GrandTotal)
-        {
-            return Result<CompleteSaleResponse>.Failure("Paid amount cannot be less than the total.");
-        }
-
-        await _unitOfWork.BeginTransactionAsync(cancellationToken);
         Guid completedSaleId;
         string completedInvoiceNumber;
-        try
+
+        // The session lock is released before printing. It guards the invoice, and a printer that
+        // takes its timeout to fail must not hold every other open invoice hostage meanwhile.
+        await using (await _sessionStore.LockAsync(cancellationToken))
         {
-            var userId = _currentUserService.UserId ?? session.CashierId;
-            var sale = new Sale(session.InvoiceNumber, userId, request.PaymentMethod);
-            sale.AssignCustomer(session.CustomerId);
-            foreach (var cartItem in session.Items)
+            var session = await PosSessionTarget.ResolveAsync(_sessionStore, request.SaleId, cancellationToken);
+            if (session is null || session.Items.Count == 0)
             {
-                var product = await _unitOfWork.Products.GetByIdAsync(cartItem.ProductId, cancellationToken);
-                if (product is null)
-                {
-                    throw new InvalidOperationException($"Product {cartItem.ProductId} was not found.");
-                }
-
-                if (!product.IsActive)
-                {
-                    throw new InvalidOperationException($"Product {product.Title} is inactive.");
-                }
-
-                if (product.Quantity < cartItem.Quantity)
-                {
-                    throw new InvalidOperationException($"Insufficient stock for {product.Title}.");
-                }
-
-                sale.AddItem(new SaleItem(product.Id, cartItem.Quantity, cartItem.UnitPrice, cartItem.Discount));
-
-                var quantityBefore = product.Quantity;
-                var quantityAfter = quantityBefore - cartItem.Quantity;
-                product.SetQuantity(quantityAfter);
-                await _unitOfWork.Inventory.AddAsync(
-                    new InventoryTransaction(
-                        product.Id,
-                        -cartItem.Quantity,
-                        InventoryTransactionType.Sale,
-                        quantityBefore,
-                        quantityAfter,
-                        "POS sale",
-                        session.InvoiceNumber,
-                        userId,
-                        _currentUserService.FullName ?? _currentUserService.Username ?? session.CashierName,
-                        $"Completed sale {session.InvoiceNumber}"),
-                    cancellationToken);
+                return Result<CompleteSaleResponse>.Failure("A sale must contain at least one item.");
             }
 
-            sale.UpdateCharges(session.InvoiceDiscount, session.Summary.Tax, session.Summary.TaxIncludedInPrice);
-            sale.UpdatePaymentMethod(request.PaymentMethod);
-            sale.Complete(session.AmountPaid);
-            await _unitOfWork.Sales.AddAsync(sale, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _unitOfWork.CommitAsync(cancellationToken);
-            await _sessionStore.ClearCurrentAsync(cancellationToken);
-            completedSaleId = sale.Id;
-            completedInvoiceNumber = sale.InvoiceNumber;
-            _logger.LogInformation("POS sale completed. Invoice={InvoiceNumber} Total={Total}", sale.InvoiceNumber, sale.Total);
-        }
-        catch (Exception ex)
-        {
-            await _unitOfWork.RollbackAsync(cancellationToken);
-            _logger.LogError(ex, "POS sale completion failed. Invoice={InvoiceNumber}", session.InvoiceNumber);
-            return Result<CompleteSaleResponse>.Failure(ex.Message);
+            session.PaymentMethod = request.PaymentMethod;
+            session.AmountPaid = request.AmountPaid;
+            session.ReceiptCopies = Math.Clamp(request.ReceiptCopies, 1, 5);
+            await _pricingService.RecalculateAsync(session, cancellationToken);
+            if (session.AmountPaid < session.Summary.GrandTotal)
+            {
+                return Result<CompleteSaleResponse>.Failure("Paid amount cannot be less than the total.");
+            }
+
+            await _unitOfWork.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                var userId = _currentUserService.UserId ?? session.CashierId;
+                var sale = new Sale(session.InvoiceNumber, userId, request.PaymentMethod);
+                sale.AssignCustomer(session.CustomerId);
+                foreach (var cartItem in session.Items)
+                {
+                    var product = await _unitOfWork.Products.GetByIdAsync(cartItem.ProductId, cancellationToken);
+                    if (product is null)
+                    {
+                        throw new InvalidOperationException($"Product {cartItem.ProductId} was not found.");
+                    }
+
+                    if (!product.IsActive)
+                    {
+                        throw new InvalidOperationException($"Product {product.Title} is inactive.");
+                    }
+
+                    if (product.Quantity < cartItem.Quantity)
+                    {
+                        throw new InvalidOperationException($"Insufficient stock for {product.Title}.");
+                    }
+
+                    sale.AddItem(new SaleItem(product.Id, cartItem.Quantity, cartItem.UnitPrice, cartItem.Discount));
+
+                    var quantityBefore = product.Quantity;
+                    var quantityAfter = quantityBefore - cartItem.Quantity;
+                    product.SetQuantity(quantityAfter);
+                    await _unitOfWork.Inventory.AddAsync(
+                        new InventoryTransaction(
+                            product.Id,
+                            -cartItem.Quantity,
+                            InventoryTransactionType.Sale,
+                            quantityBefore,
+                            quantityAfter,
+                            "POS sale",
+                            session.InvoiceNumber,
+                            userId,
+                            _currentUserService.FullName ?? _currentUserService.Username ?? session.CashierName,
+                            $"Completed sale {session.InvoiceNumber}"),
+                        cancellationToken);
+                }
+
+                sale.UpdateCharges(session.InvoiceDiscount, session.Summary.Tax, session.Summary.TaxIncludedInPrice);
+                sale.UpdatePaymentMethod(request.PaymentMethod);
+                sale.Complete(session.AmountPaid);
+                await _unitOfWork.Sales.AddAsync(sale, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                await _unitOfWork.CommitAsync(cancellationToken);
+
+                // Only the invoice that was paid for is closed. Every other open invoice stays exactly as
+                // the cashier left it.
+                await _sessionStore.CloseAsync(session.SaleId, cancellationToken);
+                completedSaleId = sale.Id;
+                completedInvoiceNumber = sale.InvoiceNumber;
+                _logger.LogInformation("POS sale completed. Invoice={InvoiceNumber} Total={Total}", sale.InvoiceNumber, sale.Total);
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackAsync(cancellationToken);
+                _logger.LogError(ex, "POS sale completion failed. Invoice={InvoiceNumber}", session.InvoiceNumber);
+                return Result<CompleteSaleResponse>.Failure(ex.Message);
+            }
         }
 
         ReceiptPrintResult printResult;
@@ -604,7 +813,7 @@ public sealed class CompleteSaleHandler
             _logger.LogError(ex, "Receipt printing failed after sale commit. Invoice={InvoiceNumber}", completedInvoiceNumber);
             printResult = ReceiptPrintResult.Failure(
                 Guid.NewGuid(),
-                "Sale completed, but receipt printing failed.",
+                "Receipt printing failed unexpectedly.",
                 receipt: new BookStore.Application.Features.Receipts.DTOs.ReceiptModel { SaleId = completedSaleId, InvoiceNumber = completedInvoiceNumber });
         }
 
@@ -621,7 +830,7 @@ public sealed class CompleteSaleHandler
     }
 }
 
-/// <summary>Handles selecting a customer for the active POS sale.</summary>
+/// <summary>Handles selecting a customer for a POS invoice.</summary>
 public sealed class SelectCustomerForSaleHandler
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -653,17 +862,23 @@ public sealed class SelectCustomerForSaleHandler
             return Result<SaleSessionDto>.Failure("Customer could not be found.");
         }
 
-        var sale = await _sessionStore.GetCurrentAsync(cancellationToken) ?? new SaleSessionDto();
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await PosSessionTarget.ResolveAsync(_sessionStore, request.SaleId, cancellationToken);
+        if (sale is null)
+        {
+            return Result<SaleSessionDto>.Failure(PosSessionTarget.MissingMessage(request.SaleId));
+        }
+
         sale.CustomerId = customer.Id;
         sale.CustomerName = customer.FullName;
         sale.CustomerPhone = customer.Phone?.Value;
-        await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
+        await _sessionStore.SaveAsync(PosSessionTarget.Touch(sale), cancellationToken);
         _logger.LogInformation("Customer selected during sale. CustomerId={CustomerId} Invoice={InvoiceNumber}", customer.Id, sale.InvoiceNumber);
         return Result<SaleSessionDto>.Success(sale);
     }
 }
 
-/// <summary>Handles removing the selected customer from the active POS sale.</summary>
+/// <summary>Handles removing the selected customer from a POS invoice.</summary>
 public sealed class ClearCustomerFromSaleHandler
 {
     private readonly IPosSaleSessionStore _sessionStore;
@@ -677,16 +892,17 @@ public sealed class ClearCustomerFromSaleHandler
     /// <summary>Handles the request.</summary>
     public async Task<Result<SaleSessionDto>> HandleAsync(ClearCustomerFromSaleRequest request, CancellationToken cancellationToken = default)
     {
-        var sale = await _sessionStore.GetCurrentAsync(cancellationToken);
+        await using var sessionLock = await _sessionStore.LockAsync(cancellationToken);
+        var sale = await PosSessionTarget.ResolveAsync(_sessionStore, request.SaleId, cancellationToken);
         if (sale is null)
         {
-            return Result<SaleSessionDto>.Failure("There is no active sale.");
+            return Result<SaleSessionDto>.Failure(PosSessionTarget.MissingMessage(request.SaleId));
         }
 
         sale.CustomerId = null;
         sale.CustomerName = "Walk-in Customer";
         sale.CustomerPhone = null;
-        await _sessionStore.SaveCurrentAsync(sale, cancellationToken);
+        await _sessionStore.SaveAsync(PosSessionTarget.Touch(sale), cancellationToken);
         return Result<SaleSessionDto>.Success(sale);
     }
 }
@@ -742,6 +958,18 @@ public sealed class GetCurrentSaleHandler
 
     /// <summary>Handles the request.</summary>
     public async Task<Result<SaleSessionDto?>> HandleAsync(GetCurrentSaleRequest request, CancellationToken cancellationToken = default) => Result<SaleSessionDto?>.Success(await _sessionStore.GetCurrentAsync(cancellationToken));
+}
+
+/// <summary>Handles open POS invoice lookup.</summary>
+public sealed class GetOpenInvoicesHandler
+{
+    private readonly IPosSaleSessionStore _sessionStore;
+
+    /// <summary>Initializes a new instance of the <see cref="GetOpenInvoicesHandler"/> class.</summary>
+    public GetOpenInvoicesHandler(IPosSaleSessionStore sessionStore) => _sessionStore = sessionStore;
+
+    /// <summary>Handles the request.</summary>
+    public async Task<Result<IReadOnlyCollection<SaleSessionDto>>> HandleAsync(GetOpenInvoicesRequest request, CancellationToken cancellationToken = default) => Result<IReadOnlyCollection<SaleSessionDto>>.Success(await _sessionStore.GetOpenAsync(cancellationToken));
 }
 
 /// <summary>Handles suspended POS sale lookup.</summary>

@@ -4,18 +4,23 @@
         The dark counterpart of Light.xaml. Every key declared there is declared here, so swapping
         the dictionary changes the whole surface rather than a handful of brushes. Contrast is set
         deliberately rather than by inverting the light values.
+
+        Dark mode keeps the same warm brand identity while moving the work surface to deep neutral
+        slate. All keys in Light.xaml are mirrored here for safe runtime theme swaps.
     -->
 
     <!-- Surfaces and text -->
-    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#0B1310" />
-    <SolidColorBrush x:Key="SurfaceBrush" Color="#141F19" />
-    <SolidColorBrush x:Key="SurfaceAltBrush" Color="#1B2A22" />
-    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#E9F1EB" />
-    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#B7C9BD" />
-    <SolidColorBrush x:Key="MutedTextBrush" Color="#899C90" />
-    <SolidColorBrush x:Key="BorderBrush" Color="#2A3A31" />
-    <SolidColorBrush x:Key="AccentBrush" Color="#4ADE80" />
-    <SolidColorBrush x:Key="AccentHoverBrush" Color="#86EFAC" />
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#0D1117" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#151A22" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="#1E2631" />
+    <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#1A202A" />
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#F4F7FB" />
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#C3CCD8" />
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#8995A6" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#303B49" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#F5C45E" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#FFD67D" />
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="#332817" />
     <SolidColorBrush x:Key="OverlayBrush" Color="#B3000000" />
 
     <!-- Status: lightened so they stay legible on a dark ground. -->
@@ -23,32 +28,51 @@
     <SolidColorBrush x:Key="WarningBrush" Color="#E0A458" />
     <SolidColorBrush x:Key="DangerBrush" Color="#F87171" />
     <SolidColorBrush x:Key="InfoBrush" Color="#5EEAD4" />
-    <SolidColorBrush x:Key="FocusBrush" Color="#4ADE80" />
+    <SolidColorBrush x:Key="FocusBrush" Color="#F5C45E" />
+    <SolidColorBrush x:Key="DataVizTealBrush" Color="#5EEAD4" />
+    <SolidColorBrush x:Key="DataVizBlueBrush" Color="#93C5FD" />
 
     <!-- Input and grid chrome: darker than the surface so text reads against it. -->
-    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#0F1A14" />
-    <SolidColorBrush x:Key="InputFocusBackgroundBrush" Color="#16241C" />
-    <SolidColorBrush x:Key="GridAlternateRowBrush" Color="#18241E" />
-    <SolidColorBrush x:Key="GridSelectedRowBrush" Color="#24463A" />
-    <SolidColorBrush x:Key="GridHeaderBrush" Color="#1E3128" />
-    <SolidColorBrush x:Key="GridHeaderTextBrush" Color="#E9F1EB" />
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#111720" />
+    <SolidColorBrush x:Key="InputFocusBackgroundBrush" Color="#18202B" />
+    <SolidColorBrush x:Key="GridAlternateRowBrush" Color="#171D26" />
+    <SolidColorBrush x:Key="GridSelectedRowBrush" Color="#3A2C15" />
+    <SolidColorBrush x:Key="GridHeaderBrush" Color="#202936" />
+    <SolidColorBrush x:Key="GridHeaderTextBrush" Color="#F4F7FB" />
 
-    <!-- On a light accent fill the text stays dark in both themes. -->
-    <SolidColorBrush x:Key="OnAccentTextBrush" Color="#052E16" />
+    <!-- The brand fill is bright gold in both themes, so its text stays dark. -->
+    <SolidColorBrush x:Key="OnAccentTextBrush" Color="#1C1605" />
     <SolidColorBrush x:Key="OnDangerTextBrush" Color="#FFFFFF" />
 
     <!-- Brand chrome -->
-    <SolidColorBrush x:Key="WarmChromeBrush" Color="#0B1310" />
-    <SolidColorBrush x:Key="WarmChromeAltBrush" Color="#16241C" />
-    <SolidColorBrush x:Key="BrandOnChromeTextBrush" Color="#BBF7D0" />
-    <SolidColorBrush x:Key="BrandDeepTextBrush" Color="#DCFCE7" />
-    <LinearGradientBrush x:Key="BookstoreGreenBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#86EFAC" Offset="0" />
-        <GradientStop Color="#22C55E" Offset="0.46" />
-        <GradientStop Color="#166534" Offset="1" />
+    <SolidColorBrush x:Key="WarmChromeBrush" Color="#0A0F16" />
+    <SolidColorBrush x:Key="WarmChromeAltBrush" Color="#121923" />
+    <SolidColorBrush x:Key="SidebarHoverBrush" Color="#202B38" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#2D3747" />
+    <SolidColorBrush x:Key="BrandOnChromeTextBrush" Color="#F9D57A" />
+    <SolidColorBrush x:Key="BrandDeepTextBrush" Color="#FBE7B0" />
+    <LinearGradientBrush x:Key="BookstoreBrandBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFE9A8" Offset="0" />
+        <GradientStop Color="#F6C760" Offset="0.48" />
+        <GradientStop Color="#B87514" Offset="1" />
     </LinearGradientBrush>
-    <LinearGradientBrush x:Key="BookstorePageBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#16241C" Offset="0" />
-        <GradientStop Color="#0F1A14" Offset="1" />
+    <LinearGradientBrush x:Key="BookstorePageBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#0D1117" Offset="0" />
+        <GradientStop Color="#111821" Offset="0.55" />
+        <GradientStop Color="#151A22" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="PanelGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#1A202A" Offset="0" />
+        <GradientStop Color="#151A22" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="ShellHeaderBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#151A22" Offset="0" />
+        <GradientStop Color="#19212C" Offset="0.58" />
+        <GradientStop Color="#282116" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="HeroPanelBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#0A0F16" Offset="0" />
+        <GradientStop Color="#172232" Offset="0.55" />
+        <GradientStop Color="#8F5A0C" Offset="1" />
     </LinearGradientBrush>
 </ResourceDictionary>

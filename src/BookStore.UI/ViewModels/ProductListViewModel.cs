@@ -61,7 +61,8 @@ public partial class ProductListViewModel : BaseViewModel
         IShellNavigationService navigationService,
         INotificationService notificationService,
         IConfirmationDialogService confirmationDialogService,
-        IProductNavigationState navigationState)
+        IProductNavigationState navigationState,
+        IGlobalSearchState globalSearchState)
     {
         _searchHandler = searchHandler;
         _deleteHandler = deleteHandler;
@@ -74,6 +75,10 @@ public partial class ProductListViewModel : BaseViewModel
         _notificationService = notificationService;
         _confirmationDialogService = confirmationDialogService;
         _navigationState = navigationState;
+
+        // Assigned to the field rather than the property: the setter starts a search of its own,
+        // which would race the initial load below over the Products collection.
+        searchTerm = globalSearchState.ConsumePendingFilter() ?? string.Empty;
         Title = "Products";
         _ = InitializeAsync();
     }
@@ -233,7 +238,7 @@ public partial class ProductListViewModel : BaseViewModel
 
     private async Task InitializeAsync()
     {
-        var categories = await _categorySearchHandler.HandleAsync(new SearchCategoriesRequest(null, 1, 500, IsActive: true));
+        var categories = await _categorySearchHandler.HandleAsync(new SearchCategoriesRequest(null, 1, PagingConstants.MaxPageSize, IsActive: true));
         if (categories.IsSuccess && categories.Value is not null)
         {
             foreach (var category in categories.Value.Items)
