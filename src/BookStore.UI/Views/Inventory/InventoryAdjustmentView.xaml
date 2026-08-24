@@ -6,9 +6,15 @@
         <controls:AppCard MaxWidth="680" HorizontalAlignment="Left" Title="Stock Adjustment" Subtitle="Every change writes a stock ledger entry." Icon="Adjust">
             <StackPanel>
                 <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Product" />
-                <ComboBox DisplayMemberPath="Title" ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" />
+                <ComboBox ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Title}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
                 <TextBlock Margin="0,14,0,6" Style="{StaticResource SectionTitleTextStyle}" Text="Adjustment Type" />
-                <ComboBox ItemsSource="{Binding TransactionTypes}" SelectedItem="{Binding AdjustmentType}" />
+                <ComboBox ItemsSource="{Binding TransactionTypes}" SelectedItem="{Binding AdjustmentType}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumDisplayConverter}}" /></DataTemplate></ComboBox.ItemTemplate></ComboBox>
                 <UniformGrid Margin="0,14,0,0" Columns="3">
                     <StackPanel Margin="0,0,12,0">
                         <TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="Before" />

@@ -9,7 +9,7 @@
     <UserControl.Resources>
         <Style x:Key="DashboardPanelStyle" TargetType="Border">
             <Setter Property="Padding" Value="18" />
-            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Background" Value="{DynamicResource PanelGradientBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="8" />
@@ -35,6 +35,7 @@
                 </EventTrigger>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource SurfaceRaisedBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -49,11 +50,12 @@
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0"
-                    Padding="22"
-                    Background="{DynamicResource BookstoreGreenBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
+                    Padding="24"
+                    Background="{DynamicResource HeroPanelBrush}"
+                    BorderBrush="{DynamicResource ChromeBorderBrush}"
                     BorderThickness="1"
-                    CornerRadius="8">
+                    CornerRadius="8"
+                    Effect="{DynamicResource CardShadow}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -62,24 +64,51 @@
                     <StackPanel Grid.Column="0">
                         <TextBlock FontSize="30"
                                    FontWeight="SemiBold"
-                                   Foreground="{DynamicResource OnAccentTextBrush}"
+                                   Foreground="White"
                                    Text="{Binding Title}" />
                         <TextBlock Margin="0,6,0,0"
                                    FontSize="14"
-                                   Foreground="{DynamicResource OnAccentTextBrush}"
+                                   Foreground="#DDE7F3"
                                    Text="{Binding Subtitle}" />
                         <TextBlock Margin="0,10,0,0"
                                    FontSize="12"
-                                   Foreground="{DynamicResource OnAccentTextBrush}"
+                                   Foreground="{DynamicResource BrandOnChromeTextBrush}"
                                    Text="{Binding LastUpdated}" />
                     </StackPanel>
-                    <Button Grid.Column="1"
-                            MinWidth="110"
-                            Height="38"
-                            Margin="16,0,0,0"
-                            VerticalAlignment="Top"
-                            Command="{Binding RefreshCommand}"
-                            Content="{DynamicResource Shell.Refresh}" />
+                    <StackPanel Grid.Column="1" Margin="24,0,0,0" VerticalAlignment="Center">
+                        <Button MinWidth="110"
+                                Height="38"
+                                HorizontalAlignment="Right"
+                                Background="{DynamicResource BookstoreBrandBrush}"
+                                Foreground="{DynamicResource OnAccentTextBrush}"
+                                BorderBrush="{DynamicResource AccentBrush}"
+                                Command="{Binding RefreshCommand}"
+                                Content="{DynamicResource Shell.Refresh}" />
+                        <Border Width="220"
+                                Margin="0,18,0,0"
+                                Padding="14"
+                                Background="#261A202A"
+                                BorderBrush="#40FFFFFF"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                            <Grid Height="82">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <Rectangle Grid.Column="0" Height="34" VerticalAlignment="Bottom" Fill="{DynamicResource BrandOnChromeTextBrush}" RadiusX="3" RadiusY="3" />
+                                <Rectangle Grid.Column="1" Height="52" Margin="8,0" VerticalAlignment="Bottom" Fill="{DynamicResource DataVizTealBrush}" RadiusX="3" RadiusY="3" />
+                                <Rectangle Grid.Column="2" Height="44" Margin="8,0" VerticalAlignment="Bottom" Fill="{DynamicResource DataVizBlueBrush}" RadiusX="3" RadiusY="3" />
+                                <Rectangle Grid.Column="3" Height="68" Margin="8,0" VerticalAlignment="Bottom" Fill="{DynamicResource BrandOnChromeTextBrush}" RadiusX="3" RadiusY="3" />
+                                <Rectangle Grid.Column="4" Height="58" Margin="8,0" VerticalAlignment="Bottom" Fill="{DynamicResource DataVizTealBrush}" RadiusX="3" RadiusY="3" />
+                                <Rectangle Grid.Column="5" Height="76" Margin="8,0,0,0" VerticalAlignment="Bottom" Fill="{DynamicResource BookstoreBrandBrush}" RadiusX="3" RadiusY="3" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
                 </Grid>
             </Border>
 
@@ -124,15 +153,19 @@
                                     <Border Grid.Column="1"
                                             Width="40"
                                             Height="40"
-                                            Background="{DynamicResource SurfaceAltBrush}"
-                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            Background="{DynamicResource AccentSoftBrush}"
+                                            BorderBrush="{DynamicResource AccentBrush}"
                                             BorderThickness="1"
                                             CornerRadius="8">
+                                        <!-- A Latin initial is meaningless in an Arabic UI, so the
+                                             tile shows the same semantic glyph the rest of the app
+                                             uses. -->
                                         <TextBlock HorizontalAlignment="Center"
                                                    VerticalAlignment="Center"
-                                                   FontWeight="Bold"
+                                                   FontFamily="Segoe MDL2 Assets"
+                                                   FontSize="16"
                                                    Foreground="{DynamicResource AccentBrush}"
-                                                   Text="{Binding Icon}" />
+                                                   Text="{Binding Icon, Converter={StaticResource IconGlyphConverter}}" />
                                     </Border>
                                 </Grid>
                             </Border>
@@ -161,7 +194,8 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <DockPanel FlowDirection="{DynamicResource AppFlowDirection}">
+                            <!--  LastChildFill off so the reading docks to the edge instead of butting against the label ("Inventory health0%").  -->
+                            <DockPanel FlowDirection="{DynamicResource AppFlowDirection}" LastChildFill="False">
                                 <TextBlock Text="{DynamicResource Dashboard.InventoryHealth}" />
                                 <TextBlock DockPanel.Dock="Right"
                                            FontWeight="SemiBold"
@@ -173,7 +207,7 @@
                                          Margin="0,8,0,16"
                                          Maximum="100"
                                          Value="{Binding InventoryHealthPercent}" />
-                            <DockPanel Grid.Row="2" FlowDirection="{DynamicResource AppFlowDirection}">
+                            <DockPanel Grid.Row="2" FlowDirection="{DynamicResource AppFlowDirection}" LastChildFill="False">
                                 <TextBlock Text="{DynamicResource Dashboard.SalesMomentum}" />
                                 <TextBlock DockPanel.Dock="Right"
                                            FontWeight="SemiBold"

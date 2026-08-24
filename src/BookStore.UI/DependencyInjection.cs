@@ -55,6 +55,7 @@ public static class DependencyInjection
         services.AddSingleton<IInventoryNavigationState, InventoryNavigationState>();
         services.AddSingleton<ICustomerNavigationState, CustomerNavigationState>();
         services.AddSingleton<ISupplierNavigationState, SupplierNavigationState>();
+        services.AddSingleton<IGlobalSearchState, GlobalSearchState>();
         services.AddSingleton<DialogService>();
         services.AddSingleton<IDialogService>(provider => provider.GetRequiredService<DialogService>());
         services.AddSingleton<IMessageDialogService>(provider => provider.GetRequiredService<DialogService>());
@@ -114,6 +115,10 @@ public static class DependencyInjection
         services.AddTransient<SalesHandlers.CompleteSaleHandler>();
         services.AddTransient<SalesHandlers.SearchProductHandler>();
         services.AddTransient<SalesHandlers.GetHeldSalesHandler>();
+        services.AddTransient<SalesHandlers.GetOpenInvoicesHandler>();
+        services.AddTransient<SalesHandlers.SwitchInvoiceHandler>();
+        services.AddTransient<SalesHandlers.CloseInvoiceHandler>();
+        services.AddTransient<SalesHandlers.SaveInvoiceDraftHandler>();
         services.AddTransient<SalesHandlers.SelectCustomerForSaleHandler>();
         services.AddTransient<SalesHandlers.ClearCustomerFromSaleHandler>();
         services.AddTransient<ReportHandlers.GetReportsDashboardHandler>();

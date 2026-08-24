@@ -1,5 +1,6 @@
 using BookStore.Application.Features.Categories.Queries.GetCategories;
 using BookStore.Application.Features.Categories.Queries.SearchCategories;
+using BookStore.Shared.Constants;
 using FluentValidation;
 
 namespace BookStore.Application.Features.Categories.Validators;
@@ -13,7 +14,7 @@ public sealed class GetCategoriesRequestValidator : AbstractValidator<GetCategor
     public GetCategoriesRequestValidator()
     {
         RuleFor(request => request.PageNumber).GreaterThan(0);
-        RuleFor(request => request.PageSize).InclusiveBetween(1, 200);
+        RuleFor(request => request.PageSize).InclusiveBetween(1, PagingConstants.MaxPageSize);
     }
 }
 
@@ -26,7 +27,7 @@ public sealed class SearchCategoriesRequestValidator : AbstractValidator<SearchC
     public SearchCategoriesRequestValidator()
     {
         RuleFor(request => request.PageNumber).GreaterThan(0);
-        RuleFor(request => request.PageSize).InclusiveBetween(1, 200);
+        RuleFor(request => request.PageSize).InclusiveBetween(1, PagingConstants.MaxPageSize);
         RuleFor(request => request.SearchTerm).MaximumLength(100);
     }
 }

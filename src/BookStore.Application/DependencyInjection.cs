@@ -85,6 +85,7 @@ public static class DependencyInjection
         services.AddTransient<BarcodeHandlers.FindProductByBarcodeHandler>();
         services.AddTransient<BarcodeHandlers.GetBarcodeSettingsHandler>();
         services.AddScoped<IPricingService, SalesHandlers.PricingService>();
+        services.AddScoped<IPosCartStockService, PosCartStockService>();
         services.AddScoped<IReceiptService, ReceiptService>();
         services.AddSingleton<ICheckoutConcurrencyGuard, CheckoutConcurrencyGuard>();
         services.AddTransient<SalesHandlers.StartSaleHandler>();
@@ -100,6 +101,10 @@ public static class DependencyInjection
         services.AddTransient<SalesHandlers.SearchProductHandler>();
         services.AddTransient<SalesHandlers.GetCurrentSaleHandler>();
         services.AddTransient<SalesHandlers.GetHeldSalesHandler>();
+        services.AddTransient<SalesHandlers.GetOpenInvoicesHandler>();
+        services.AddTransient<SalesHandlers.SwitchInvoiceHandler>();
+        services.AddTransient<SalesHandlers.CloseInvoiceHandler>();
+        services.AddTransient<SalesHandlers.SaveInvoiceDraftHandler>();
         services.AddTransient<SalesHandlers.GetSaleSummaryHandler>();
         services.AddTransient<SalesHandlers.SelectCustomerForSaleHandler>();
         services.AddTransient<SalesHandlers.ClearCustomerFromSaleHandler>();

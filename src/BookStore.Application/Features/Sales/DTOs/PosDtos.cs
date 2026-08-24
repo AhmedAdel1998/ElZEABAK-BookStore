@@ -87,6 +87,10 @@ public sealed class SaleSessionDto
     public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Cash;
     /// <summary>Gets or sets amount paid.</summary>
     public decimal AmountPaid { get; set; }
+    /// <summary>Gets or sets how many receipt copies this invoice prints at checkout.</summary>
+    public int ReceiptCopies { get; set; } = 1;
+    /// <summary>Gets or sets the last time this invoice was edited.</summary>
+    public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
     /// <summary>Gets or sets summary.</summary>
     public SaleSummaryDto Summary { get; set; } = new();
 }
@@ -130,4 +134,37 @@ public sealed class ReceiptModel
     public string CashierName { get; set; } = string.Empty;
     /// <summary>Gets or sets summary.</summary>
     public SaleSummaryDto Summary { get; set; } = new();
+}
+
+/// <summary>
+/// Describes one change the POS had to make to an open invoice because live stock no longer
+/// supported the quantity the cart was holding.
+/// </summary>
+public sealed class PosCartAdjustmentDto
+{
+    /// <summary>Gets or sets the product identifier.</summary>
+    public Guid ProductId { get; set; }
+    /// <summary>Gets or sets the product title.</summary>
+    public string Title { get; set; } = string.Empty;
+    /// <summary>Gets or sets the quantity the cart held before the adjustment.</summary>
+    public int PreviousQuantity { get; set; }
+    /// <summary>Gets or sets the quantity the cart holds after the adjustment. Zero means removed.</summary>
+    public int NewQuantity { get; set; }
+    /// <summary>Gets or sets the reason for the adjustment.</summary>
+    public PosCartAdjustmentReason Reason { get; set; }
+}
+
+/// <summary>
+/// Identifies why an open invoice line had to be adjusted.
+/// </summary>
+public enum PosCartAdjustmentReason
+{
+    /// <summary>Remaining stock was lower than the quantity held, so the line was reduced.</summary>
+    QuantityReduced = 0,
+
+    /// <summary>No stock remained, so the line was dropped.</summary>
+    LineRemoved = 1,
+
+    /// <summary>The product was deleted or deactivated, so the line was dropped.</summary>
+    ProductUnavailable = 2
 }

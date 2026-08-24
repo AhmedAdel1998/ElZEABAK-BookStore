@@ -136,6 +136,24 @@ public partial class ShellNavigationService : ObservableObject, IShellNavigation
         var segments = breadcrumb.Split('>', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         return segments.Length == 0
             ? breadcrumb
-            : string.Join(BreadcrumbSeparator, segments.Select(_localizationService.TranslateLiteral));
+            : string.Join(BreadcrumbSeparator, segments.Select(LocalizeSegment));
+    }
+
+    /// <summary>
+    /// Translates one breadcrumb segment, accepting either a dictionary key ("Nav.Products") or an
+    /// authored English literal ("Details").
+    /// </summary>
+    /// <remarks>
+    /// Callers used to translate the key before handing it over, which stored the trail in the
+    /// language that happened to be current. Nothing can translate "لوحة التحكم" back, so the
+    /// breadcrumb froze on the first navigation and never followed the language again. Keys are
+    /// kept verbatim now and resolved on every read.
+    /// </remarks>
+    private string LocalizeSegment(string segment)
+    {
+        var byKey = _localizationService.T(segment);
+        return string.Equals(byKey, segment, StringComparison.Ordinal)
+            ? _localizationService.TranslateLiteral(segment)
+            : byKey;
     }
 }

@@ -24,7 +24,9 @@ public sealed class ReceiptPreparationService : IReceiptPreparationService
     {
         ArgumentNullException.ThrowIfNull(receipt);
 
-        var tempFolder = Path.Combine(AppContext.BaseDirectory, FolderConstants.Temp);
+        // The install directory is read-only on a real deployment, so prepared receipts belong under
+        // the resolved writable data root.
+        var tempFolder = ApplicationPaths.ResolveDataPath(FolderConstants.Temp);
         Directory.CreateDirectory(tempFolder);
         var safeInvoice = string.Join("_", receipt.InvoiceNumber.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
         var path = Path.Combine(tempFolder, $"receipt-{safeInvoice}.json");

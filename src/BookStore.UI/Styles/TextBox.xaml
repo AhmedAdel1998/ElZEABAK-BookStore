@@ -131,6 +131,12 @@
                             </ToggleButton.Template>
                         </ToggleButton>
 
+                        <!--
+                            SelectionBoxItemTemplate follows ItemTemplate, and is null when a combo
+                            box only sets DisplayMemberPath. The closed box then falls back to
+                            ToString() and shows a type name, so combo boxes in this application
+                            give an explicit ItemTemplate instead.
+                        -->
                         <ContentPresenter Margin="10,0,28,0"
                                           VerticalAlignment="Center"
                                           IsHitTestVisible="False"

@@ -18,6 +18,12 @@ using BookStore.Application.Features.Sales.Commands.SuspendSale;
 using BookStore.Application.Features.Sales.Commands.UpdateItemQuantity;
 using BookStore.Application.Features.Sales.DTOs;
 using BookStore.Application.Features.Sales.Handlers;
+using BookStore.Application.Features.Sales.Queries.GetOpenInvoices;
+using BookStore.Application.Features.Sales.Commands.CancelSale;
+using BookStore.Application.Features.Sales.Commands.CloseInvoice;
+using BookStore.Application.Features.Sales.Commands.SaveInvoiceDraft;
+using BookStore.Application.Features.Sales.Commands.SwitchInvoice;
+using BookStore.Application.Features.Sales.Services;
 using BookStore.Application.Features.Sales.Validators;
 using BookStore.Application.Features.Settings.DTOs;
 using BookStore.Application.Features.Settings.Services;
@@ -207,7 +213,7 @@ public class SalesModuleTests
     }
 
     [Fact]
-    public async Task StartSale_WithForceNew_SuspendsTheCurrentCartInsteadOfDiscardingIt()
+    public async Task StartSale_WithForceNew_LeavesTheFirstInvoiceOpenAlongsideTheNewOne()
     {
         var fixture = new Fixture();
         var product = fixture.AddProduct(quantity: 5);
@@ -220,9 +226,45 @@ public class SalesModuleTests
         Assert.NotEqual(first.InvoiceNumber, result.Value!.InvoiceNumber);
         Assert.Empty(result.Value.Items);
 
-        var held = await fixture.Store.GetHeldAsync();
-        Assert.Single(held);
-        Assert.Equal(first.InvoiceNumber, held.Single().InvoiceNumber);
+        // Both invoices are open, and the new one is the one on screen. Nothing was parked or lost.
+        var open = await fixture.Store.GetOpenAsync();
+        Assert.Equal(2, open.Count);
+        Assert.Contains(open, sale => sale.SaleId == first.SaleId && sale.Items.Sum(item => item.Quantity) == 2);
+        Assert.Empty(await fixture.Store.GetHeldAsync());
+        Assert.Equal(result.Value.SaleId, (await fixture.Store.GetCurrentAsync())!.SaleId);
+    }
+
+    [Fact]
+    public async Task StartSale_WithForceNew_ReusesAnUntouchedInvoiceInsteadOfStackingEmptyOnes()
+    {
+        var fixture = new Fixture();
+        var first = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+
+        var result = await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(first.SaleId, result.Value!.SaleId);
+        Assert.Single(await fixture.Store.GetOpenAsync());
+    }
+
+    [Fact]
+    public async Task StartSale_RefusesToOpenMoreThanTheInvoiceLimit()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: PosConstants.MaxOpenInvoices + 5);
+
+        // Each invoice needs a line, otherwise the blank invoice is reused rather than added to.
+        for (var index = 0; index < PosConstants.MaxOpenInvoices; index++)
+        {
+            var opened = await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true));
+            Assert.True(opened.IsSuccess);
+            await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1, opened.Value!.SaleId));
+        }
+
+        var result = await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true));
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(PosConstants.MaxOpenInvoices, (await fixture.Store.GetOpenAsync()).Count);
     }
 
     [Fact]
@@ -237,7 +279,7 @@ public class SalesModuleTests
     }
 
     [Fact]
-    public async Task ResumeSale_ParksTheActiveCartRatherThanDestroyingIt()
+    public async Task ResumeSale_LeavesTheInvoiceOnScreenOpenBesideTheResumedOne()
     {
         var fixture = new Fixture();
         var product = fixture.AddProduct(quantity: 10);
@@ -256,9 +298,11 @@ public class SalesModuleTests
         Assert.True(result.IsSuccess);
         Assert.Equal(parked.SaleId, result.Value!.SaleId);
 
-        // The cart that was on screen is now held, not lost.
-        var held = await fixture.Store.GetHeldAsync();
-        Assert.Contains(held, sale => sale.SaleId == onScreen.SaleId && sale.Items.Sum(item => item.Quantity) == 4);
+        // Resuming no longer parks anything: both invoices are simply open, nothing is held.
+        var open = await fixture.Store.GetOpenAsync();
+        Assert.Equal(2, open.Count);
+        Assert.Contains(open, sale => sale.SaleId == onScreen.SaleId && sale.Items.Sum(item => item.Quantity) == 4);
+        Assert.Empty(await fixture.Store.GetHeldAsync());
     }
 
     [Fact]
@@ -342,7 +386,10 @@ public class SalesModuleTests
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Value!.ReceiptPrintSucceeded);
-        Assert.Equal("Sale completed, but receipt printing failed.", result.Value.ReceiptPrintError);
+        // The message describes only the printing fault. The POS notification wraps it in
+        // "Sale completed, but receipt printing failed. {0}", so repeating that clause here
+        // showed the cashier the same sentence twice.
+        Assert.Equal("Receipt printing failed unexpectedly.", result.Value.ReceiptPrintError);
         Assert.Equal(3, product.Quantity);
         Assert.Single(fixture.InventoryRepository.Transactions);
         Assert.Single(fixture.SaleRepository.Sales);
@@ -381,6 +428,263 @@ public class SalesModuleTests
         Assert.Empty(fixture.SaleRepository.Sales);
     }
 
+    [Fact]
+    public async Task TwoOpenInvoices_KeepSeparateLinesCustomersAndTotals()
+    {
+        var fixture = new Fixture();
+        var pen = fixture.AddProduct("BK-PEN", quantity: 10, price: 30);
+        var book = fixture.AddProduct("BK-BOOK", quantity: 10, price: 100);
+
+        var first = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(pen.Id, 2, first.SaleId));
+
+        var second = (await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true))).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(book.Id, 1, second.SaleId));
+
+        // Adding to the invoice that is not on screen must land on that invoice, not the active one.
+        var updatedFirst = (await fixture.AddItem.HandleAsync(new AddItemRequest(pen.Id, 1, first.SaleId))).Value!;
+
+        Assert.Equal(3, Assert.Single(updatedFirst.Items).Quantity);
+        Assert.Equal(90, updatedFirst.Summary.GrandTotal);
+
+        var reloadedSecond = await fixture.Store.GetAsync(second.SaleId);
+        Assert.Equal(1, Assert.Single(reloadedSecond!.Items).Quantity);
+        Assert.Equal(100, reloadedSecond.Summary.GrandTotal);
+    }
+
+    [Fact]
+    public async Task OpenInvoices_DoNotSellTheSameUnitTwice()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 5);
+
+        var first = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+        var loaded = await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 4, first.SaleId));
+        Assert.True(loaded.IsSuccess);
+
+        var second = (await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true))).Value!;
+
+        // Only one unit is left over from the first invoice, so a second unit must be refused.
+        var takesLast = await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1, second.SaleId));
+        var overSells = await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1, second.SaleId));
+
+        Assert.True(takesLast.IsSuccess);
+        Assert.False(overSells.IsSuccess);
+        Assert.Equal(0, takesLast.Value!.Items[0].AvailableQuantity);
+    }
+
+    [Fact]
+    public async Task UpdateQuantity_CannotClaimStockAnotherOpenInvoiceIsHolding()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 6);
+
+        var first = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+        var firstLine = (await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1, first.SaleId))).Value!.Items[0];
+
+        var second = (await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true))).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 4, second.SaleId));
+
+        // Six in stock, four held by the other invoice, so this invoice tops out at two.
+        var allowed = await fixture.UpdateQuantity.HandleAsync(new UpdateItemQuantityRequest(firstLine.Id, 2, first.SaleId));
+        var refused = await fixture.UpdateQuantity.HandleAsync(new UpdateItemQuantityRequest(firstLine.Id, 3, first.SaleId));
+
+        Assert.True(allowed.IsSuccess);
+        Assert.False(refused.IsSuccess);
+    }
+
+    [Fact]
+    public async Task SwitchInvoice_MakesTheNamedInvoiceActiveAndReconcilesItsStock()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 10);
+
+        var first = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 3, first.SaleId));
+        var second = (await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true))).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1, second.SaleId));
+
+        // Stock is written down behind the cashier's back while the first invoice sits idle.
+        product.SetQuantity(2);
+
+        var result = await fixture.SwitchInvoice.HandleAsync(new SwitchInvoiceRequest(first.SaleId));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(first.SaleId, (await fixture.Store.GetCurrentAsync())!.SaleId);
+
+        // Two left, one of them held by the other invoice, so this line is cut back to one.
+        Assert.Equal(1, Assert.Single(result.Value!.Items).Quantity);
+    }
+
+    [Fact]
+    public async Task SwitchInvoice_RejectsAnInvoiceThatIsNotOpen()
+    {
+        var fixture = new Fixture();
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+
+        var result = await fixture.SwitchInvoice.HandleAsync(new SwitchInvoiceRequest(Guid.NewGuid()));
+
+        Assert.False(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task CompleteSale_ClosesOnlyThePaidInvoice()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 10, price: 100);
+
+        var paying = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1, paying.SaleId));
+        var waiting = (await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true))).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 2, waiting.SaleId));
+
+        var result = await fixture.CompleteSale.HandleAsync(new CompleteSaleRequest(PaymentMethod.Cash, 100, SaleId: paying.SaleId));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(paying.InvoiceNumber, result.Value!.InvoiceNumber);
+
+        // Only one unit came off stock, and the other invoice is untouched and still open.
+        Assert.Equal(9, product.Quantity);
+        var open = await fixture.Store.GetOpenAsync();
+        Assert.Equal(waiting.SaleId, Assert.Single(open).SaleId);
+        Assert.Equal(2, open.Single().Items.Sum(item => item.Quantity));
+    }
+
+    [Fact]
+    public async Task CloseInvoice_DiscardsOneInvoiceAndActivatesAnother()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 10);
+
+        var keep = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1, keep.SaleId));
+        var discard = (await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true))).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 2, discard.SaleId));
+
+        var result = await fixture.CloseInvoice.HandleAsync(new CloseInvoiceRequest(discard.SaleId));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(keep.SaleId, Assert.Single(await fixture.Store.GetOpenAsync()).SaleId);
+        Assert.Equal(keep.SaleId, (await fixture.Store.GetCurrentAsync())!.SaleId);
+
+        // The two units the closed invoice held are free again; the one the surviving invoice holds is not.
+        Assert.Equal(9, await fixture.CartStock.GetAvailableAsync(product.Id, discard.SaleId));
+    }
+
+    [Fact]
+    public async Task CloseInvoice_WithItems_RequiresCancelPermission()
+    {
+        var fixture = new Fixture([PermissionConstants.SalesComplete]);
+        var product = fixture.AddProduct(quantity: 5);
+        var invoice = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1, invoice.SaleId));
+
+        var result = await fixture.CloseInvoice.HandleAsync(new CloseInvoiceRequest(invoice.SaleId));
+
+        Assert.False(result.IsSuccess);
+        Assert.Single(await fixture.Store.GetOpenAsync());
+    }
+
+    [Fact]
+    public async Task CloseInvoice_WithoutItems_NeedsNoCancelPermission()
+    {
+        var fixture = new Fixture([]);
+        var invoice = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+
+        var result = await fixture.CloseInvoice.HandleAsync(new CloseInvoiceRequest(invoice.SaleId));
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(await fixture.Store.GetOpenAsync());
+    }
+
+    [Fact]
+    public async Task SaveInvoiceDraft_KeepsThePaymentBoxOfAnInvoiceLeftForLater()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 5, price: 100);
+        var first = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1, first.SaleId));
+
+        await fixture.SaveDraft.HandleAsync(new SaveInvoiceDraftRequest(PaymentMethod.Card, 150, 3, first.SaleId));
+        await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true));
+
+        var reloaded = await fixture.Store.GetAsync(first.SaleId);
+
+        Assert.Equal(PaymentMethod.Card, reloaded!.PaymentMethod);
+        Assert.Equal(150, reloaded.AmountPaid);
+        Assert.Equal(3, reloaded.ReceiptCopies);
+        Assert.Equal(50, reloaded.Summary.Change);
+    }
+
+    [Fact]
+    public async Task GetOpenInvoices_ListsEveryInvoiceOnTheWorkstation()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 10);
+        var first = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1, first.SaleId));
+        var second = (await fixture.StartSale.HandleAsync(new StartSaleRequest(ForceNew: true))).Value!;
+
+        var result = await fixture.GetOpenInvoices.HandleAsync(new GetOpenInvoicesRequest());
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value!.Count);
+        Assert.Contains(result.Value, invoice => invoice.SaleId == first.SaleId);
+        Assert.Contains(result.Value, invoice => invoice.SaleId == second.SaleId);
+    }
+
+    [Fact]
+    public async Task AddItem_FailsClearlyWhenNoInvoiceIsOpen()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 5);
+
+        var result = await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1));
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("There is no open invoice.", result.Error);
+        Assert.Empty(await fixture.Store.GetOpenAsync());
+    }
+
+    [Fact]
+    public async Task AddItem_RejectsAnInvoiceThatIsNotOpen()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 5);
+        await fixture.StartSale.HandleAsync(new StartSaleRequest());
+
+        var result = await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 1, Guid.NewGuid()));
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("That invoice is not open.", result.Error);
+    }
+
+    [Fact]
+    public async Task CancelSale_FailsWhenThereIsNothingToCancel()
+    {
+        var fixture = new Fixture();
+
+        var result = await fixture.CancelSale.HandleAsync(new CancelSaleRequest("No reason"));
+
+        Assert.False(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task CartStock_DropsALineWhoseProductWentAway()
+    {
+        var fixture = new Fixture();
+        var product = fixture.AddProduct(quantity: 5);
+        var invoice = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+        await fixture.AddItem.HandleAsync(new AddItemRequest(product.Id, 2, invoice.SaleId));
+
+        product.Deactivate();
+
+        var reloaded = (await fixture.StartSale.HandleAsync(new StartSaleRequest())).Value!;
+
+        Assert.Empty(reloaded.Items);
+        Assert.Equal(0, reloaded.Summary.GrandTotal);
+    }
+
     private sealed class Fixture
     {
         public Fixture(IReadOnlyCollection<string>? permissions = null)
@@ -388,14 +692,20 @@ public class SalesModuleTests
             Authorization = new FakeAuthorizationService(permissions ?? [PermissionConstants.SalesCancel, PermissionConstants.SalesSuspend, PermissionConstants.SalesComplete, PermissionConstants.SalesApplyDiscount]);
             UnitOfWork = new FakeUnitOfWork(ProductRepository, InventoryRepository, SaleRepository);
             Pricing = new PricingService(new FakeSettingsService(Settings.Value));
-            StartSale = new StartSaleHandler(CurrentUser, Store, Pricing, new StartSaleRequestValidator(), NullLogger<StartSaleHandler>.Instance);
-            AddItem = new AddItemHandler(UnitOfWork, Store, Pricing, new AddItemRequestValidator());
-            UpdateQuantity = new UpdateItemQuantityHandler(Store, Pricing, new UpdateItemQuantityRequestValidator());
+            CartStock = new PosCartStockService(UnitOfWork, Store);
+            StartSale = new StartSaleHandler(CurrentUser, Store, CartStock, Pricing, new StartSaleRequestValidator(), NullLogger<StartSaleHandler>.Instance);
+            AddItem = new AddItemHandler(UnitOfWork, Store, CartStock, Pricing, new AddItemRequestValidator());
+            UpdateQuantity = new UpdateItemQuantityHandler(Store, CartStock, Pricing, new UpdateItemQuantityRequestValidator());
             RemoveItem = new RemoveItemHandler(Store, Pricing, new RemoveItemRequestValidator());
             ApplyLineDiscount = new ApplyLineDiscountHandler(Authorization, Store, Pricing, new ApplyLineDiscountRequestValidator());
             ApplyInvoiceDiscount = new ApplyInvoiceDiscountHandler(Authorization, Store, Pricing, new ApplyInvoiceDiscountRequestValidator());
             SuspendSale = new SuspendSaleHandler(Authorization, Store);
-            ResumeSale = new ResumeSaleHandler(Store, new ResumeSaleRequestValidator());
+            CancelSale = new CancelSaleHandler(Authorization, Store, new CancelSaleRequestValidator(), NullLogger<CancelSaleHandler>.Instance);
+            ResumeSale = new ResumeSaleHandler(Store, CartStock, Pricing, new ResumeSaleRequestValidator());
+            SwitchInvoice = new SwitchInvoiceHandler(Store, CartStock, Pricing, NullLogger<SwitchInvoiceHandler>.Instance);
+            CloseInvoice = new CloseInvoiceHandler(Authorization, Store, NullLogger<CloseInvoiceHandler>.Instance);
+            SaveDraft = new SaveInvoiceDraftHandler(Store, Pricing);
+            GetOpenInvoices = new GetOpenInvoicesHandler(Store);
             CheckoutGuard = new FakeCheckoutConcurrencyGuard();
             CompleteSale = new CompleteSaleHandler(Authorization, CurrentUser, UnitOfWork, Store, Pricing, ReceiptService, CheckoutGuard, new CompleteSaleRequestValidator(), NullLogger<CompleteSaleHandler>.Instance);
         }
@@ -403,7 +713,7 @@ public class SalesModuleTests
         public OptionsWrapper<ApplicationSettings> Settings { get; } = new(new ApplicationSettings());
         public FakeCurrentUserService CurrentUser { get; } = new();
         public FakeAuthorizationService Authorization { get; }
-        public FakePosSaleSessionStore Store { get; } = new();
+        public InMemoryPosSaleSessionStore Store { get; } = new();
         public FakeProductRepository ProductRepository { get; } = new();
         public FakeInventoryRepository InventoryRepository { get; } = new();
         public FakeSaleRepository SaleRepository { get; } = new();
@@ -411,6 +721,7 @@ public class SalesModuleTests
         public FakeBarcodeService BarcodeService { get; } = new();
         public FakeCheckoutConcurrencyGuard CheckoutGuard { get; }
         public PricingService Pricing { get; }
+        public PosCartStockService CartStock { get; }
         public FakeUnitOfWork UnitOfWork { get; }
         public StartSaleHandler StartSale { get; }
         public AddItemHandler AddItem { get; }
@@ -419,7 +730,12 @@ public class SalesModuleTests
         public ApplyLineDiscountHandler ApplyLineDiscount { get; }
         public ApplyInvoiceDiscountHandler ApplyInvoiceDiscount { get; }
         public SuspendSaleHandler SuspendSale { get; }
+        public CancelSaleHandler CancelSale { get; }
         public ResumeSaleHandler ResumeSale { get; }
+        public SwitchInvoiceHandler SwitchInvoice { get; }
+        public CloseInvoiceHandler CloseInvoice { get; }
+        public SaveInvoiceDraftHandler SaveDraft { get; }
+        public GetOpenInvoicesHandler GetOpenInvoices { get; }
         public CompleteSaleHandler CompleteSale { get; }
 
         public Product AddProduct(string barcode = "BK100", int quantity = 5, decimal price = 50)
@@ -428,29 +744,6 @@ public class SalesModuleTests
             product.SetQuantity(quantity);
             ProductRepository.Products.Add(product);
             return product;
-        }
-    }
-
-    private sealed class FakePosSaleSessionStore : IPosSaleSessionStore
-    {
-        private SaleSessionDto? _current;
-        private readonly List<SaleSessionDto> _held = [];
-
-        public Task<SaleSessionDto?> GetCurrentAsync(CancellationToken cancellationToken = default) => Task.FromResult(_current);
-        public Task SaveCurrentAsync(SaleSessionDto sale, CancellationToken cancellationToken = default) { _current = sale; return Task.CompletedTask; }
-        public Task ClearCurrentAsync(CancellationToken cancellationToken = default) { _current = null; return Task.CompletedTask; }
-        public Task SuspendAsync(SaleSessionDto sale, CancellationToken cancellationToken = default) { _held.Add(sale); return Task.CompletedTask; }
-        public Task<IReadOnlyCollection<SaleSessionDto>> GetHeldAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<SaleSessionDto>>(_held.ToArray());
-        public Task<SaleSessionDto?> ResumeAsync(Guid saleId, CancellationToken cancellationToken = default)
-        {
-            var sale = _held.FirstOrDefault(item => item.SaleId == saleId);
-            if (sale is not null)
-            {
-                _held.Remove(sale);
-                _current = sale;
-            }
-
-            return Task.FromResult(sale);
         }
     }
 

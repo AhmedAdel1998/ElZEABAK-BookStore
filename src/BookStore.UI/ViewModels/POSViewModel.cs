@@ -9,19 +9,24 @@ using BookStore.Application.Features.Sales.Commands.AddItem;
 using BookStore.Application.Features.Sales.Commands.ApplyInvoiceDiscount;
 using BookStore.Application.Features.Sales.Commands.ApplyLineDiscount;
 using BookStore.Application.Features.Sales.Commands.CancelSale;
+using BookStore.Application.Features.Sales.Commands.CloseInvoice;
 using BookStore.Application.Features.Sales.Commands.CompleteSale;
 using BookStore.Application.Features.Sales.Commands.RemoveItem;
 using BookStore.Application.Features.Sales.Commands.ResumeSale;
+using BookStore.Application.Features.Sales.Commands.SaveInvoiceDraft;
 using BookStore.Application.Features.Sales.Commands.ClearCustomer;
 using BookStore.Application.Features.Sales.Commands.SelectCustomer;
 using BookStore.Application.Features.Sales.Commands.StartSale;
 using BookStore.Application.Features.Sales.Commands.SuspendSale;
+using BookStore.Application.Features.Sales.Commands.SwitchInvoice;
 using BookStore.Application.Features.Sales.Commands.UpdateItemQuantity;
 using BookStore.Application.Features.Sales.DTOs;
 using BookStore.Application.Features.Sales.Handlers;
 using BookStore.Application.Features.Sales.Queries.GetHeldSales;
+using BookStore.Application.Features.Sales.Queries.GetOpenInvoices;
 using BookStore.Application.Features.Sales.Queries.SearchProduct;
 using BookStore.Domain.Enums;
+using BookStore.Shared.Constants;
 using BookStore.UI.Dialogs;
 using BookStore.UI.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -34,6 +39,12 @@ namespace BookStore.UI.ViewModels;
 /// <summary>
 /// View model for the enterprise POS cashier screen.
 /// </summary>
+/// <remarks>
+/// The screen edits one invoice at a time but keeps several open at once. <see cref="OpenInvoices"/>
+/// is the strip of open invoices and <see cref="CurrentSale"/> is the one being edited; every command
+/// names its target invoice explicitly so a switch that lands mid-flight cannot move an item onto the
+/// wrong bill.
+/// </remarks>
 public partial class POSViewModel : BaseViewModel
 {
     private readonly StartSaleHandler _startSaleHandler;
@@ -46,8 +57,12 @@ public partial class POSViewModel : BaseViewModel
     private readonly SuspendSaleHandler _suspendSaleHandler;
     private readonly ResumeSaleHandler _resumeSaleHandler;
     private readonly CompleteSaleHandler _completeSaleHandler;
+    private readonly SwitchInvoiceHandler _switchInvoiceHandler;
+    private readonly CloseInvoiceHandler _closeInvoiceHandler;
+    private readonly SaveInvoiceDraftHandler _saveInvoiceDraftHandler;
     private readonly SearchProductHandler _searchProductHandler;
     private readonly GetHeldSalesHandler _getHeldSalesHandler;
+    private readonly GetOpenInvoicesHandler _getOpenInvoicesHandler;
     private readonly SelectCustomerForSaleHandler _selectCustomerForSaleHandler;
     private readonly ClearCustomerFromSaleHandler _clearCustomerFromSaleHandler;
     private readonly SearchCustomersHandler _searchCustomersHandler;
@@ -56,6 +71,18 @@ public partial class POSViewModel : BaseViewModel
     private readonly IDialogService _dialogService;
     private readonly INotificationService _notificationService;
     private readonly ILocalizationService _localizationService;
+
+    /// <summary>
+    /// Suppresses the payment property handlers while a different invoice is being loaded into the
+    /// screen, so loading invoice B's values does not write them onto invoice A.
+    /// </summary>
+    private bool _isLoadingInvoice;
+
+    /// <summary>
+    /// Suppresses the selection handler while the open invoice strip is being rebuilt, so rebuilding
+    /// it does not read as the cashier clicking a tab.
+    /// </summary>
+    private bool _isSyncingInvoiceStrip;
 
     [ObservableProperty]
     private SaleSessionDto? currentSale;
@@ -123,6 +150,12 @@ public partial class POSViewModel : BaseViewModel
     [ObservableProperty]
     private string stockAlertText = string.Empty;
 
+    [ObservableProperty]
+    private string openInvoicesText = string.Empty;
+
+    [ObservableProperty]
+    private SaleSessionDto? selectedOpenInvoice;
+
     /// <summary>Initializes a new instance of the <see cref="POSViewModel"/> class.</summary>
     public POSViewModel(
         StartSaleHandler startSaleHandler,
@@ -135,8 +168,12 @@ public partial class POSViewModel : BaseViewModel
         SuspendSaleHandler suspendSaleHandler,
         ResumeSaleHandler resumeSaleHandler,
         CompleteSaleHandler completeSaleHandler,
+        SwitchInvoiceHandler switchInvoiceHandler,
+        CloseInvoiceHandler closeInvoiceHandler,
+        SaveInvoiceDraftHandler saveInvoiceDraftHandler,
         SearchProductHandler searchProductHandler,
         GetHeldSalesHandler getHeldSalesHandler,
+        GetOpenInvoicesHandler getOpenInvoicesHandler,
         SelectCustomerForSaleHandler selectCustomerForSaleHandler,
         ClearCustomerFromSaleHandler clearCustomerFromSaleHandler,
         SearchCustomersHandler searchCustomersHandler,
@@ -156,8 +193,12 @@ public partial class POSViewModel : BaseViewModel
         _suspendSaleHandler = suspendSaleHandler;
         _resumeSaleHandler = resumeSaleHandler;
         _completeSaleHandler = completeSaleHandler;
+        _switchInvoiceHandler = switchInvoiceHandler;
+        _closeInvoiceHandler = closeInvoiceHandler;
+        _saveInvoiceDraftHandler = saveInvoiceDraftHandler;
         _searchProductHandler = searchProductHandler;
         _getHeldSalesHandler = getHeldSalesHandler;
+        _getOpenInvoicesHandler = getOpenInvoicesHandler;
         _selectCustomerForSaleHandler = selectCustomerForSaleHandler;
         _clearCustomerFromSaleHandler = clearCustomerFromSaleHandler;
         _searchCustomersHandler = searchCustomersHandler;
@@ -175,6 +216,9 @@ public partial class POSViewModel : BaseViewModel
     /// <summary>Gets search results for manual product lookup.</summary>
     public ObservableCollection<PosProductDto> SearchResults { get; } = [];
 
+    /// <summary>Gets the invoices open on this workstation, in the order they were opened.</summary>
+    public ObservableCollection<SaleSessionDto> OpenInvoices { get; } = [];
+
     /// <summary>Gets held sales available to resume.</summary>
     public ObservableCollection<SaleSessionDto> HeldSales { get; } = [];
 
@@ -183,6 +227,12 @@ public partial class POSViewModel : BaseViewModel
 
     /// <summary>Gets supported payment methods.</summary>
     public IReadOnlyCollection<PaymentMethod> PaymentMethods { get; } = Enum.GetValues<PaymentMethod>();
+
+    /// <summary>Gets the identifier of the invoice the screen is editing.</summary>
+    public Guid? ActiveSaleId => CurrentSale?.SaleId;
+
+    /// <summary>Gets a value indicating whether more than one invoice is open.</summary>
+    public bool HasMultipleInvoices => OpenInvoices.Count > 1;
 
     /// <summary>Searches customers for POS selection.</summary>
     [RelayCommand]
@@ -211,25 +261,25 @@ public partial class POSViewModel : BaseViewModel
         });
     }
 
-    /// <summary>Selects a customer for the active sale.</summary>
+    /// <summary>Selects a customer for the invoice on screen.</summary>
     [RelayCommand]
     private async Task SelectCustomerAsync()
     {
-        if (SelectedCustomer is null)
+        if (SelectedCustomer is null || CurrentSale is null)
         {
             return;
         }
 
         await ExecuteAsync(async () =>
         {
-            var result = await _selectCustomerForSaleHandler.HandleAsync(new SelectCustomerForSaleRequest(SelectedCustomer.Id));
+            var result = await _selectCustomerForSaleHandler.HandleAsync(new SelectCustomerForSaleRequest(SelectedCustomer.Id, CurrentSale.SaleId));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
                 return;
             }
 
-            SetSale(result.Value);
+            await SetSaleAsync(result.Value);
             _notificationService.Show(_localizationService.T("POS.Title"), _localizationService.T("POS.CustomerSelected"), NotificationSeverity.Information);
         });
     }
@@ -238,16 +288,21 @@ public partial class POSViewModel : BaseViewModel
     [RelayCommand]
     private async Task ClearCustomerAsync()
     {
+        if (CurrentSale is null)
+        {
+            return;
+        }
+
         await ExecuteAsync(async () =>
         {
-            var result = await _clearCustomerFromSaleHandler.HandleAsync(new ClearCustomerFromSaleRequest());
+            var result = await _clearCustomerFromSaleHandler.HandleAsync(new ClearCustomerFromSaleRequest(CurrentSale.SaleId));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
                 return;
             }
 
-            SetSale(result.Value);
+            await SetSaleAsync(result.Value);
         });
     }
 
@@ -257,6 +312,11 @@ public partial class POSViewModel : BaseViewModel
     {
         await ExecuteAsync(async () =>
         {
+            if (!await EnsureActiveSaleAsync())
+            {
+                return;
+            }
+
             var create = await _createCustomerHandler.HandleAsync(new CreateCustomerRequest(new CustomerEditorModel { FullName = NewCustomerName, Phone = NewCustomerPhone, IsActive = true }));
             if (!create.IsSuccess || create.Value is null)
             {
@@ -264,7 +324,7 @@ public partial class POSViewModel : BaseViewModel
                 return;
             }
 
-            var select = await _selectCustomerForSaleHandler.HandleAsync(new SelectCustomerForSaleRequest(create.Value.Id));
+            var select = await _selectCustomerForSaleHandler.HandleAsync(new SelectCustomerForSaleRequest(create.Value.Id, CurrentSale?.SaleId));
             if (!select.IsSuccess || select.Value is null)
             {
                 await ShowErrorAsync(select.Error);
@@ -273,19 +333,19 @@ public partial class POSViewModel : BaseViewModel
 
             NewCustomerName = string.Empty;
             NewCustomerPhone = string.Empty;
-            SetSale(select.Value);
+            await SetSaleAsync(select.Value);
             _notificationService.Show(_localizationService.T("POS.Title"), _localizationService.T("POS.CustomerCreated"), NotificationSeverity.Success);
         });
     }
 
     /// <summary>
-    /// Starts a fresh cashier sale, suspending any cart currently in progress.
+    /// Opens an additional invoice alongside the ones already open and switches the screen to it.
     /// </summary>
     [RelayCommand]
     private async Task StartSaleAsync() => await BeginSaleAsync(forceNew: true);
 
     /// <summary>
-    /// Loads the cart already in progress, or opens a new one when there is none. Used when the POS
+    /// Loads the invoice already in progress, or opens one when there is none. Used when the POS
     /// screen is opened so that navigating away and back does not lose a cart.
     /// </summary>
     private async Task ResumeOrStartSaleAsync() => await BeginSaleAsync(forceNew: false);
@@ -294,19 +354,86 @@ public partial class POSViewModel : BaseViewModel
     {
         await ExecuteAsync(async () =>
         {
+            // The payment box of the invoice being left behind is written down first, otherwise the
+            // figures a cashier typed vanish the moment another invoice takes the screen.
+            if (forceNew)
+            {
+                await SaveDraftAsync();
+            }
+
             var result = await _startSaleHandler.HandleAsync(new StartSaleRequest(ForceNew: forceNew));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
+                await RefreshInvoiceListsAsync();
                 return;
             }
 
-            SetSale(result.Value);
-            await RefreshHeldSalesAsync();
+            await SetSaleAsync(result.Value);
         });
     }
 
-    /// <summary>Adds the scanned barcode to the cart.</summary>
+    /// <summary>Switches the screen to another invoice that is already open.</summary>
+    [RelayCommand]
+    private async Task SwitchInvoiceAsync(SaleSessionDto? invoice)
+    {
+        if (invoice is null || invoice.SaleId == CurrentSale?.SaleId)
+        {
+            return;
+        }
+
+        await ExecuteAsync(async () =>
+        {
+            await SaveDraftAsync();
+            var result = await _switchInvoiceHandler.HandleAsync(new SwitchInvoiceRequest(invoice.SaleId));
+            if (!result.IsSuccess || result.Value is null)
+            {
+                await ShowErrorAsync(result.Error);
+                await RefreshInvoiceListsAsync();
+                return;
+            }
+
+            await SetSaleAsync(result.Value);
+        });
+    }
+
+    /// <summary>Closes an open invoice, asking first when it still holds items.</summary>
+    [RelayCommand]
+    private async Task CloseInvoiceAsync(SaleSessionDto? invoice)
+    {
+        var target = invoice ?? CurrentSale;
+        if (target is null)
+        {
+            return;
+        }
+
+        if (target.Items.Count > 0)
+        {
+            var confirmed = await _dialogService.ShowConfirmationAsync(
+                _localizationService.T("POS.CloseInvoiceTitle"),
+                string.Format(_localizationService.T("POS.CloseInvoiceConfirm"), target.InvoiceNumber, target.Items.Count));
+            if (!confirmed)
+            {
+                return;
+            }
+        }
+
+        await ExecuteAsync(async () =>
+        {
+            var result = await _closeInvoiceHandler.HandleAsync(new CloseInvoiceRequest(target.SaleId));
+            if (!result.IsSuccess)
+            {
+                await ShowErrorAsync(result.Error);
+                await RefreshInvoiceListsAsync();
+                return;
+            }
+
+            // Closing the last invoice must still leave the cashier with something to scan into.
+            await ReloadActiveInvoiceAsync();
+        });
+    }
+
+    /// <summary>Adds the scanned barcode to the invoice on screen.</summary>
     [RelayCommand]
     private async Task AddBarcodeAsync()
     {
@@ -323,6 +450,7 @@ public partial class POSViewModel : BaseViewModel
                 return;
             }
 
+            var targetSaleId = CurrentSale!.SaleId;
             var lookup = await _findProductByBarcodeHandler.HandleAsync(new FindProductByBarcodeRequest(barcode));
             if (!lookup.IsSuccess || lookup.Value is null)
             {
@@ -334,7 +462,7 @@ public partial class POSViewModel : BaseViewModel
                 return;
             }
 
-            var result = await _addItemHandler.HandleAsync(new AddItemRequest(lookup.Value.ProductId, 1));
+            var result = await _addItemHandler.HandleAsync(new AddItemRequest(lookup.Value.ProductId, 1, targetSaleId));
             if (!result.IsSuccess || result.Value is null)
             {
                 LastScanMessage = string.Format(_localizationService.T("POS.ProductNotAdded"), lookup.Value.Title);
@@ -346,7 +474,7 @@ public partial class POSViewModel : BaseViewModel
             }
 
             BarcodeText = string.Empty;
-            SetSale(result.Value, lookup.Value.ProductId);
+            await SetSaleAsync(result.Value, lookup.Value.ProductId);
             LastScanMessage = string.Format(_localizationService.T("POS.AddedProduct"), lookup.Value.Title);
             LastScanCategory = lookup.Value.CategoryName ?? _localizationService.T("POS.NoCategory");
             LastScanDestination = string.Format(_localizationService.T("POS.AddedToInvoice"), result.Value.InvoiceNumber, result.Value.Items.Count);
@@ -392,7 +520,7 @@ public partial class POSViewModel : BaseViewModel
         });
     }
 
-    /// <summary>Adds the selected search result to the cart.</summary>
+    /// <summary>Adds the selected search result to the invoice on screen.</summary>
     [RelayCommand]
     private async Task AddSelectedProductAsync()
     {
@@ -408,14 +536,14 @@ public partial class POSViewModel : BaseViewModel
                 return;
             }
 
-            var result = await _addItemHandler.HandleAsync(new AddItemRequest(SelectedProduct.ProductId, Math.Max(ItemQuantity, 1)));
+            var result = await _addItemHandler.HandleAsync(new AddItemRequest(SelectedProduct.ProductId, Math.Max(ItemQuantity, 1), CurrentSale!.SaleId));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
                 return;
             }
 
-            SetSale(result.Value, SelectedProduct.ProductId);
+            await SetSaleAsync(result.Value, SelectedProduct.ProductId);
         });
     }
 
@@ -449,21 +577,21 @@ public partial class POSViewModel : BaseViewModel
     [RelayCommand]
     private async Task UpdateQuantityAsync()
     {
-        if (SelectedCartItem is null)
+        if (SelectedCartItem is null || CurrentSale is null)
         {
             return;
         }
 
         await ExecuteAsync(async () =>
         {
-            var result = await _updateItemQuantityHandler.HandleAsync(new UpdateItemQuantityRequest(SelectedCartItem.Id, Math.Max(ItemQuantity, 1)));
+            var result = await _updateItemQuantityHandler.HandleAsync(new UpdateItemQuantityRequest(SelectedCartItem.Id, Math.Max(ItemQuantity, 1), CurrentSale.SaleId));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
                 return;
             }
 
-            SetSale(result.Value, SelectedCartItem.ProductId);
+            await SetSaleAsync(result.Value, SelectedCartItem.ProductId);
         });
     }
 
@@ -471,21 +599,21 @@ public partial class POSViewModel : BaseViewModel
     [RelayCommand]
     private async Task ApplyLineDiscountAsync()
     {
-        if (SelectedCartItem is null)
+        if (SelectedCartItem is null || CurrentSale is null)
         {
             return;
         }
 
         await ExecuteAsync(async () =>
         {
-            var result = await _applyLineDiscountHandler.HandleAsync(new ApplyLineDiscountRequest(SelectedCartItem.Id, LineDiscount));
+            var result = await _applyLineDiscountHandler.HandleAsync(new ApplyLineDiscountRequest(SelectedCartItem.Id, LineDiscount, CurrentSale.SaleId));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
                 return;
             }
 
-            SetSale(result.Value);
+            await SetSaleAsync(result.Value);
         });
     }
 
@@ -493,16 +621,21 @@ public partial class POSViewModel : BaseViewModel
     [RelayCommand]
     private async Task ApplyInvoiceDiscountAsync()
     {
+        if (CurrentSale is null)
+        {
+            return;
+        }
+
         await ExecuteAsync(async () =>
         {
-            var result = await _applyInvoiceDiscountHandler.HandleAsync(new ApplyInvoiceDiscountRequest(InvoiceDiscount));
+            var result = await _applyInvoiceDiscountHandler.HandleAsync(new ApplyInvoiceDiscountRequest(InvoiceDiscount, CurrentSale.SaleId));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
                 return;
             }
 
-            SetSale(result.Value);
+            await SetSaleAsync(result.Value);
         });
     }
 
@@ -510,31 +643,37 @@ public partial class POSViewModel : BaseViewModel
     [RelayCommand]
     private async Task RemoveSelectedItemAsync()
     {
-        if (SelectedCartItem is null)
+        if (SelectedCartItem is null || CurrentSale is null)
         {
             return;
         }
 
         await ExecuteAsync(async () =>
         {
-            var result = await _removeItemHandler.HandleAsync(new RemoveItemRequest(SelectedCartItem.Id));
+            var result = await _removeItemHandler.HandleAsync(new RemoveItemRequest(SelectedCartItem.Id, CurrentSale.SaleId));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
                 return;
             }
 
-            SetSale(result.Value);
+            await SetSaleAsync(result.Value);
         });
     }
 
-    /// <summary>Suspends the active sale.</summary>
+    /// <summary>Suspends the invoice on screen.</summary>
     [RelayCommand]
     private async Task SuspendSaleAsync()
     {
+        if (CurrentSale is null)
+        {
+            return;
+        }
+
         await ExecuteAsync(async () =>
         {
-            var result = await _suspendSaleHandler.HandleAsync(new SuspendSaleRequest());
+            await SaveDraftAsync();
+            var result = await _suspendSaleHandler.HandleAsync(new SuspendSaleRequest(CurrentSale.SaleId));
             if (!result.IsSuccess)
             {
                 await ShowErrorAsync(result.Error);
@@ -542,11 +681,11 @@ public partial class POSViewModel : BaseViewModel
             }
 
             _notificationService.Show(_localizationService.T("POS.Title"), _localizationService.T("POS.SaleSuspended"), NotificationSeverity.Information);
-            await StartSaleAsync();
+            await ReloadActiveInvoiceAsync();
         });
     }
 
-    /// <summary>Resumes a held sale.</summary>
+    /// <summary>Re-opens a held sale as an additional open invoice.</summary>
     [RelayCommand]
     private async Task ResumeSaleAsync(SaleSessionDto? sale)
     {
@@ -557,22 +696,29 @@ public partial class POSViewModel : BaseViewModel
 
         await ExecuteAsync(async () =>
         {
+            await SaveDraftAsync();
             var result = await _resumeSaleHandler.HandleAsync(new ResumeSaleRequest(sale.SaleId));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
+                await RefreshInvoiceListsAsync();
                 return;
             }
 
-            SetSale(result.Value);
-            await RefreshHeldSalesAsync();
+            await SetSaleAsync(result.Value);
         });
     }
 
-    /// <summary>Cancels the active sale.</summary>
+    /// <summary>Cancels the invoice on screen.</summary>
     [RelayCommand]
     private async Task CancelSaleAsync()
     {
+        if (CurrentSale is null)
+        {
+            return;
+        }
+
+        var targetSaleId = CurrentSale.SaleId;
         var confirmed = await _dialogService.ShowConfirmationAsync(_localizationService.T("POS.CancelTitle"), _localizationService.T("POS.CancelConfirm"));
         if (!confirmed)
         {
@@ -581,18 +727,19 @@ public partial class POSViewModel : BaseViewModel
 
         await ExecuteAsync(async () =>
         {
-            var result = await _cancelSaleHandler.HandleAsync(new CancelSaleRequest("Cancelled by cashier"));
+            var result = await _cancelSaleHandler.HandleAsync(new CancelSaleRequest("Cancelled by cashier", targetSaleId));
             if (!result.IsSuccess)
             {
                 await ShowErrorAsync(result.Error);
+                await RefreshInvoiceListsAsync();
                 return;
             }
 
-            await StartSaleAsync();
+            await ReloadActiveInvoiceAsync();
         });
     }
 
-    /// <summary>Completes the sale and prepares the receipt payload.</summary>
+    /// <summary>Completes the invoice on screen and prepares the receipt payload.</summary>
     [RelayCommand]
     private async Task CompleteSaleAsync()
     {
@@ -602,6 +749,7 @@ public partial class POSViewModel : BaseViewModel
             return;
         }
 
+        var targetSaleId = CurrentSale.SaleId;
         var confirmed = await _dialogService.ShowConfirmationAsync(_localizationService.T("POS.CompleteSale"), _localizationService.T("POS.CompleteConfirm"));
         if (!confirmed)
         {
@@ -610,10 +758,11 @@ public partial class POSViewModel : BaseViewModel
 
         await ExecuteAsync(async () =>
         {
-            var result = await _completeSaleHandler.HandleAsync(new CompleteSaleRequest(SelectedPaymentMethod, AmountPaid, Math.Clamp(ReceiptCopies, 1, 5)));
+            var result = await _completeSaleHandler.HandleAsync(new CompleteSaleRequest(SelectedPaymentMethod, AmountPaid, Math.Clamp(ReceiptCopies, 1, 5), targetSaleId));
             if (!result.IsSuccess || result.Value is null)
             {
                 await ShowErrorAsync(result.Error);
+                await RefreshInvoiceListsAsync();
                 return;
             }
 
@@ -623,7 +772,10 @@ public partial class POSViewModel : BaseViewModel
                     ? string.Format(_localizationService.T("POS.ReceiptPrinted"), result.Value.ReceiptCopies, result.Value.InvoiceNumber)
                     : string.Format(_localizationService.T("POS.ReceiptFailed"), result.Value.ReceiptPrintError),
                 result.Value.ReceiptPrintSucceeded ? NotificationSeverity.Success : NotificationSeverity.Warning);
-            await StartSaleAsync();
+
+            // The paid invoice is gone; the screen falls back to whichever invoice is still open, or
+            // to a fresh one when that was the only invoice.
+            await ReloadActiveInvoiceAsync();
         });
     }
 
@@ -646,17 +798,73 @@ public partial class POSViewModel : BaseViewModel
         }
     }
 
-    private async Task RefreshHeldSalesAsync()
+    /// <summary>
+    /// Writes the payment fields of the invoice on screen back to the session store, so switching
+    /// away and back keeps them.
+    /// </summary>
+    private async Task SaveDraftAsync()
     {
-        var result = await _getHeldSalesHandler.HandleAsync(new GetHeldSalesRequest());
-        HeldSales.Clear();
-        if (result.IsSuccess && result.Value is not null)
+        if (CurrentSale is null)
         {
-            foreach (var sale in result.Value)
+            return;
+        }
+
+        await _saveInvoiceDraftHandler.HandleAsync(new SaveInvoiceDraftRequest(SelectedPaymentMethod, AmountPaid, Math.Clamp(ReceiptCopies, 1, 5), CurrentSale.SaleId));
+    }
+
+    /// <summary>
+    /// Reloads whichever invoice the store considers active, opening a fresh one when the last open
+    /// invoice has just been completed, cancelled, closed or held.
+    /// </summary>
+    private async Task ReloadActiveInvoiceAsync()
+    {
+        var result = await _startSaleHandler.HandleAsync(new StartSaleRequest());
+        if (!result.IsSuccess || result.Value is null)
+        {
+            await ShowErrorAsync(result.Error);
+            await RefreshInvoiceListsAsync();
+            return;
+        }
+
+        await SetSaleAsync(result.Value);
+    }
+
+    private async Task RefreshInvoiceListsAsync()
+    {
+        var open = await _getOpenInvoicesHandler.HandleAsync(new GetOpenInvoicesRequest());
+        _isSyncingInvoiceStrip = true;
+        try
+        {
+            OpenInvoices.Clear();
+            if (open.IsSuccess && open.Value is not null)
+            {
+                foreach (var invoice in open.Value.OrderBy(invoice => invoice.CreatedAt))
+                {
+                    // The strip holds the very object the screen is editing for the active invoice, so
+                    // its badge tracks live edits and the tab highlight matches by reference.
+                    OpenInvoices.Add(CurrentSale is not null && CurrentSale.SaleId == invoice.SaleId ? CurrentSale : invoice);
+                }
+            }
+
+            SelectedOpenInvoice = OpenInvoices.FirstOrDefault(invoice => invoice.SaleId == CurrentSale?.SaleId);
+        }
+        finally
+        {
+            _isSyncingInvoiceStrip = false;
+        }
+
+        var held = await _getHeldSalesHandler.HandleAsync(new GetHeldSalesRequest());
+        HeldSales.Clear();
+        if (held.IsSuccess && held.Value is not null)
+        {
+            foreach (var sale in held.Value)
             {
                 HeldSales.Add(sale);
             }
         }
+
+        OnPropertyChanged(nameof(HasMultipleInvoices));
+        OpenInvoicesText = string.Format(_localizationService.T("POS.OpenInvoicesCount"), OpenInvoices.Count, PosConstants.MaxOpenInvoices);
     }
 
     private async Task<bool> EnsureActiveSaleAsync()
@@ -673,9 +881,7 @@ public partial class POSViewModel : BaseViewModel
             return false;
         }
 
-
-        SetSale(result.Value);
-        await RefreshHeldSalesAsync();
+        await SetSaleAsync(result.Value);
         return true;
     }
 
@@ -687,32 +893,55 @@ public partial class POSViewModel : BaseViewModel
             LastScanMessage = _localizationService.T("POS.ReadyToScan");
         }
 
+        OpenInvoicesText = string.Format(_localizationService.T("POS.OpenInvoicesCount"), OpenInvoices.Count, PosConstants.MaxOpenInvoices);
         UpdateDerivedState();
     }
 
-    private void SetSale(SaleSessionDto sale, Guid? selectedProductId = null)
+    private async Task SetSaleAsync(SaleSessionDto sale, Guid? selectedProductId = null)
     {
-        CurrentSale = sale;
-        InvoiceDiscount = sale.InvoiceDiscount;
-        AmountPaid = sale.AmountPaid;
-        SelectedPaymentMethod = sale.PaymentMethod;
-        ReceiptCopies = Math.Clamp(ReceiptCopies, 1, 5);
-        SelectedCartItem = selectedProductId.HasValue
-            ? sale.Items.FirstOrDefault(item => item.ProductId == selectedProductId.Value) ?? sale.Items.FirstOrDefault()
-            : sale.Items.FirstOrDefault();
-        if (SelectedCartItem is not null)
+        // The payment properties belong to the invoice being loaded, not to the one leaving the
+        // screen, so their change handlers must not write back while the swap is in progress.
+        _isLoadingInvoice = true;
+        try
         {
-            ItemQuantity = SelectedCartItem.Quantity;
-            LineDiscount = SelectedCartItem.Discount;
+            CurrentSale = sale;
+            InvoiceDiscount = sale.InvoiceDiscount;
+            AmountPaid = sale.AmountPaid;
+            SelectedPaymentMethod = sale.PaymentMethod;
+            ReceiptCopies = Math.Clamp(sale.ReceiptCopies, 1, 5);
+            SelectedCartItem = selectedProductId.HasValue
+                ? sale.Items.FirstOrDefault(item => item.ProductId == selectedProductId.Value) ?? sale.Items.FirstOrDefault()
+                : sale.Items.FirstOrDefault();
+            if (SelectedCartItem is not null)
+            {
+                ItemQuantity = SelectedCartItem.Quantity;
+                LineDiscount = SelectedCartItem.Discount;
+            }
+            else
+            {
+                ItemQuantity = 1;
+                LineDiscount = 0;
+            }
         }
-        else
+        finally
         {
-            ItemQuantity = 1;
-            LineDiscount = 0;
+            _isLoadingInvoice = false;
         }
 
         OnPropertyChanged(nameof(CurrentSale));
+        OnPropertyChanged(nameof(ActiveSaleId));
+        await RefreshInvoiceListsAsync();
         UpdateDerivedState();
+    }
+
+    partial void OnSelectedOpenInvoiceChanged(SaleSessionDto? value)
+    {
+        if (_isSyncingInvoiceStrip || value is null || value.SaleId == CurrentSale?.SaleId)
+        {
+            return;
+        }
+
+        _ = SwitchInvoiceCommand.ExecuteAsync(value);
     }
 
     partial void OnSelectedCartItemChanged(SaleCartItemDto? value)
@@ -728,7 +957,7 @@ public partial class POSViewModel : BaseViewModel
 
     partial void OnAmountPaidChanged(decimal value)
     {
-        if (CurrentSale is null)
+        if (_isLoadingInvoice || CurrentSale is null)
         {
             return;
         }
@@ -740,12 +969,28 @@ public partial class POSViewModel : BaseViewModel
         UpdateDerivedState();
     }
 
+    partial void OnSelectedPaymentMethodChanged(PaymentMethod value)
+    {
+        if (_isLoadingInvoice || CurrentSale is null)
+        {
+            return;
+        }
+
+        CurrentSale.PaymentMethod = value;
+    }
+
     partial void OnReceiptCopiesChanged(int value)
     {
         var clamped = Math.Clamp(value, 1, 5);
         if (value != clamped)
         {
             ReceiptCopies = clamped;
+            return;
+        }
+
+        if (!_isLoadingInvoice && CurrentSale is not null)
+        {
+            CurrentSale.ReceiptCopies = clamped;
         }
     }
 

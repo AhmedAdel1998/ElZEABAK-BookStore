@@ -4,27 +4,58 @@
     <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
     <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
+    <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="#FFFFFF" />
     <SolidColorBrush x:Key="PrimaryTextBrush" Color="{StaticResource PrimaryTextColor}" />
     <SolidColorBrush x:Key="SecondaryTextBrush" Color="{StaticResource SecondaryTextColor}" />
     <SolidColorBrush x:Key="MutedTextBrush" Color="{StaticResource MutedTextColor}" />
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="#FFF3D7" />
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
     <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
     <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
     <SolidColorBrush x:Key="FocusBrush" Color="{StaticResource FocusColor}" />
-    <SolidColorBrush x:Key="OverlayBrush" Color="#99102016" />
-    <SolidColorBrush x:Key="WarmChromeBrush" Color="#102016" />
-    <SolidColorBrush x:Key="WarmChromeAltBrush" Color="#16351F" />
-    <LinearGradientBrush x:Key="BookstoreGreenBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#BBF7D0" Offset="0" />
-        <GradientStop Color="#22C55E" Offset="0.46" />
-        <GradientStop Color="#15803D" Offset="1" />
+    <SolidColorBrush x:Key="DataVizTealBrush" Color="#0F766E" />
+    <SolidColorBrush x:Key="DataVizBlueBrush" Color="#2563EB" />
+    <SolidColorBrush x:Key="OverlayBrush" Color="#9918212F" />
+    <SolidColorBrush x:Key="OnAccentTextBrush" Color="#1C1605" />
+    <SolidColorBrush x:Key="OnDangerTextBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#F8FAFC" />
+    <SolidColorBrush x:Key="InputFocusBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="GridAlternateRowBrush" Color="#F7FAFD" />
+    <SolidColorBrush x:Key="GridSelectedRowBrush" Color="#FFF0C7" />
+    <SolidColorBrush x:Key="GridHeaderBrush" Color="#EEF3F9" />
+    <SolidColorBrush x:Key="GridHeaderTextBrush" Color="#18212F" />
+    <SolidColorBrush x:Key="WarmChromeBrush" Color="#121923" />
+    <SolidColorBrush x:Key="WarmChromeAltBrush" Color="#1C2633" />
+    <SolidColorBrush x:Key="SidebarHoverBrush" Color="#263345" />
+    <SolidColorBrush x:Key="ChromeBorderBrush" Color="#2F3D50" />
+    <SolidColorBrush x:Key="BrandOnChromeTextBrush" Color="#F9D57A" />
+    <SolidColorBrush x:Key="BrandDeepTextBrush" Color="#1C1605" />
+    <LinearGradientBrush x:Key="BookstoreBrandBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFE9A8" Offset="0" />
+        <GradientStop Color="#F6C760" Offset="0.48" />
+        <GradientStop Color="#B87514" Offset="1" />
     </LinearGradientBrush>
-    <LinearGradientBrush x:Key="BookstorePageBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#F7FFF9" Offset="0" />
-        <GradientStop Color="#E9F8EE" Offset="1" />
+    <LinearGradientBrush x:Key="BookstorePageBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#F8FBFF" Offset="0" />
+        <GradientStop Color="#F3F7FC" Offset="0.55" />
+        <GradientStop Color="#EEF3F8" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="PanelGradientBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FFFFFF" Offset="0" />
+        <GradientStop Color="#F8FAFC" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="ShellHeaderBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FFFFFF" Offset="0" />
+        <GradientStop Color="#F9FBFE" Offset="0.58" />
+        <GradientStop Color="#FFF4D9" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="HeroPanelBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#121923" Offset="0" />
+        <GradientStop Color="#1E2A39" Offset="0.55" />
+        <GradientStop Color="#B87514" Offset="1" />
     </LinearGradientBrush>
 </ResourceDictionary>

@@ -15,4 +15,5 @@
     <converters:IconGlyphConverter x:Key="IconGlyphConverter" />
     <converters:EmptyCollectionToVisibilityConverter x:Key="EmptyCollectionToVisibilityConverter" />
     <converters:LocalizeConverter x:Key="LocalizeConverter" />
+    <converters:EnumDisplayConverter x:Key="EnumDisplayConverter" />
 </ResourceDictionary>

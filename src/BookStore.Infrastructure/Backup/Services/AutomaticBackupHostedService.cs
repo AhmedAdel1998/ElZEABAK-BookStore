@@ -1,4 +1,5 @@
 using BookStore.Application.Features.Backup.Services;
+using BookStore.Shared.Constants;
 using BookStore.Shared.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -45,7 +46,8 @@ public sealed class AutomaticBackupHostedService : BackgroundService
             var programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
             var tempFolder = (settings.TempFolder ?? "%ProgramData%\\BookStore\\Temp")
                 .Replace("%ProgramData%", programData, StringComparison.OrdinalIgnoreCase);
-            tempFolder = Path.GetFullPath(Path.IsPathRooted(tempFolder) ? tempFolder : Path.Combine(AppContext.BaseDirectory, tempFolder));
+            // A relative configured path used to land in the read-only install directory.
+            tempFolder = ApplicationPaths.ResolveDataPath(tempFolder);
             if (!Directory.Exists(tempFolder))
             {
                 return;

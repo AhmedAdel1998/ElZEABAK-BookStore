@@ -206,7 +206,7 @@ public sealed class ReceiptService : IReceiptService
         {
             _printQueueService.EnqueueForRetry(job);
             _logger.LogError(ex, "Print failed. Invoice={InvoiceNumber} Printer={PrinterName} RequestId={PrintRequestId}", receipt.InvoiceNumber, options.PrinterName, job.RequestId);
-            return ReceiptPrintResult.Failure(job.RequestId, "Sale completed, but receipt printing failed.", options.PrinterName, receipt);
+            return ReceiptPrintResult.Failure(job.RequestId, "The receipt could not be sent to the printer.", options.PrinterName, receipt);
         }
     }
 

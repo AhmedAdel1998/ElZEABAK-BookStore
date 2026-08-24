@@ -81,7 +81,7 @@ public sealed class ReceiptModuleTests
     {
         var receiptService = new FakeReceiptService
         {
-            PrintResult = ReceiptPrintResult.Failure(Guid.NewGuid(), "Sale completed, but receipt printing failed.", "Offline printer", CreateReceipt())
+            PrintResult = ReceiptPrintResult.Failure(Guid.NewGuid(), "The printer is unavailable.", "Offline printer", CreateReceipt())
         };
         var handler = new PrintReceiptHandler(
             new FakeAuthorizationService([PermissionConstants.ReceiptPrint]),
@@ -93,7 +93,7 @@ public sealed class ReceiptModuleTests
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Value!.Succeeded);
-        Assert.Equal("Sale completed, but receipt printing failed.", result.Value.Error);
+        Assert.Equal("The printer is unavailable.", result.Value.Error);
     }
 
     [Fact]
