@@ -1,0 +1,67 @@
+EL ZEABAK BookStore POS - Customer Test Build
+Date: 2026-08-30
+Windows: 64-bit Windows 10 or Windows 11
+
+ENGLISH
+=======
+
+1. Extract the complete ZIP file to a normal local folder such as Desktop or Documents.
+2. Keep every file inside the "BookStore POS" folder together. Do not copy only the EXE.
+3. Open the "BookStore POS" folder and double-click BookStore.UI.exe.
+4. On the first start, create your own Administrator account. Use a password containing at least 8 characters, uppercase, lowercase, a number, and a special character. Keep this password private.
+5. If Windows SmartScreen appears, choose "More info" and then "Run anyway" only if this ZIP was received directly from the developer.
+
+The application is offline and stores its live data on this computer under:
+%LOCALAPPDATA%\BookStore POS
+
+Do not delete that data folder after starting real work. Do not run two copied versions as if they shared one database.
+
+Please test:
+- First-run Administrator creation and login
+- Categories, products, suppliers, and customers
+- Barcode scanning and product search
+- A complete sale, payment, stock reduction, and receipt
+- Reports and exports
+- Backup creation and validation
+- Arabic/English switching and light/dark theme
+- The real 80 mm receipt printer and real barcode scanner
+
+If a problem occurs, send the developer:
+- A screenshot or short screen recording
+- The exact steps that caused the problem
+- The date and time of the problem
+- The newest log file from %LOCALAPPDATA%\BookStore POS\Logs
+
+Do not send the database unless the developer specifically requests it; it can contain business and customer information.
+
+العربية
+=======
+
+1. فك ضغط ملف ZIP بالكامل داخل مجلد عادي مثل سطح المكتب أو المستندات.
+2. احتفظ بكل الملفات الموجودة داخل مجلد "BookStore POS" معا. لا تنقل ملف EXE وحده.
+3. افتح مجلد "BookStore POS" ثم شغل BookStore.UI.exe بالنقر المزدوج.
+4. عند أول تشغيل، أنشئ حساب Administrator خاصا بك. يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل، وحرف كبير، وحرف صغير، ورقم، ورمز خاص. لا ترسل كلمة المرور لأي شخص.
+5. إذا ظهرت رسالة Windows SmartScreen، اختر "More info" ثم "Run anyway" فقط إذا استلمت الملف مباشرة من المطور.
+
+البرنامج يعمل محليا بدون إنترنت، ويحفظ البيانات على هذا الجهاز داخل:
+%LOCALAPPDATA%\BookStore POS
+
+لا تحذف هذا المجلد بعد بدء العمل الحقيقي. ولا تستخدم نسختين منفصلتين من البرنامج على أساس أنهما تشتركان في قاعدة بيانات واحدة.
+
+يرجى اختبار:
+- إنشاء حساب المدير لأول مرة وتسجيل الدخول
+- الأقسام والمنتجات والموردين والعملاء
+- قارئ الباركود والبحث عن المنتجات
+- عملية بيع كاملة والدفع وخصم المخزون وطباعة الفاتورة
+- التقارير والتصدير
+- إنشاء النسخة الاحتياطية والتحقق منها
+- التحويل بين العربية والإنجليزية وبين الوضع الفاتح والداكن
+- الطابعة الحرارية 80 مم وقارئ الباركود الحقيقيان
+
+عند حدوث مشكلة، أرسل للمطور:
+- صورة للشاشة أو تسجيل فيديو قصير
+- الخطوات الدقيقة التي سببت المشكلة
+- تاريخ ووقت حدوث المشكلة
+- أحدث ملف Log من %LOCALAPPDATA%\BookStore POS\Logs
+
+لا ترسل قاعدة البيانات إلا إذا طلبها المطور بشكل واضح، لأنها قد تحتوي على بيانات العمل والعملاء.

@@ -1,0 +1,13 @@
+EL ZEABAK BookStore POS customer test build
+Prepared: 2026-08-30 (Africa/Cairo)
+Source branch: staging
+Source commit: cff8adf64f16fba9f721e29a64362ec695436ee8
+Configuration: Release
+Runtime: win-x64
+Deployment: self-contained
+Automated verification: 373 passed, 0 failed, 0 skipped
+Release build: 0 warnings, 0 errors
+Published executable startup smoke test: passed with a new isolated database
+Portable test configuration: database, logs, backups, exports, and temp files use the per-user BookStore POS data root
+
+Manual customer-machine acceptance remains required for the real printer, barcode scanner, receipt layout, and performance on the target computer.
