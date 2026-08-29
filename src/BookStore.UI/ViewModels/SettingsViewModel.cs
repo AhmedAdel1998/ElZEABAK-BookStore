@@ -92,7 +92,7 @@ public partial class SettingsViewModel : BaseViewModel
     private async Task ResetCategoryAsync(SettingsCategory category)
     {
         var result = await _commandHandler.Handle(new ResetSettingsCommand(category));
-            _notificationService.Show(_localizationService.T("Settings.Title"), result.IsSuccess ? "Settings category reset." : result.Error ?? "Settings could not be reset.", result.IsSuccess ? NotificationSeverity.Success : NotificationSeverity.Warning);
+        _notificationService.Show(_localizationService.T("Settings.Title"), result.IsSuccess ? "Settings category reset." : result.Error ?? "Settings could not be reset.", result.IsSuccess ? NotificationSeverity.Success : NotificationSeverity.Warning);
         if (result.IsSuccess)
         {
             await LoadAsync();

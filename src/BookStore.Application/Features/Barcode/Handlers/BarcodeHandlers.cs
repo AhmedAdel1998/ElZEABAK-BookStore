@@ -1,17 +1,13 @@
-using AutoMapper;
 using BookStore.Application.Features.Barcode.Commands.GenerateBarcode;
 using BookStore.Application.Features.Barcode.Commands.PrintBarcode;
 using BookStore.Application.Features.Barcode.Commands.ValidateBarcode;
 using BookStore.Application.Features.Barcode.DTOs;
 using BookStore.Application.Features.Barcode.Queries.FindProductByBarcode;
-using BookStore.Application.Features.Barcode.Queries.GetBarcodeSettings;
 using BookStore.Application.Features.Barcode.Responses;
 using BookStore.Application.Interfaces;
-using BookStore.Shared.Models;
 using BookStore.Shared.Results;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace BookStore.Application.Features.Barcode.Handlers;
 
@@ -50,7 +46,6 @@ public sealed class GenerateBarcodeHandler
         return Result<BarcodeDto>.Success(barcode);
     }
 }
-
 /// <summary>Handles barcode validation.</summary>
 public sealed class ValidateBarcodeHandler
 {
@@ -91,7 +86,6 @@ public sealed class ValidateBarcodeHandler
         });
     }
 }
-
 /// <summary>Handles barcode label print preparation.</summary>
 public sealed class PrintBarcodeHandler
 {
@@ -116,9 +110,21 @@ public sealed class PrintBarcodeHandler
             return OperationResult.Invalid(validation.Errors.Select(error => new ValidationError(error.PropertyName, error.ErrorMessage)).ToArray());
         }
 
-        await _printService.PreparePrintAsync(request.Labels, cancellationToken);
-        _logger.LogInformation("Barcode print prepared: {Count} labels", request.Labels.Sum(label => label.Quantity));
-        return OperationResult.Success();
+        try
+        {
+            await _printService.PreparePrintAsync(request.Labels, cancellationToken);
+            _logger.LogInformation("Barcode print completed: {Count} labels", request.Labels.Sum(label => label.Quantity));
+            return OperationResult.Success();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Barcode print failed");
+            return OperationResult.Failure(new Error("Barcode.PrintFailed", ex.Message));
+        }
     }
 }
 
@@ -149,25 +155,5 @@ public sealed class FindProductByBarcodeHandler
         var product = await _barcodeService.FindProductAsync(request.Barcode, cancellationToken);
         _logger.LogInformation("Barcode scanned: {Barcode} Found={Found}", request.Barcode, product is not null);
         return product is null ? Result<BarcodeProductDto>.Failure("Product was not found.") : Result<BarcodeProductDto>.Success(product);
-    }
-}
-
-/// <summary>Handles barcode settings queries.</summary>
-public sealed class GetBarcodeSettingsHandler
-{
-    private readonly IOptions<ApplicationSettings> _settings;
-    private readonly IMapper _mapper;
-
-    /// <summary>Initializes a new instance of the <see cref="GetBarcodeSettingsHandler"/> class.</summary>
-    public GetBarcodeSettingsHandler(IOptions<ApplicationSettings> settings, IMapper mapper)
-    {
-        _settings = settings;
-        _mapper = mapper;
-    }
-
-    /// <summary>Handles the request.</summary>
-    public Task<Result<BarcodeSettingsDto>> HandleAsync(GetBarcodeSettingsRequest request, CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(Result<BarcodeSettingsDto>.Success(_mapper.Map<BarcodeSettingsDto>(_settings.Value.Barcode)));
     }
 }

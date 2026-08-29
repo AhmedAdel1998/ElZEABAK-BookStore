@@ -3,7 +3,7 @@ using BookStore.Application.Features.Products.DTOs;
 namespace BookStore.Application.Interfaces;
 
 /// <summary>
-/// Defines product export operations prepared for future implementation.
+/// Defines product export operations.
 /// </summary>
 public interface IProductExportService
 {

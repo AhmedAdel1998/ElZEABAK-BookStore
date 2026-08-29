@@ -19,7 +19,8 @@ public class SaleItem : BaseEntity
     /// <param name="quantity">The quantity.</param>
     /// <param name="unitPrice">The unit price.</param>
     /// <param name="discount">The line discount.</param>
-    public SaleItem(Guid productId, int quantity, decimal unitPrice, decimal discount = 0)
+    /// <param name="unitCost">The product purchase cost captured at sale time.</param>
+    public SaleItem(Guid productId, int quantity, decimal unitPrice, decimal discount = 0, decimal unitCost = 0)
     {
         if (quantity <= 0)
         {
@@ -36,9 +37,15 @@ public class SaleItem : BaseEntity
             throw new ValidationException("Sale item discount cannot be negative.");
         }
 
+        if (unitCost < 0)
+        {
+            throw new ValidationException("Sale item unit cost cannot be negative.");
+        }
+
         ProductId = productId;
         Quantity = quantity;
         UnitPrice = unitPrice;
+        UnitCost = unitCost;
         Discount = discount;
         Total = CalculateTotal();
     }
@@ -62,6 +69,9 @@ public class SaleItem : BaseEntity
     /// Gets the unit price.
     /// </summary>
     public decimal UnitPrice { get; private set; }
+
+    /// <summary>Gets the purchase cost captured when the sale completed.</summary>
+    public decimal UnitCost { get; private set; }
 
     /// <summary>
     /// Gets the discount.

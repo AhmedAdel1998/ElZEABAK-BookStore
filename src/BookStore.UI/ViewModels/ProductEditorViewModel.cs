@@ -10,6 +10,7 @@ using BookStore.Application.Features.Products.DTOs;
 using BookStore.Application.Features.Products.Handlers;
 using BookStore.Application.Features.Products.Queries.GetProductById;
 using BookStore.Application.Interfaces;
+using BookStore.Application.Features.Settings.Services;
 using BookStore.Shared.Constants;
 using BookStore.UI.Navigation;
 using BookStore.UI.Services;
@@ -38,6 +39,8 @@ public partial class ProductEditorViewModel : BaseViewModel
     private readonly IProductNavigationState _navigationState;
     private readonly IMapper _mapper;
     private readonly BarcodeHandlers.GenerateBarcodeHandler _generateBarcodeHandler;
+    private readonly ISettingsService _settingsService;
+    private BookStore.Application.Features.Settings.DTOs.BarcodeSettingsDto _barcodeSettings = new();
     private ProductEditorModel _original = new();
 
     [ObservableProperty] private Guid? productId;
@@ -74,7 +77,8 @@ public partial class ProductEditorViewModel : BaseViewModel
         INotificationService notificationService,
         IProductNavigationState navigationState,
         IMapper mapper,
-        BarcodeHandlers.GenerateBarcodeHandler generateBarcodeHandler)
+        BarcodeHandlers.GenerateBarcodeHandler generateBarcodeHandler,
+        ISettingsService settingsService)
     {
         _createHandler = createHandler;
         _updateHandler = updateHandler;
@@ -87,6 +91,7 @@ public partial class ProductEditorViewModel : BaseViewModel
         _navigationState = navigationState;
         _mapper = mapper;
         _generateBarcodeHandler = generateBarcodeHandler;
+        _settingsService = settingsService;
         ProductId = navigationState.SelectedProductId;
         Title = ProductId.HasValue ? "Edit Product" : "New Product";
         _ = InitializeAsync();
@@ -99,6 +104,9 @@ public partial class ProductEditorViewModel : BaseViewModel
     public bool CanSaveProduct => ProductId.HasValue
         ? _authorizationService.HasPermission(PermissionConstants.ProductEdit)
         : _authorizationService.HasPermission(PermissionConstants.ProductCreate);
+
+    /// <summary>Gets whether manual barcode generation is enabled and authorized.</summary>
+    public bool CanGenerateBarcode => _barcodeSettings.ManualGenerationEnabled && _authorizationService.HasPermission(PermissionConstants.BarcodeGenerate);
 
     /// <summary>Saves product.</summary>
     [RelayCommand(CanExecute = nameof(CanSaveProduct))]
@@ -132,7 +140,7 @@ public partial class ProductEditorViewModel : BaseViewModel
     [RelayCommand]
     private void Reset() => ApplyModel(_original);
 
-    /// <summary>Duplicates the current product using a placeholder barcode.</summary>
+    /// <summary>Duplicates the current product using a generated unique barcode.</summary>
     [RelayCommand]
     private async Task DuplicateAsync()
     {
@@ -142,7 +150,14 @@ public partial class ProductEditorViewModel : BaseViewModel
             return;
         }
 
-        var result = await _duplicateHandler.HandleAsync(new DuplicateProductRequest(ProductId.Value, $"{Barcode}-COPY"));
+        var generated = await GenerateBarcodeCoreAsync();
+        if (!generated.IsSuccess || generated.Value is null)
+        {
+            _notificationService.Show("Product", generated.Error ?? "Unable to generate a unique barcode for the duplicate.", NotificationSeverity.Error);
+            return;
+        }
+
+        var result = await _duplicateHandler.HandleAsync(new DuplicateProductRequest(ProductId.Value, generated.Value.Value));
         if (!result.IsSuccess)
         {
             _notificationService.Show("Product", result.Error ?? "Unable to duplicate product.", NotificationSeverity.Error);
@@ -154,11 +169,11 @@ public partial class ProductEditorViewModel : BaseViewModel
         await _navigationService.NavigateToAsync<ProductDetailsViewModel>("Products > Details");
     }
 
-    /// <summary>Shows barcode generation placeholder.</summary>
-    [RelayCommand]
+    /// <summary>Generates a unique barcode using the saved barcode settings.</summary>
+    [RelayCommand(CanExecute = nameof(CanGenerateBarcode))]
     private async Task GenerateBarcodeAsync()
     {
-        var result = await _generateBarcodeHandler.HandleAsync(new GenerateBarcodeRequest(BarcodeFormat.Code128));
+        var result = await GenerateBarcodeCoreAsync();
         if (!result.IsSuccess || result.Value is null)
         {
             _notificationService.Show("Barcode", result.Error ?? "Unable to generate barcode.", NotificationSeverity.Error);
@@ -186,32 +201,56 @@ public partial class ProductEditorViewModel : BaseViewModel
 
     private async Task InitializeAsync()
     {
-        var categories = await _categorySearchHandler.HandleAsync(new SearchCategoriesRequest(null, 1, PagingConstants.MaxPageSize, IsActive: true));
-        if (categories.IsSuccess && categories.Value is not null)
+        try
         {
-            foreach (var category in categories.Value.Items)
+            _barcodeSettings = await _settingsService.GetAsync<BookStore.Application.Features.Settings.DTOs.BarcodeSettingsDto>();
+            GenerateBarcodeCommand.NotifyCanExecuteChanged();
+            var categories = await _categorySearchHandler.HandleAsync(new SearchCategoriesRequest(null, 1, PagingConstants.MaxPageSize, IsActive: true));
+            if (categories.IsSuccess && categories.Value is not null)
             {
-                Categories.Add(category);
+                foreach (var category in categories.Value.Items)
+                {
+                    Categories.Add(category);
+                }
             }
-        }
 
-        if (!ProductId.HasValue)
-        {
+            if (!ProductId.HasValue)
+            {
+                if (_barcodeSettings.AutoGenerate && _authorizationService.HasPermission(PermissionConstants.BarcodeGenerate))
+                {
+                    var generated = await GenerateBarcodeCoreAsync();
+                    if (generated.IsSuccess && generated.Value is not null) Barcode = generated.Value.Value;
+                }
+                _original = BuildModel();
+                return;
+            }
+
+            IsBusy = true;
+            var product = await _getByIdHandler.HandleAsync(new GetProductByIdRequest(ProductId.Value));
+            if (!product.IsSuccess || product.Value is null)
+            {
+                ValidationMessage = product.Error ?? "Product was not found.";
+                return;
+            }
+
+            ApplyModel(_mapper.Map<ProductEditorModel>(product.Value));
             _original = BuildModel();
-            return;
         }
-
-        IsBusy = true;
-        var product = await _getByIdHandler.HandleAsync(new GetProductByIdRequest(ProductId.Value));
-        IsBusy = false;
-        if (!product.IsSuccess || product.Value is null)
+        catch (Exception ex)
         {
-            ValidationMessage = product.Error ?? "Product was not found.";
-            return;
+            ValidationMessage = $"Unable to initialize product editor: {ex.Message}";
+            _notificationService.Show("Products", ValidationMessage, NotificationSeverity.Error);
         }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
-        ApplyModel(_mapper.Map<ProductEditorModel>(product.Value));
-        _original = BuildModel();
+    private Task<BookStore.Shared.Results.Result<BarcodeDto>> GenerateBarcodeCoreAsync()
+    {
+        var format = Enum.TryParse<BarcodeFormat>(_barcodeSettings.DefaultFormat, true, out var parsed) ? parsed : BarcodeFormat.Code128;
+        return _generateBarcodeHandler.HandleAsync(new GenerateBarcodeRequest(format));
     }
 
     private ProductEditorModel BuildModel() => new()

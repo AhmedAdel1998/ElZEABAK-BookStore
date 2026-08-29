@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<IReportQueryService, BookStoreReportQueryService>();
         services.AddScoped<IAuditTrailService, AuditTrailService>();
         services.AddScoped<IDataQualityService, DataQualityService>();
+        services.AddScoped<IReportExporter, ReportExporter>();
         return services;
     }
 }

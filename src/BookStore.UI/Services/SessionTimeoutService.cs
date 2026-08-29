@@ -90,14 +90,37 @@ public class SessionTimeoutService : ISessionTimeoutService
             return;
         }
 
+        await ExpireSessionAsync();
+    }
+
+    internal async Task ExpireSessionAsync()
+    {
         Stop();
-        using (var scope = _scopeFactory.CreateScope())
+
+        try
         {
+            using var scope = _scopeFactory.CreateScope();
             await scope.ServiceProvider.GetRequiredService<IAuthenticationService>().LogoutAsync();
         }
+        catch (Exception exception)
+        {
+            // The concrete authentication service clears its in-memory session before touching the
+            // remember-me file. A locked or damaged token file must therefore be logged without
+            // tearing down the WPF dispatcher or preventing navigation back to the login screen.
+            _logger.LogError(exception, "Session cleanup failed during inactivity logout");
+        }
 
-        await _navigationService.NavigateToAsync<LoginViewModel>();
-        _logger.LogInformation("Session expired because of inactivity");
+        try
+        {
+            await _navigationService.NavigateToAsync<LoginViewModel>();
+            _logger.LogInformation("Session expired because of inactivity");
+        }
+        catch (Exception exception)
+        {
+            // DispatcherTimer events are async void. Letting an exception escape this method would
+            // become an unhandled UI exception and could terminate the cashier application.
+            _logger.LogError(exception, "Navigation to login failed after session expiration");
+        }
     }
 
     private async Task RefreshSecuritySettingsAsync(CancellationToken cancellationToken = default)

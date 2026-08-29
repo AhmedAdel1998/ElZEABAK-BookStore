@@ -16,7 +16,6 @@ public class ReportQueryServiceTests
     public async Task SalesSummary_ExcludesCancelledSales_AndFiltersDateRange()
     {
         await using var fixture = await ReportingFixture.CreateAsync();
-
         var summary = await fixture.Service.GetSalesSummaryAsync(new GetSalesSummaryQuery(fixture.TodayRange));
 
         Assert.Equal(214, summary.TotalSales);
@@ -26,17 +25,19 @@ public class ReportQueryServiceTests
     }
 
     [Fact]
-    public async Task ProfitReport_UsesCurrentPurchasePriceLimitation_WhenSaleItemHasNoHistoricalCost()
+    public async Task ProfitReport_UsesSaleTimeHistoricalUnitCost()
     {
         await using var fixture = await ReportingFixture.CreateAsync();
+        await fixture.ChangePurchasePriceAsync("BK100", 500);
+        await fixture.ChangePurchasePriceAsync("BK200", 900);
 
         var profit = await fixture.Service.GetProfitReportAsync(new GetProfitReportQuery(fixture.TodayRange));
 
-        Assert.Equal(210, profit.Revenue);
+        Assert.Equal(200, profit.Revenue);
         Assert.Equal(90, profit.CostOfGoodsSold);
-        Assert.Equal(120, profit.GrossProfit);
-        Assert.False(profit.UsesHistoricalCost);
-        Assert.Contains("not historical purchase cost", profit.AccuracyNote);
+        Assert.Equal(110, profit.GrossProfit);
+        Assert.True(profit.UsesHistoricalCost);
+        Assert.Contains("captured when each sale completed", profit.AccuracyNote);
     }
 
     [Fact]
@@ -62,7 +63,7 @@ public class ReportQueryServiceTests
 
         Assert.Equal(214, dashboard.TodaysSales);
         Assert.Equal(2, dashboard.TodaysTransactions);
-        Assert.Equal(120, dashboard.TodaysProfit);
+        Assert.Equal(110, dashboard.TodaysProfit);
         Assert.Equal("Clean Architecture", dashboard.BestSellingProduct);
         Assert.Equal("Walk-in", dashboard.TopCustomer);
         Assert.Equal("Cashier One", dashboard.TopCashier);
@@ -103,6 +104,13 @@ public class ReportQueryServiceTests
         public BookStoreReportQueryService Service { get; }
         public ReportDateRange TodayRange { get; }
 
+        public async Task ChangePurchasePriceAsync(string barcode, decimal purchasePrice)
+        {
+            var product = await DbContext.Products.SingleAsync(product => product.Barcode.Value == barcode);
+            product.UpdatePrice(purchasePrice, Math.Max(product.SellingPrice, purchasePrice));
+            await DbContext.SaveChangesAsync();
+        }
+
         public static async Task<ReportingFixture> CreateAsync()
         {
             var connection = new SqliteConnection("Data Source=:memory:");
@@ -138,11 +146,11 @@ public class ReportQueryServiceTests
             await DbContext.SaveChangesAsync();
 
             var today = DateTimeOffset.UtcNow.Date.AddHours(10);
-            var sale1 = CreateCompletedSale("INV-001", user.Id, customer.Id, PaymentMethod.Cash, today, cleanArchitecture.Id, 2, 50, discount: 10, tax: 14);
-            var sale2 = CreateCompletedSale("INV-002", user.Id, null, PaymentMethod.Card, today.AddMinutes(20), ddd.Id, 1, 110, discount: 0, tax: 0);
-            var yesterday = CreateCompletedSale("INV-003", user.Id, null, PaymentMethod.MobileWallet, today.AddDays(-1), cleanArchitecture.Id, 1, 500, discount: 0, tax: 0);
+            var sale1 = CreateCompletedSale("INV-001", user.Id, customer.Id, PaymentMethod.Cash, today, cleanArchitecture.Id, 2, 50, 25, discount: 10, tax: 14);
+            var sale2 = CreateCompletedSale("INV-002", user.Id, null, PaymentMethod.Card, today.AddMinutes(20), ddd.Id, 1, 110, 40, discount: 0, tax: 0);
+            var yesterday = CreateCompletedSale("INV-003", user.Id, null, PaymentMethod.MobileWallet, today.AddDays(-1), cleanArchitecture.Id, 1, 500, 25, discount: 0, tax: 0);
             var cancelled = new Sale("INV-004", user.Id, PaymentMethod.Cash);
-            cancelled.AddItem(new SaleItem(cleanArchitecture.Id, 1, 999));
+            cancelled.AddItem(new SaleItem(cleanArchitecture.Id, 1, 999, unitCost: 25));
             SetSaleDate(cancelled, today);
             cancelled.Cancel();
 
@@ -151,11 +159,11 @@ public class ReportQueryServiceTests
             await DbContext.SaveChangesAsync();
         }
 
-        private static Sale CreateCompletedSale(string invoice, Guid userId, Guid? customerId, PaymentMethod paymentMethod, DateTimeOffset date, Guid productId, int quantity, decimal unitPrice, decimal discount, decimal tax)
+        private static Sale CreateCompletedSale(string invoice, Guid userId, Guid? customerId, PaymentMethod paymentMethod, DateTimeOffset date, Guid productId, int quantity, decimal unitPrice, decimal unitCost, decimal discount, decimal tax)
         {
             var sale = new Sale(invoice, userId, paymentMethod);
             sale.AssignCustomer(customerId);
-            sale.AddItem(new SaleItem(productId, quantity, unitPrice));
+            sale.AddItem(new SaleItem(productId, quantity, unitPrice, unitCost: unitCost));
             sale.UpdateCharges(discount, tax);
             sale.Complete(sale.Total);
             SetSaleDate(sale, date);

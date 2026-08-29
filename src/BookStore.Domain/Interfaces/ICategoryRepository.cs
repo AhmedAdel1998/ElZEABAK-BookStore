@@ -14,10 +14,7 @@ public interface ICategoryRepository
     /// <param name="id">The category identifier.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The category when found; otherwise, <see langword="null"/>.</returns>
-    Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets categories matching a specification.
@@ -25,10 +22,7 @@ public interface ICategoryRepository
     /// <param name="specification">The query specification.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The matching categories.</returns>
-    Task<IReadOnlyCollection<Category>> ListAsync(ISpecification<Category>? specification = null, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task<IReadOnlyCollection<Category>> ListAsync(ISpecification<Category>? specification = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a category.
@@ -36,10 +30,7 @@ public interface ICategoryRepository
     /// <param name="category">The category to add.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    Task AddAsync(Category category, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task AddAsync(Category category, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Searches categories by name or description.

@@ -84,6 +84,10 @@ public sealed partial class BarcodeSettingsValidator : AbstractValidator<Barcode
         RuleFor(settings => settings.DefaultFormat).NotEmpty().Must(format => format is "Code128" or "Code39" or "Ean13" or "Ean8");
         RuleFor(settings => settings.Prefix).Must(value => string.IsNullOrWhiteSpace(value) || PrefixRegex().IsMatch(value)).WithMessage("Barcode prefix is invalid.");
         RuleFor(settings => settings.StartingNumber).GreaterThan(0);
+        RuleFor(settings => settings.Length).InclusiveBetween(3, 64);
+        RuleFor(settings => settings.LabelWidthMm).InclusiveBetween(10, 300);
+        RuleFor(settings => settings.LabelHeightMm).InclusiveBetween(10, 300);
+        RuleFor(settings => settings.PrinterName).MaximumLength(250);
         RuleFor(settings => settings.ScanTimeout).InclusiveBetween(20, 5000);
     }
 

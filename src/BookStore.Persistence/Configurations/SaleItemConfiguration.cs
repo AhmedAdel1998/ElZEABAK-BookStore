@@ -15,6 +15,7 @@ public class SaleItemConfiguration : EntityConfigurationBase<SaleItem>
         builder.ToTable("SaleItems");
         builder.Property(item => item.Quantity).IsRequired();
         builder.Property(item => item.UnitPrice).HasPrecision(18, 2).IsRequired();
+        builder.Property(item => item.UnitCost).HasPrecision(18, 2).IsRequired();
         builder.Property(item => item.Discount).HasPrecision(18, 2).IsRequired();
         builder.Property(item => item.Total).HasPrecision(18, 2).IsRequired();
         builder.HasOne(item => item.Product)

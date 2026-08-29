@@ -15,10 +15,7 @@ public interface ICustomerRepository
     /// <param name="id">The customer identifier.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The customer when found; otherwise, <see langword="null"/>.</returns>
-    Task<Customer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task<Customer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets customers matching a specification.
@@ -26,10 +23,7 @@ public interface ICustomerRepository
     /// <param name="specification">The query specification.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The matching customers.</returns>
-    Task<IReadOnlyCollection<Customer>> ListAsync(ISpecification<Customer>? specification = null, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task<IReadOnlyCollection<Customer>> ListAsync(ISpecification<Customer>? specification = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a customer.
@@ -37,10 +31,7 @@ public interface ICustomerRepository
     /// <param name="customer">The customer to add.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    Task AddAsync(Customer customer, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task AddAsync(Customer customer, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Determines whether a phone number already exists.

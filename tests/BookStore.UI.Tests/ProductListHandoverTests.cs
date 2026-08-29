@@ -1,10 +1,16 @@
 using BookStore.Application.Features.Categories.Handlers;
+using BookStore.Application.Features.Barcode.DTOs;
 using BookStore.Application.Features.Products.Handlers;
+using BookStore.Application.Features.Products.DTOs;
+using BookStore.Application.Features.Authentication.Responses;
 using BookStore.Application.Interfaces;
+using BookStore.Domain.Interfaces;
 using BookStore.Shared.Constants;
 using BookStore.UI.Services;
 using BookStore.UI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
+using FluentValidation;
 
 namespace BookStore.UI.Tests;
 
@@ -79,12 +85,20 @@ public class ProductListHandoverTests
             services.GetRequiredService<ActivateProductHandler>(),
             services.GetRequiredService<DeactivateProductHandler>(),
             services.GetRequiredService<DuplicateProductHandler>(),
+            new FakeBarcodeService(),
             services.GetRequiredService<SearchCategoriesHandler>(),
             new FakeAuthorizationService(PermissionConstants.ProductView),
             fixture.ShellNavigation,
             fixture.Notifications,
             new FakeConfirmationDialogService(),
             new ProductNavigationState(),
+            new FakeProductFileService(),
+            new FakeProductFileService(),
+            new ImportProductsHandler(
+                services.GetRequiredService<IUnitOfWork>(),
+                services.GetRequiredService<IValidator<ProductEditorModel>>(),
+                new ProductListCurrentUserService(),
+                NullLogger<ImportProductsHandler>.Instance),
             fixture.GlobalSearch);
     }
 
@@ -103,6 +117,38 @@ public class ProductListHandoverTests
 
         Assert.Fail($"Timed out after {Timeout.TotalSeconds:N0}s waiting for {because}.");
     }
+}
+
+internal sealed class FakeProductFileService : IProductImportService, IProductExportService
+{
+    public Task<IReadOnlyCollection<BookStore.Application.Features.Products.DTOs.ProductEditorModel>> ImportAsync(string filePath, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyCollection<BookStore.Application.Features.Products.DTOs.ProductEditorModel>>([]);
+
+    public Task ExportAsync(IEnumerable<BookStore.Application.Features.Products.DTOs.ProductListItem> products, string filePath, CancellationToken cancellationToken = default) => Task.CompletedTask;
+}
+
+internal sealed class FakeBarcodeService : IBarcodeService
+{
+    public Task<BarcodeDto> GenerateUniqueAsync(BarcodeFormat format, string? prefix = null, CancellationToken cancellationToken = default) => Task.FromResult(new BarcodeDto { Value = "TEST-UNIQUE", Format = format });
+    public bool IsValid(string barcode, BarcodeFormat format) => true;
+    public Task<bool> IsDuplicateAsync(string barcode, CancellationToken cancellationToken = default) => Task.FromResult(false);
+    public Task<bool> ReserveAsync(string barcode, CancellationToken cancellationToken = default) => Task.FromResult(true);
+    public string GenerateImageSvg(string barcode, BarcodeFormat format) => string.Empty;
+    public Task<BarcodeProductDto?> FindProductAsync(string barcode, CancellationToken cancellationToken = default) => Task.FromResult<BarcodeProductDto?>(null);
+}
+
+internal sealed class ProductListCurrentUserService : ICurrentUserService
+{
+    public bool IsAuthenticated => true;
+    public Guid? UserId => Guid.NewGuid();
+    public string? Username => "tester";
+    public string? FullName => "Test User";
+    public string? Role => "Administrator";
+    public IReadOnlyCollection<string> Permissions => [];
+    public Guid? SessionId => null;
+    public DateTimeOffset? LoginTime => DateTimeOffset.UtcNow;
+    public void SignIn(UserSessionSnapshot session) { }
+    public void SignOut() { }
 }
 
 internal sealed class FakeConfirmationDialogService : IConfirmationDialogService

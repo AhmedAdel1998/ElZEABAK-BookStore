@@ -75,7 +75,7 @@ public partial class InventoryListViewModel : BaseViewModel
     [RelayCommand]
     private Task HistoryAsync() => _navigationService.NavigateToAsync<InventoryHistoryViewModel>("Inventory > Stock Ledger");
 
-/// <summary>Gets the number of pages available for the current filters.</summary>
+    /// <summary>Gets the number of pages available for the current filters.</summary>
     public int TotalPages => PageSize <= 0 ? 1 : Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
 
     /// <summary>Gets whether an earlier page exists.</summary>

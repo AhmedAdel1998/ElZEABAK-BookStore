@@ -11,7 +11,7 @@ namespace BookStore.Reporting.Services;
 
 public sealed class BookStoreReportQueryService : IReportQueryService
 {
-    private const string ProfitAccuracyNote = "Sale items store historical selling price but not historical purchase cost. COGS uses current product purchase price until sale-time cost is added to the sales model.";
+    private const string ProfitAccuracyNote = "COGS uses the unit purchase cost captured when each sale completed. Records created before the historical-cost upgrade were backfilled with the product cost available during that upgrade.";
     private readonly BookStoreDbContext _dbContext;
 
     public BookStoreReportQueryService(BookStoreDbContext dbContext)
@@ -140,17 +140,10 @@ public sealed class BookStoreReportQueryService : IReportQueryService
     public async Task<ProfitReportDto> GetProfitReportAsync(GetProfitReportQuery query, CancellationToken cancellationToken = default)
     {
         var range = query.DateRange.ToUtcBounds();
-        var rows = await SaleItemRows(range)
-            .GroupBy(_ => 1)
-            .Select(group => new
-            {
-                Revenue = group.Sum(row => row.Item.Total),
-                Cost = group.Sum(row => row.Product.PurchasePrice * row.Item.Quantity)
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-        var revenue = Math.Round(rows?.Revenue ?? 0, 2);
-        var cost = Math.Round(rows?.Cost ?? 0, 2);
+        var revenue = Math.Round(await _dbContext.Sales.AsNoTracking()
+            .Where(sale => sale.SaleDate >= range.StartDate && sale.SaleDate < range.EndDate && sale.Status != SaleStatus.Cancelled)
+            .SumAsync(sale => sale.Total - sale.Tax, cancellationToken), 2);
+        var cost = Math.Round(await SaleItemRows(range).SumAsync(row => row.Item.UnitCost * row.Item.Quantity, cancellationToken), 2);
         var profit = revenue - cost;
         return new ProfitReportDto
         {
@@ -158,7 +151,7 @@ public sealed class BookStoreReportQueryService : IReportQueryService
             CostOfGoodsSold = cost,
             GrossProfit = profit,
             GrossMarginPercent = revenue == 0 ? 0 : Math.Round(profit / revenue * 100, 2),
-            UsesHistoricalCost = false,
+            UsesHistoricalCost = true,
             AccuracyNote = ProfitAccuracyNote
         };
     }
@@ -184,18 +177,36 @@ public sealed class BookStoreReportQueryService : IReportQueryService
     public async Task<IReadOnlyCollection<CategorySalesRowDto>> GetCategorySalesAsync(GetCategorySalesQuery query, CancellationToken cancellationToken = default)
     {
         var range = query.DateRange.ToUtcBounds();
-        var totalRevenue = await SaleItemRows(range).SumAsync(row => row.Item.Total, cancellationToken);
-        var rows = await SaleItemRows(range)
-            .GroupBy(row => row.Category.Name)
-            .Select(group => new CategorySalesRowDto
+        var source = await SaleItemRows(range)
+            .Select(row => new
             {
-                Category = group.Key,
-                ProductsSold = group.Select(row => row.Product.Id).Distinct().Count(),
-                QuantitySold = group.Sum(row => row.Item.Quantity),
-                Revenue = group.Sum(row => row.Item.Total),
-                Profit = group.Sum(row => row.Item.Total - (row.Product.PurchasePrice * row.Item.Quantity))
+                SaleId = row.Sale.Id,
+                SaleNetRevenue = row.Sale.Total - row.Sale.Tax,
+                Category = row.Category.Name,
+                ProductId = row.Product.Id,
+                row.Item.Quantity,
+                LineRevenue = row.Item.Total,
+                Cost = row.Item.UnitCost * row.Item.Quantity
             })
             .ToArrayAsync(cancellationToken);
+        var saleLineTotals = source.GroupBy(row => row.SaleId).ToDictionary(group => group.Key, group => group.Sum(row => row.LineRevenue));
+        var allocated = source.Select(row => new
+        {
+            row.Category,
+            row.ProductId,
+            row.Quantity,
+            row.Cost,
+            Revenue = AllocateNetRevenue(row.SaleNetRevenue, row.LineRevenue, saleLineTotals[row.SaleId])
+        });
+        var rows = allocated.GroupBy(row => row.Category).Select(group => new CategorySalesRowDto
+        {
+            Category = group.Key,
+            ProductsSold = group.Select(row => row.ProductId).Distinct().Count(),
+            QuantitySold = group.Sum(row => row.Quantity),
+            Revenue = group.Sum(row => row.Revenue),
+            Profit = group.Sum(row => row.Revenue - row.Cost)
+        }).ToArray();
+        var totalRevenue = rows.Sum(row => row.Revenue);
 
         foreach (var row in rows)
         {
@@ -437,9 +448,11 @@ public sealed class BookStoreReportQueryService : IReportQueryService
             })
             .ToArray();
         var profitSource = await SaleItemRows(range)
-            .Select(row => new { row.Sale.SaleDate, Profit = row.Item.Total - (row.Product.PurchasePrice * row.Item.Quantity) })
+            .Select(row => new { SaleId = row.Sale.Id, row.Sale.SaleDate, SaleNetRevenue = row.Sale.Total - row.Sale.Tax, Cost = row.Item.UnitCost * row.Item.Quantity })
             .ToArrayAsync(cancellationToken);
         var profitRows = profitSource
+            .GroupBy(row => row.SaleId)
+            .Select(group => new { group.First().SaleDate, Profit = group.First().SaleNetRevenue - group.Sum(row => row.Cost) })
             .GroupBy(row => DateOnly.FromDateTime(row.SaleDate.ToLocalTime().Date))
             .ToDictionary(group => group.Key, group => group.Sum(row => row.Profit));
 
@@ -490,11 +503,14 @@ public sealed class BookStoreReportQueryService : IReportQueryService
                 Category = row.Category.Name,
                 row.Item.Quantity,
                 row.Item.Total,
-                row.Product.PurchasePrice,
+                row.Item.UnitCost,
                 row.Item.UnitPrice,
-                SaleId = row.Sale.Id
+                SaleId = row.Sale.Id,
+                SaleNetRevenue = row.Sale.Total - row.Sale.Tax
             })
             .ToArrayAsync(cancellationToken);
+
+        var saleLineTotals = sourceRows.GroupBy(row => row.SaleId).ToDictionary(group => group.Key, group => group.Sum(row => row.Total));
 
         var rows = sourceRows
             .GroupBy(row => new
@@ -511,8 +527,8 @@ public sealed class BookStoreReportQueryService : IReportQueryService
                 group.Key.Barcode,
                 group.Key.Category,
                 QuantitySold = group.Sum(row => row.Quantity),
-                Revenue = group.Sum(row => row.Total),
-                Cost = group.Sum(row => row.PurchasePrice * row.Quantity),
+                Revenue = group.Sum(row => AllocateNetRevenue(row.SaleNetRevenue, row.Total, saleLineTotals[row.SaleId])),
+                Cost = group.Sum(row => row.UnitCost * row.Quantity),
                 AverageSellingPrice = group.Average(row => row.UnitPrice),
                 NumberOfTransactions = group.Select(row => row.SaleId).Distinct().Count()
             });
@@ -536,6 +552,9 @@ public sealed class BookStoreReportQueryService : IReportQueryService
             })
             .ToArray();
     }
+
+    private static decimal AllocateNetRevenue(decimal saleNetRevenue, decimal lineRevenue, decimal saleLineTotal) =>
+        saleLineTotal == 0 ? 0 : saleNetRevenue * lineRevenue / saleLineTotal;
 
     private IQueryable<SaleItemReportRow> SaleItemRows(ReportDateRange range)
     {

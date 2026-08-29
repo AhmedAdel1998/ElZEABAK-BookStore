@@ -11,7 +11,7 @@ using BarcodeHandlers = BookStore.Application.Features.Barcode.Handlers;
 namespace BookStore.UI.ViewModels;
 
 /// <summary>
-/// Barcode label print preparation view model.
+/// Barcode label printing view model.
 /// </summary>
 public partial class BarcodeLabelPrintViewModel : BaseViewModel
 {
@@ -22,7 +22,7 @@ public partial class BarcodeLabelPrintViewModel : BaseViewModel
     [ObservableProperty] private string barcodeValue = string.Empty;
     [ObservableProperty] private string productTitle = string.Empty;
     [ObservableProperty] private int quantity = 1;
-    [ObservableProperty] private string template = "Single";
+    [ObservableProperty] private BarcodeLabelDto? selectedLabel;
 
     /// <summary>Initializes a new instance of the <see cref="BarcodeLabelPrintViewModel"/> class.</summary>
     public BarcodeLabelPrintViewModel(BarcodeHandlers.PrintBarcodeHandler printHandler, IAuthorizationService authorizationService, INotificationService notificationService)
@@ -43,10 +43,25 @@ public partial class BarcodeLabelPrintViewModel : BaseViewModel
     [RelayCommand]
     private void AddLabel()
     {
-        Labels.Add(new BarcodeLabelDto { BarcodeValue = BarcodeValue, ProductTitle = ProductTitle, Quantity = Quantity, Template = Template });
+        if (string.IsNullOrWhiteSpace(BarcodeValue) || Quantity is < 1 or > 1000)
+        {
+            _notificationService.Show("Barcode", "Enter a barcode and a quantity between 1 and 1,000.", NotificationSeverity.Error);
+            return;
+        }
+        Labels.Add(new BarcodeLabelDto { BarcodeValue = BarcodeValue, ProductTitle = ProductTitle, Quantity = Quantity });
+        BarcodeValue = string.Empty;
+        ProductTitle = string.Empty;
+        Quantity = 1;
     }
 
-    /// <summary>Prepares barcode label print job.</summary>
+    /// <summary>Removes the selected label from the batch.</summary>
+    [RelayCommand]
+    private void RemoveLabel()
+    {
+        if (SelectedLabel is not null) Labels.Remove(SelectedLabel);
+    }
+
+    /// <summary>Prints the barcode label job.</summary>
     [RelayCommand(CanExecute = nameof(CanPrint))]
     private async Task PrintAsync()
     {
@@ -58,5 +73,6 @@ public partial class BarcodeLabelPrintViewModel : BaseViewModel
         }
 
         _notificationService.Show("Barcode", "Barcode printed.", NotificationSeverity.Success);
+        Labels.Clear();
     }
 }

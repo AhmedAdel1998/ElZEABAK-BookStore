@@ -114,8 +114,18 @@ public class UnitOfWork : IUnitOfWork
             return;
         }
 
-        await _currentTransaction.RollbackAsync(cancellationToken);
-        await DisposeTransactionAsync();
+        try
+        {
+            await _currentTransaction.RollbackAsync(cancellationToken);
+        }
+        finally
+        {
+            await DisposeTransactionAsync();
+            // A database rollback does not reset EF's in-memory entity states. Leaving Added or
+            // Modified entries tracked would let a later, unrelated SaveChanges persist work that
+            // the caller was explicitly told had been rolled back.
+            _dbContext.ChangeTracker.Clear();
+        }
     }
 
     /// <inheritdoc />

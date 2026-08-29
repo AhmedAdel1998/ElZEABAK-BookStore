@@ -30,7 +30,7 @@ public class User : BaseEntity, IAggregateRoot
             throw new ValidationException("Username is required.");
         }
 
-        if (string.IsNullOrWhiteSpace(passwordHash) || !passwordHash.StartsWith("$2", StringComparison.Ordinal))
+        if (!IsSupportedPasswordHash(passwordHash))
         {
             throw new ValidationException("A BCrypt password hash is required.");
         }
@@ -109,13 +109,20 @@ public class User : BaseEntity, IAggregateRoot
     /// <param name="passwordHash">The BCrypt password hash.</param>
     public void ChangePasswordHash(string passwordHash)
     {
-        if (string.IsNullOrWhiteSpace(passwordHash) || !passwordHash.StartsWith("$2", StringComparison.Ordinal))
+        if (!IsSupportedPasswordHash(passwordHash))
         {
             throw new ValidationException("A BCrypt password hash is required.");
         }
 
         PasswordHash = passwordHash;
         MarkUpdated();
+    }
+
+    private static bool IsSupportedPasswordHash(string? passwordHash)
+    {
+        return !string.IsNullOrWhiteSpace(passwordHash)
+            && (passwordHash.StartsWith("$2", StringComparison.Ordinal)
+                || passwordHash.StartsWith("BS2:$2", StringComparison.Ordinal));
     }
 
     /// <summary>
@@ -126,6 +133,26 @@ public class User : BaseEntity, IAggregateRoot
     {
         Email = email;
         MarkUpdated();
+    }
+
+    /// <summary>Updates the user's identity and role assignment.</summary>
+    public void UpdateProfile(string username, string fullName, Guid roleId, Email? email)
+    {
+        if (string.IsNullOrWhiteSpace(username)) throw new ValidationException("Username is required.");
+        if (string.IsNullOrWhiteSpace(fullName)) throw new ValidationException("User full name is required.");
+        if (roleId == Guid.Empty) throw new ValidationException("A role is required.");
+        Username = username.Trim();
+        FullName = fullName.Trim();
+        RoleId = roleId;
+        Email = email;
+        MarkUpdated();
+    }
+
+    /// <summary>Activates the user account.</summary>
+    public void Activate()
+    {
+        IsActive = true;
+        ResetFailedLogins();
     }
 
     /// <summary>

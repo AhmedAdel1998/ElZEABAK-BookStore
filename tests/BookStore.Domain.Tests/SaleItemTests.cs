@@ -9,6 +9,20 @@ namespace BookStore.Domain.Tests;
 public class SaleItemTests
 {
     [Fact]
+    public void Constructor_CapturesHistoricalUnitCost()
+    {
+        var item = new SaleItem(Guid.NewGuid(), 2, 20m, unitCost: 7.50m);
+
+        Assert.Equal(7.50m, item.UnitCost);
+    }
+
+    [Fact]
+    public void Constructor_RejectsNegativeUnitCost()
+    {
+        Assert.Throws<ValidationException>(() => new SaleItem(Guid.NewGuid(), 1, 20m, unitCost: -0.01m));
+    }
+
+    [Fact]
     public void Constructor_CalculatesTotalFromQuantityPriceAndDiscount()
     {
         var item = new SaleItem(Guid.NewGuid(), quantity: 3, unitPrice: 25m, discount: 10m);

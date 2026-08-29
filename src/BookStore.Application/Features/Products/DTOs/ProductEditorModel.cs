@@ -31,7 +31,7 @@ public sealed class ProductEditorModel
     public decimal PurchasePrice { get; set; }
     /// <summary>Gets or sets the selling price.</summary>
     public decimal SellingPrice { get; set; }
-    /// <summary>Gets or sets the tax category placeholder.</summary>
+    /// <summary>Gets or sets the tax category.</summary>
     public string? TaxCategory { get; set; }
     /// <summary>Gets or sets the quantity.</summary>
     public int Quantity { get; set; }

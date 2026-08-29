@@ -5,13 +5,13 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <controls:AppCard Width="620" HorizontalAlignment="Left" Title="Barcode Settings" Subtitle="Generation format, prefix, length, and label sizes used when printing barcodes." Icon="Settings">
             <UniformGrid Columns="2">
-                <StackPanel Margin="0,0,12,12"><TextBlock Text="Default Type" /><TextBlock FontWeight="SemiBold" Text="{Binding Settings.DefaultFormat}" /></StackPanel>
+                <StackPanel Margin="0,0,12,12"><TextBlock Text="Default Type" /><ComboBox ItemsSource="{Binding BarcodeFormats}" SelectedItem="{Binding Settings.DefaultFormat}" /></StackPanel>
                 <StackPanel Margin="0,0,12,12"><TextBlock Text="Prefix" /><controls:TextInputBox Text="{Binding Settings.Prefix}" /></StackPanel>
                 <StackPanel Margin="0,0,12,12"><TextBlock Text="Starting Number" /><controls:NumericTextBox Text="{Binding Settings.StartingNumber}" /></StackPanel>
                 <StackPanel Margin="0,0,12,12"><TextBlock Text="Length" /><controls:NumericTextBox Text="{Binding Settings.Length}" /></StackPanel>
                 <StackPanel Margin="0,0,12,12"><TextBlock Text="Label Width mm" /><controls:NumericTextBox Text="{Binding Settings.LabelWidthMm}" /></StackPanel>
                 <StackPanel Margin="0,0,12,12"><TextBlock Text="Label Height mm" /><controls:NumericTextBox Text="{Binding Settings.LabelHeightMm}" /></StackPanel>
-                <StackPanel Margin="0,0,12,12"><TextBlock Text="Printer" /><controls:TextInputBox Text="{Binding Settings.PrinterName}" /></StackPanel>
+                <StackPanel Margin="0,0,12,12"><TextBlock Text="Printer" /><ComboBox ItemsSource="{Binding Printers}" DisplayMemberPath="Name" SelectedValuePath="Name" SelectedValue="{Binding Settings.PrinterName}" /></StackPanel>
                 <StackPanel Margin="0,0,12,12"><TextBlock Text="Scan Timeout ms" /><controls:NumericTextBox Text="{Binding Settings.ScanTimeoutMilliseconds}" /></StackPanel>
                 <CheckBox Margin="0,0,12,12" Content="Automatic Generation" IsChecked="{Binding Settings.AutomaticGenerationEnabled}" />
                 <CheckBox Margin="0,0,12,12" Content="Manual Generation" IsChecked="{Binding Settings.ManualGenerationEnabled}" />

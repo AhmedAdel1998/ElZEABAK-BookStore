@@ -67,6 +67,22 @@ public sealed class BackupServiceTests
     }
 
     [Fact]
+    public async Task RestoreBackup_WithFullyMigratedSchema_PreservesMigrationHistoryAndData()
+    {
+        await using var fixture = await BackupFixture.CreateAsync(useMigrations: true);
+        var expectedMigrations = await fixture.GetAppliedMigrationsAsync();
+        var created = await fixture.BackupService.CreateBackupAsync(BackupType.Manual);
+        await fixture.AddCategoryAsync("After Backup");
+
+        var restore = await fixture.BackupService.RestoreBackupAsync(created.Backup!.BackupId, BackupFixture.ConfirmationText);
+
+        Assert.True(restore.Succeeded, restore.Message);
+        Assert.True(restore.RestartRequired);
+        Assert.Equal(expectedMigrations, await fixture.GetAppliedMigrationsAsync());
+        Assert.DoesNotContain("After Backup", await fixture.GetCategoryNamesAsync());
+    }
+
+    [Fact]
     public async Task RestoreBackup_WithInvalidBackupLeavesProductionDatabaseUntouched()
     {
         await using var fixture = await BackupFixture.CreateAsync();
@@ -139,14 +155,22 @@ public sealed class BackupServiceTests
         public BackupService BackupService { get; }
         public DatabaseIntegrityService IntegrityService { get; }
 
-        public static async Task<BackupFixture> CreateAsync(bool hasEnoughSpace = true, int retentionCount = 10)
+        public static async Task<BackupFixture> CreateAsync(bool hasEnoughSpace = true, int retentionCount = 10, bool useMigrations = false)
         {
             var root = Path.Combine(Path.GetTempPath(), "bookstore-backup-tests", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
             var databasePath = Path.Combine(root, "bookstore-test.db");
             await using (var context = CreateContext(databasePath))
             {
-                await context.Database.EnsureCreatedAsync();
+                if (useMigrations)
+                {
+                    await context.Database.MigrateAsync();
+                }
+                else
+                {
+                    await context.Database.EnsureCreatedAsync();
+                }
+
                 context.Categories.Add(new Category("Before Backup"));
                 await context.SaveChangesAsync();
             }
@@ -194,6 +218,12 @@ public sealed class BackupServiceTests
         {
             await using var context = CreateContext(DatabasePath);
             return await context.Categories.IgnoreQueryFilters().Select(category => category.Name).OrderBy(name => name).ToArrayAsync();
+        }
+
+        public async Task<IReadOnlyList<string>> GetAppliedMigrationsAsync()
+        {
+            await using var context = CreateContext(DatabasePath);
+            return (await context.Database.GetAppliedMigrationsAsync()).ToArray();
         }
 
         public ValueTask DisposeAsync()

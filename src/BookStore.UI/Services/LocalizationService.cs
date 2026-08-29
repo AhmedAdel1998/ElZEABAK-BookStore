@@ -745,8 +745,6 @@ public sealed class LocalizationService : ILocalizationService
         ["Page size"] = "حجم الصفحة",
         ["Page size "] = "حجم الصفحة ",
         ["Pagination prepared"] = "تم تجهيز الترقيم",
-        ["Pagination controls prepared for future enhancement."] = "تم تجهيز عناصر الترقيم للتحسين لاحقا.",
-        ["Pagination controls prepared for future enhancement"] = "تم تجهيز عناصر الترقيم للتحسين لاحقا",
         ["Product rows "] = "صفوف المنتجات ",
         ["Sales rows "] = "صفوف المبيعات ",
         ["Customer created "] = "تم إنشاء العميل ",
@@ -754,8 +752,6 @@ public sealed class LocalizationService : ILocalizationService
         ["Qty "] = "الكمية ",
         ["Total "] = "الإجمالي ",
         ["Updated "] = "آخر تحديث ",
-        ["Product export is prepared for future implementation."] = "تم تجهيز تصدير المنتجات للتنفيذ لاحقا.",
-        ["Product import is prepared for future implementation."] = "تم تجهيز استيراد المنتجات للتنفيذ لاحقا.",
         ["Operation failed."] = "فشلت العملية.",
         ["Unable to load products."] = "تعذر تحميل المنتجات.",
         ["Unable to save product."] = "تعذر حفظ المنتج.",
@@ -931,13 +927,11 @@ public sealed class LocalizationService : ILocalizationService
         ["General, book, pricing, stock, category, media, and status metadata."] = "بيانات عامة وبيانات الكتاب والأسعار والمخزون والتصنيف والوسائط والحالة.",
         ["Generate, validate, and lookup products."] = "إنشاء الباركود والتحقق منه والبحث عن المنتجات.",
         ["Prepare single, multi-label, or sheet output."] = "تجهيز مخرجات ملصق واحد أو عدة ملصقات أو صفحة كاملة.",
-        ["Loaded from appsettings; persistence prepared for future implementation."] = "يتم التحميل من إعدادات التطبيق؛ الحفظ مجهز للتنفيذ لاحقا.",
         [" | Customer created "] = " | تم إنشاء العميل ",
         [" | Supplier created "] = " | تم إنشاء المورد ",
         [" | Updated "] = " | آخر تحديث ",
         [" | Qty "] = " | الكمية ",
         ["Generation format, prefix, length, and label sizes used when printing barcodes."] = "تنسيق الإنشاء والبادئة والطول ومقاسات الملصقات المستخدمة عند طباعة الباركود.",
-        ["This module is ready for future implementation."] = "هذه الشاشة مجهزة للتطوير لاحقا.",
         ["Walk-in Customer"] = "عميل عابر",
         ["Cash"] = "نقدي",
         ["Card"] = "بطاقة",
@@ -1316,4 +1310,3 @@ public sealed class LocalizationService : ILocalizationService
         }
     }
 }
-

@@ -3,8 +3,7 @@ namespace BookStore.Application.Features.Reports.Services;
 public enum ReportExportFormat
 {
     Csv,
-    Excel,
-    Pdf
+    Excel
 }
 
 public sealed record ReportExportRequest<TReport>(string ReportName, IReadOnlyCollection<TReport> Rows, ReportExportFormat Format);

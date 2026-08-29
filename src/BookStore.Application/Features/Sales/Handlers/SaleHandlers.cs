@@ -761,7 +761,7 @@ public sealed class CompleteSaleHandler
                         throw new InvalidOperationException($"Insufficient stock for {product.Title}.");
                     }
 
-                    sale.AddItem(new SaleItem(product.Id, cartItem.Quantity, cartItem.UnitPrice, cartItem.Discount));
+                    sale.AddItem(new SaleItem(product.Id, cartItem.Quantity, cartItem.UnitPrice, cartItem.Discount, product.PurchasePrice));
 
                     var quantityBefore = product.Quantity;
                     var quantityAfter = quantityBefore - cartItem.Quantity;

@@ -33,7 +33,7 @@ public sealed partial class BarcodeGeneratorService : IBarcodeService
         var settings = await _settingsService.GetAsync<BookStore.Application.Features.Settings.DTOs.BarcodeSettingsDto>(cancellationToken);
         var effectivePrefix = string.IsNullOrWhiteSpace(prefix) ? settings.Prefix : prefix.Trim();
         var sequence = Math.Max(settings.StartingNumber, 1);
-        var length = 12;
+        var length = Math.Clamp(settings.Length, 3, 64);
 
         for (var attempt = 0; attempt < 10000; attempt++)
         {

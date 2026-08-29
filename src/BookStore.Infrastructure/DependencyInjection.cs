@@ -6,6 +6,7 @@ using BookStore.Infrastructure.Backup.Services;
 using BookStore.Infrastructure.Barcode;
 using BookStore.Infrastructure.Configuration;
 using BookStore.Infrastructure.Logging;
+using BookStore.Infrastructure.Products;
 using BookStore.Infrastructure.Printing;
 using BookStore.Infrastructure.Printing.ESCPos;
 using BookStore.Infrastructure.Printing.Services;
@@ -36,23 +37,27 @@ public static class DependencyInjection
         services.AddScoped<IAuthorizationService, PermissionService>();
         services.AddSingleton<IApplicationFolderService, ApplicationFolderService>();
         services.AddScoped<PermissionService>();
-        services.AddScoped<RoleService>();
         services.AddScoped<IBarcodeService, BarcodeGeneratorService>();
-        services.AddScoped<IBarcodeScannerService, BarcodeScannerService>();
-        services.AddScoped<IBarcodeLabelPrintService, BarcodeLabelPrintService>();
+        services.AddScoped<IBarcodeScannerService>(provider => new BarcodeScannerService(
+            provider.GetRequiredService<IBarcodeService>(),
+            provider.GetRequiredService<BookStore.Application.Features.Settings.Services.ISettingsService>(),
+            provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<BarcodeScannerService>>()));
 #pragma warning disable CA1416
+        services.AddScoped<IBarcodeLabelPrintService, BarcodeLabelPrintService>();
+        services.AddSingleton<ProductCsvService>();
+        services.AddSingleton<IProductImportService>(provider => provider.GetRequiredService<ProductCsvService>());
+        services.AddSingleton<IProductExportService>(provider => provider.GetRequiredService<ProductCsvService>());
         services.AddScoped<IReceiptPrinter, WindowsReceiptPrinter>();
         services.AddScoped<IPrinterDiscoveryService, PrinterDiscoveryService>();
+        services.AddScoped<ICashDrawerService, CashDrawerService>();
 #pragma warning restore CA1416
         services.AddScoped<IReceiptFormatter, ReceiptFormatter>();
         services.AddScoped<IPrintQueueService, PrintQueueService>();
-        services.AddScoped<ICashDrawerService, CashDrawerService>();
         services.AddScoped<IReceiptCodeService, ReceiptCodeService>();
         services.AddScoped<EscPosReceiptCommandBuilder>();
         services.AddSingleton<IPosSaleSessionStore, PosSaleSessionStore>();
         services.AddSingleton<IReceiptPreparationService, ReceiptPreparationService>();
         services.AddScoped<ReceiptPrinter>();
-        services.AddScoped<BarcodePrinter>();
         services.AddSingleton<DatabasePathResolver>();
         services.AddSingleton<IDiskSpaceService, DiskSpaceService>();
         services.AddScoped<IDatabaseIntegrityService, DatabaseIntegrityService>();

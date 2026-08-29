@@ -15,6 +15,7 @@
              xmlns:auditViews="clr-namespace:BookStore.UI.Views.Audit"
              xmlns:dataQualityViews="clr-namespace:BookStore.UI.Views.DataQuality"
              xmlns:settingsViews="clr-namespace:BookStore.UI.Views.Settings"
+             xmlns:administrationViews="clr-namespace:BookStore.UI.Views.Administration"
              xmlns:views="clr-namespace:BookStore.UI.Views.Shell"
              xmlns:viewModels="clr-namespace:BookStore.UI.ViewModels">
     <UserControl.Resources>
@@ -74,14 +75,8 @@
                              RepeatBehavior="Forever" />
         </Storyboard>
 
-        <DataTemplate DataType="{x:Type viewModels:ModulePlaceholderViewModel}">
-            <views:ModulePlaceholderView />
-        </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:DashboardViewModel}">
             <views:DashboardView />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type viewModels:CategoriesViewModel}">
-            <views:ModulePlaceholderView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:CategoryListViewModel}">
             <categoryViews:CategoryListView />
@@ -92,9 +87,6 @@
         <DataTemplate DataType="{x:Type viewModels:CategoryDetailsViewModel}">
             <categoryViews:CategoryDetailsView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type viewModels:ProductsViewModel}">
-            <views:ModulePlaceholderView />
-        </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:ProductListViewModel}">
             <productViews:ProductListView />
         </DataTemplate>
@@ -103,9 +95,6 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:ProductDetailsViewModel}">
             <productViews:ProductDetailsView />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type viewModels:InventoryViewModel}">
-            <views:ModulePlaceholderView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:InventoryDashboardViewModel}">
             <inventoryViews:InventoryDashboardView />
@@ -128,14 +117,8 @@
         <DataTemplate DataType="{x:Type viewModels:BarcodeLabelPrintViewModel}">
             <barcodeViews:BarcodeLabelPrintView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type viewModels:SalesViewModel}">
-            <views:ModulePlaceholderView />
-        </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:POSViewModel}">
             <salesViews:POSView />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type viewModels:CustomersViewModel}">
-            <views:ModulePlaceholderView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:CustomerListViewModel}">
             <customerViews:CustomerListView />
@@ -146,9 +129,6 @@
         <DataTemplate DataType="{x:Type viewModels:CustomerDetailsViewModel}">
             <customerViews:CustomerDetailsView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type viewModels:SuppliersViewModel}">
-            <views:ModulePlaceholderView />
-        </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:SupplierListViewModel}">
             <supplierViews:SupplierListView />
         </DataTemplate>
@@ -157,9 +137,6 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:SupplierDetailsViewModel}">
             <supplierViews:SupplierDetailsView />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type viewModels:ReportsViewModel}">
-            <views:ModulePlaceholderView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:ReportsDashboardViewModel}">
             <reportViews:ReportsDashboardView />
@@ -213,10 +190,10 @@
             <settingsViews:SettingsView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:UsersViewModel}">
-            <views:ModulePlaceholderView />
+            <administrationViews:UsersView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:RolesViewModel}">
-            <views:ModulePlaceholderView />
+            <administrationViews:RolesView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewModels:BackupViewModel}">
             <backupViews:BackupListView />

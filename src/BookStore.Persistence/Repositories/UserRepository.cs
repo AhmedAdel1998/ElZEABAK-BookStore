@@ -30,6 +30,13 @@ public class UserRepository(BookStoreDbContext dbContext) : Repository<User>(dbC
     }
 
     /// <inheritdoc />
+    public Task<bool> ExistsByUsernameAsync(string username, Guid? excludedUserId = null, CancellationToken cancellationToken = default)
+    {
+        var normalized = username.Trim().ToUpperInvariant();
+        return DbContext.Users.AsNoTracking().AnyAsync(user => user.Username.ToUpper() == normalized && (!excludedUserId.HasValue || user.Id != excludedUserId.Value), cancellationToken);
+    }
+
+    /// <inheritdoc />
     public override async Task<IReadOnlyCollection<User>> ListAsync(ISpecification<User>? specification = null, CancellationToken cancellationToken = default)
     {
         IQueryable<User> query = DbContext.Users

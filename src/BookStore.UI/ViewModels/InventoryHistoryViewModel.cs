@@ -52,7 +52,7 @@ public partial class InventoryHistoryViewModel : BaseViewModel
         await LoadAsync();
     }
 
-/// <summary>Gets the number of pages available for the current filters.</summary>
+    /// <summary>Gets the number of pages available for the current filters.</summary>
     public int TotalPages => PageSize <= 0 ? 1 : Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
 
     /// <summary>Gets whether an earlier page exists.</summary>

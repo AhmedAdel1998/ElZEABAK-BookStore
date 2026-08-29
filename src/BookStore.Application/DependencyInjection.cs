@@ -17,6 +17,7 @@ using BookStore.Application.Features.Settings.Services;
 using BookStore.Application.Features.Sales.Services;
 using BookStore.Application.Features.Receipts.Services;
 using BookStore.Application.Interfaces;
+using BookStore.Application.Features.Administration;
 
 namespace BookStore.Application;
 
@@ -70,6 +71,7 @@ public static class DependencyInjection
         services.AddTransient<GetProductByIdHandler>();
         services.AddTransient<SearchProductsHandler>();
         services.AddTransient<GetLowStockProductsHandler>();
+        services.AddTransient<ImportProductsHandler>();
         services.AddTransient<InventoryHandlers.InventoryMovementService>();
         services.AddTransient<InventoryHandlers.IncreaseStockHandler>();
         services.AddTransient<InventoryHandlers.DecreaseStockHandler>();
@@ -83,7 +85,6 @@ public static class DependencyInjection
         services.AddTransient<BarcodeHandlers.ValidateBarcodeHandler>();
         services.AddTransient<BarcodeHandlers.PrintBarcodeHandler>();
         services.AddTransient<BarcodeHandlers.FindProductByBarcodeHandler>();
-        services.AddTransient<BarcodeHandlers.GetBarcodeSettingsHandler>();
         services.AddScoped<IPricingService, SalesHandlers.PricingService>();
         services.AddScoped<IPosCartStockService, PosCartStockService>();
         services.AddScoped<IReceiptService, ReceiptService>();
@@ -148,6 +149,7 @@ public static class DependencyInjection
         services.AddScoped<ISettingsService, SettingsService>();
         services.AddTransient<SettingsHandlers.SettingsQueryHandler>();
         services.AddTransient<SettingsHandlers.SettingsCommandHandler>();
+        services.AddScoped<AdministrationService>();
 
         return services;
     }

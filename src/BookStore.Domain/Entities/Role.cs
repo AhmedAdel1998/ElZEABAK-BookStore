@@ -60,4 +60,22 @@ public class Role : BaseEntity, IAggregateRoot
         _permissions.Add(permission);
         MarkUpdated();
     }
+
+    /// <summary>Updates the role name and description.</summary>
+    public void Update(string name, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new ValidationException("Role name is required.");
+        Name = name.Trim();
+        Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+        MarkUpdated();
+    }
+
+    /// <summary>Replaces the complete permission set for this role.</summary>
+    public void SetPermissions(IEnumerable<Permission> permissions)
+    {
+        ArgumentNullException.ThrowIfNull(permissions);
+        _permissions.Clear();
+        foreach (var permission in permissions.DistinctBy(permission => permission.Id)) _permissions.Add(permission);
+        MarkUpdated();
+    }
 }

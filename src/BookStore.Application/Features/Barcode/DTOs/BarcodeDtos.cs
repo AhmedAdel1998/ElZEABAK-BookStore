@@ -68,8 +68,6 @@ public sealed class BarcodeLabelDto
     public string? ProductTitle { get; set; }
     /// <summary>Gets or sets quantity of labels.</summary>
     public int Quantity { get; set; } = 1;
-    /// <summary>Gets or sets label template.</summary>
-    public string Template { get; set; } = "Single";
 }
 
 /// <summary>

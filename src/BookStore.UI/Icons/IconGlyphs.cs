@@ -35,6 +35,8 @@ public static class IconGlyphs
         ["Restore"] = "\uE895",
         ["Adjust"] = "\uE8AB",
         ["Filter"] = "\uE71C",
+        ["Check"] = "\uE73E",
+        ["Lock"] = "\uE72E",
 
         // Areas
         ["Settings"] = "\uE713",

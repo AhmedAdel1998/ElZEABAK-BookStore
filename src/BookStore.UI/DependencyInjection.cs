@@ -98,11 +98,11 @@ public static class DependencyInjection
         services.AddTransient<GetProductByIdHandler>();
         services.AddTransient<SearchProductsHandler>();
         services.AddTransient<GetLowStockProductsHandler>();
+        services.AddTransient<ImportProductsHandler>();
         services.AddTransient<BarcodeHandlers.GenerateBarcodeHandler>();
         services.AddTransient<BarcodeHandlers.ValidateBarcodeHandler>();
         services.AddTransient<BarcodeHandlers.PrintBarcodeHandler>();
         services.AddTransient<BarcodeHandlers.FindProductByBarcodeHandler>();
-        services.AddTransient<BarcodeHandlers.GetBarcodeSettingsHandler>();
         services.AddTransient<SalesHandlers.StartSaleHandler>();
         services.AddTransient<SalesHandlers.AddItemHandler>();
         services.AddTransient<SalesHandlers.UpdateItemQuantityHandler>();
@@ -167,9 +167,6 @@ public static class DependencyInjection
         services.AddTransient<CategoryEditorViewModel>();
         services.AddTransient<CategoryDetailsViewModel>();
         services.AddTransient<DashboardViewModel>();
-        services.AddTransient<CategoriesViewModel>();
-        services.AddTransient<ProductsViewModel>();
-        services.AddTransient<InventoryViewModel>();
         services.AddTransient<InventoryDashboardViewModel>();
         services.AddTransient<InventoryListViewModel>();
         services.AddTransient<InventoryAdjustmentViewModel>();
@@ -185,10 +182,6 @@ public static class DependencyInjection
         services.AddTransient<SupplierListViewModel>();
         services.AddTransient<SupplierEditorViewModel>();
         services.AddTransient<SupplierDetailsViewModel>();
-        services.AddTransient<SalesViewModel>();
-        services.AddTransient<CustomersViewModel>();
-        services.AddTransient<SuppliersViewModel>();
-        services.AddTransient<ReportsViewModel>();
         services.AddTransient<ReportsDashboardViewModel>();
         services.AddTransient<SalesSummaryViewModel>();
         services.AddTransient<SalesDetailsViewModel>();

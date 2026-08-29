@@ -1,0 +1,24 @@
+<UserControl x:Class="BookStore.UI.Views.Administration.RolesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:BookStore.UI.Controls">
+    <Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="300" /><ColumnDefinition Width="18" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+            <DockPanel Margin="0,0,0,12"><StackPanel><TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Roles" /><TextBlock Foreground="{DynamicResource SecondaryTextBrush}" Text="Create roles and assign exact permissions." /></StackPanel><controls:PrimaryButton DockPanel.Dock="Right" Command="{Binding NewCommand}" Content="New" Icon="Add" /></DockPanel>
+            <controls:AppDataGrid Grid.Row="1" ItemsSource="{Binding Roles}" SelectedItem="{Binding SelectedRole, Mode=TwoWay}" IsLoading="{Binding IsBusy}"><DataGrid.Columns><DataGridTextColumn Header="Role" Binding="{Binding Name}" Width="*" /><DataGridTextColumn Header="Permissions" Binding="{Binding Permissions.Count}" Width="100" /></DataGrid.Columns></controls:AppDataGrid>
+        </Grid>
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+            <controls:AppCard Title="Role Details" Subtitle="Changes affect authorization the next time a user signs in." Icon="Lock">
+                <Grid><Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="18" /><ColumnDefinition /></Grid.ColumnDefinitions>
+                    <StackPanel><TextBlock Text="Role Name" /><controls:TextInputBox Text="{Binding RoleName, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                    <StackPanel Grid.Column="2"><TextBlock Text="Description" /><controls:TextInputBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                </Grid>
+            </controls:AppCard>
+            <Border Grid.Row="1" Margin="0,12,0,0" Style="{StaticResource PanelBorderStyle}"><DockPanel><StackPanel DockPanel.Dock="Top" Margin="0,0,0,8" Orientation="Horizontal"><TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="Permissions" /><controls:SecondaryButton Margin="12,0,8,0" Command="{Binding SelectAllCommand}" Content="Select All" Icon="Check" /><controls:SecondaryButton Command="{Binding ClearAllCommand}" Content="Clear" Icon="Close" /></StackPanel><ListBox ItemsSource="{Binding Permissions}" BorderThickness="0"><ListBox.ItemTemplate><DataTemplate><CheckBox Margin="4" IsChecked="{Binding IsSelected}" ToolTip="{Binding Description}" Content="{Binding Name}" /></DataTemplate></ListBox.ItemTemplate></ListBox></DockPanel></Border>
+            <controls:PrimaryButton Grid.Row="2" Margin="0,12,0,0" HorizontalAlignment="Right" Command="{Binding SaveCommand}" Content="Save Role" Icon="Save" />
+        </Grid>
+    </Grid>
+</UserControl>

@@ -83,8 +83,13 @@ public sealed class BarcodeSettingsDto
     public string DefaultFormat { get; set; } = "Code128";
     public string Prefix { get; set; } = "BK";
     public int StartingNumber { get; set; } = 100000;
+    public int Length { get; set; } = 12;
+    public double LabelWidthMm { get; set; } = 50;
+    public double LabelHeightMm { get; set; } = 25;
+    public string PrinterName { get; set; } = string.Empty;
     public int ScanTimeout { get; set; } = 80;
     public bool AutoGenerate { get; set; } = true;
+    public bool ManualGenerationEnabled { get; set; } = true;
 }
 
 public sealed class InventorySettingsDto

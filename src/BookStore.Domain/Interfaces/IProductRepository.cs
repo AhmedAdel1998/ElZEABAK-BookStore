@@ -14,10 +14,7 @@ public interface IProductRepository
     /// <param name="id">The product identifier.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The product when found; otherwise, <see langword="null"/>.</returns>
-    Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets products matching a specification.
@@ -25,10 +22,7 @@ public interface IProductRepository
     /// <param name="specification">The query specification.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The matching products.</returns>
-    Task<IReadOnlyCollection<Product>> ListAsync(ISpecification<Product>? specification = null, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task<IReadOnlyCollection<Product>> ListAsync(ISpecification<Product>? specification = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a product.
@@ -36,19 +30,13 @@ public interface IProductRepository
     /// <param name="product">The product to add.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    Task AddAsync(Product product, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task AddAsync(Product product, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a product.
     /// </summary>
     /// <param name="product">The product to remove.</param>
-    void Remove(Product product)
-    {
-        throw new NotImplementedException();
-    }
+    void Remove(Product product);
 
     /// <summary>
     /// Searches products with optional filters.

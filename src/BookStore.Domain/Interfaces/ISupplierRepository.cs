@@ -15,10 +15,7 @@ public interface ISupplierRepository
     /// <param name="id">The supplier identifier.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The supplier when found; otherwise, <see langword="null"/>.</returns>
-    Task<Supplier?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task<Supplier?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets suppliers matching a specification.
@@ -26,10 +23,7 @@ public interface ISupplierRepository
     /// <param name="specification">The query specification.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>The matching suppliers.</returns>
-    Task<IReadOnlyCollection<Supplier>> ListAsync(ISpecification<Supplier>? specification = null, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task<IReadOnlyCollection<Supplier>> ListAsync(ISpecification<Supplier>? specification = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Adds a supplier.
@@ -37,10 +31,7 @@ public interface ISupplierRepository
     /// <param name="supplier">The supplier to add.</param>
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    Task AddAsync(Supplier supplier, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+    Task AddAsync(Supplier supplier, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Determines whether a supplier exists with the same company name.

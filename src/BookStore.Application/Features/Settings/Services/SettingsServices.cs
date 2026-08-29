@@ -46,8 +46,6 @@ public interface ISettingsService
     Task<IReadOnlyList<SettingEntryDto>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<Result> ResetAsync(CancellationToken cancellationToken = default);
     Task<Result> ResetCategoryAsync(SettingsCategory category, CancellationToken cancellationToken = default);
-    Task SaveAsync(CancellationToken cancellationToken = default);
-    Task ReloadAsync(CancellationToken cancellationToken = default);
 }
 
 public sealed class SettingsChangedNotifier : ISettingsChangedNotifier
@@ -240,14 +238,6 @@ public sealed class SettingsService : ISettingsService
         }
     }
 
-    public Task SaveAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-    public Task ReloadAsync(CancellationToken cancellationToken = default)
-    {
-        _cache.Clear();
-        return Task.CompletedTask;
-    }
-
     private static T Deserialize<T>(PersistedSettingRecord record)
         where T : class, new()
     {
@@ -272,7 +262,7 @@ internal static class SettingsRegistry
         new("Settings.Printer", SettingsCategory.Printer, typeof(PrinterSettingsDto), "Printer selection and connection settings", false, false, app => new PrinterSettingsDto { PrinterName = app.Printer.DefaultPrinterName, PrintTimeout = app.Printer.PrintTimeoutMilliseconds }),
         new("Settings.Tax", SettingsCategory.Tax, typeof(TaxSettingsDto), "Tax calculation settings", false, false, app => new TaxSettingsDto { Enabled = app.Store.TaxRate > 0, DefaultRate = app.Store.TaxRate }),
         new("Settings.Currency", SettingsCategory.Currency, typeof(CurrencySettingsDto), "Currency formatting settings", false, false, app => new CurrencySettingsDto { CurrencyCode = app.Store.Currency, CurrencySymbol = app.Store.Currency }),
-        new("Settings.Barcode", SettingsCategory.Barcode, typeof(BarcodeSettingsDto), "Barcode generation and scanner settings", false, false, app => new BarcodeSettingsDto { DefaultFormat = app.Barcode.DefaultType, Prefix = app.Barcode.Prefix, StartingNumber = app.Barcode.StartingNumber, ScanTimeout = app.Barcode.ScanTimeoutMilliseconds, AutoGenerate = app.Barcode.AutomaticGenerationEnabled }),
+        new("Settings.Barcode", SettingsCategory.Barcode, typeof(BarcodeSettingsDto), "Barcode generation, label, printer, and scanner settings", false, false, app => new BarcodeSettingsDto { DefaultFormat = app.Barcode.DefaultType, Prefix = app.Barcode.Prefix, StartingNumber = app.Barcode.StartingNumber, ScanTimeout = app.Barcode.ScanTimeoutMilliseconds, AutoGenerate = app.Barcode.AutomaticGenerationEnabled }),
         new("Settings.Inventory", SettingsCategory.Inventory, typeof(InventorySettingsDto), "Inventory policy settings", false, false, app => new InventorySettingsDto()),
         new("Settings.Backup", SettingsCategory.Backup, typeof(BackupSettingsDto), "Backup schedule and retention settings", false, false, app => new BackupSettingsDto { Enabled = app.Backup.Enabled, Frequency = app.Backup.Frequency, BackupLocation = app.Backup.Folder, RetentionCount = app.Backup.RetentionCount, ValidateAfterBackup = app.Backup.ValidateAfterBackup, CreatePreRestoreBackup = app.Backup.CreatePreRestoreBackup }),
         new("Settings.Security", SettingsCategory.Security, typeof(SecuritySettingsDto), "Authentication and session safety settings", true, true, app => new SecuritySettingsDto { SessionTimeout = app.Authentication.SessionTimeoutMinutes, MaxLoginAttempts = app.Authentication.MaxFailedLoginAttempts, LockoutDuration = app.Authentication.LockoutMinutes }),

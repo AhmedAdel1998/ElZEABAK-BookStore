@@ -31,4 +31,10 @@ public interface IRoleRepository
     /// <param name="cancellationToken">A token used to cancel the operation.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
     Task AddAsync(Role role, CancellationToken cancellationToken = default);
+
+    /// <summary>Gets every available permission.</summary>
+    Task<IReadOnlyCollection<Permission>> ListPermissionsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Checks whether a role name is already assigned.</summary>
+    Task<bool> ExistsByNameAsync(string name, Guid? excludedRoleId = null, CancellationToken cancellationToken = default);
 }
